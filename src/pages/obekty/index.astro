@@ -1,0 +1,67 @@
+---
+// Ш4 — каталог объектов: фильтры → сетка карточек → форма «Хочу так же».
+import Base from '../../layouts/Base.astro';
+import Section from '../../components/Section.astro';
+import ObjCard from '../../components/ObjCard.astro';
+import LeadSection from '../../components/LeadSection.astro';
+import { OBJECTS } from '../../data/objects';
+const filters = [
+  ['all', 'Все объекты'], ['kotelnaya', 'Котельные'], ['teplyj-pol', 'Тёплый пол'], ['gaz', 'Газовое отопление'],
+  ['bez-gaza', 'Без газа'], ['seti', 'Вода и канализация'], ['kanalizaciya', 'Септики'],
+];
+const districts = [...new Set(OBJECTS.map((o) => o.district))];
+---
+<Base title="Наши объекты: отопление и котельные в частных домах СПб и ЛО" description="Объекты компании «Система тепла»: котельные, тёплые полы, отопление без газа, разводка воды. Площадь, материал стен, срок и бюджет каждого объекта." crumbs={[{ href: '/obekty/', label: 'Объекты' }]}>
+  <section class="hero" style="padding-bottom:0">
+    <div class="wrap">
+      <div class="eyebrow">Портфолио</div>
+      <h1>Объекты: отопление и котельные в частных домах</h1>
+      <p class="hero__offer">В каждой карточке — площадь дома, стены, что сделали, сколько длилось и во что обошлось. Точные адреса и данные владельцев не публикуем.</p>
+    </div>
+  </section>
+  <Section>
+    <div class="filters" role="toolbar" aria-label="Фильтр по типу работ" data-filters>
+      {filters.map(([v, l], i) => <button type="button" data-filter={v} aria-pressed={i === 0 ? 'true' : 'false'}>{l}</button>)}
+    </div>
+    <div class="filters" style="margin-top:-8px">
+      <label class="visually-hidden" for="f-district">Район</label>
+      <select id="f-district" class="chip" style="min-height:44px" data-district>
+        <option value="">Все районы</option>
+        {districts.map((d) => <option value={d}>{d}</option>)}
+      </select>
+      <label class="visually-hidden" for="f-area">Площадь</label>
+      <select id="f-area" class="chip" style="min-height:44px" data-area>
+        <option value="">Любая площадь</option><option value="0-150">до 150 м²</option><option value="150-250">150–250 м²</option><option value="250-9999">больше 250 м²</option>
+      </select>
+    </div>
+    <div class="grid grid--4" data-grid>
+      {OBJECTS.map((o) => <div data-obj data-district={o.district} data-area={o.area} data-tags={o.tags.join(' ')}><ObjCard o={o} /></div>)}
+    </div>
+    <div class="empty" data-empty>По этим условиям объектов пока нет. Сбросьте фильтр или <a href="#zayavka">оставьте заявку</a> — покажем похожие дома на замере.</div>
+    <p class="table-note mt-24">Прототип: 4 объекта из 10 на запуске. Параметры и бюджеты — примеры, заменяются паспортами объектов.</p>
+  </Section>
+  <LeadSection title="Хочу так же" text="Расскажите о своём доме — подберём похожий объект, покажем смету и сроки." uid="lead-obj" />
+</Base>
+<script>
+  const root = document.querySelector('[data-filters]')!;
+  const items = [...document.querySelectorAll<HTMLElement>('[data-obj]')];
+  const district = document.querySelector<HTMLSelectElement>('[data-district]')!;
+  const area = document.querySelector<HTMLSelectElement>('[data-area]')!;
+  const empty = document.querySelector<HTMLElement>('[data-empty]')!;
+  let tag = 'all';
+  const apply = () => {
+    const [min, max] = area.value ? area.value.split('-').map(Number) : [0, Infinity];
+    let shown = 0;
+    items.forEach((el) => {
+      const a = Number(el.dataset.area);
+      const ok = (tag === 'all' || el.dataset.tags!.split(' ').includes(tag)) && (!district.value || el.dataset.district === district.value) && a >= min && a < max;
+      el.hidden = !ok; if (ok) shown++;
+    });
+    empty.style.display = shown ? 'none' : 'block';
+  };
+  root.querySelectorAll<HTMLButtonElement>('button').forEach((b) => b.addEventListener('click', () => {
+    root.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', 'false'));
+    b.setAttribute('aria-pressed', 'true'); tag = b.dataset.filter!; apply();
+  }));
+  district.addEventListener('change', apply); area.addEventListener('change', apply);
+</script>

@@ -1,0 +1,67 @@
+---
+// Единый компонент формы заявки. Чекбокс согласия НЕ отмечен по умолчанию, без него форма не отправляется.
+// Прототип: данные никуда не отправляются — после проверки полей переход на /spasibo/.
+interface Props { uid: string; withFile?: boolean; button?: string; short?: boolean }
+const { uid, withFile = true, button = 'Отправить заявку', short = false } = Astro.props;
+---
+<form class="form" data-lead novalidate>
+  {!short && (
+    <div class="field">
+      <label for={`${uid}-name`}>Имя</label>
+      <input id={`${uid}-name`} name="name" type="text" autocomplete="given-name" placeholder="Как к вам обращаться" />
+    </div>
+  )}
+  <div class="field" data-field="phone">
+    <label for={`${uid}-phone`}>Телефон *</label>
+    <input id={`${uid}-phone`} name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+7 (___) ___-__-__" required />
+    <span class="err">Укажите телефон, чтобы мы могли перезвонить</span>
+  </div>
+  {withFile && !short && (
+    <div class="field">
+      <span class="field__label">Проект дома или план (необязательно)</span>
+      <label class="file">
+        <input class="visually-hidden" name="file" type="file" accept=".pdf,.jpg,.jpeg,.png,.dwg" data-file />
+        <span class="file__btn">Прикрепить файл</span>
+        <span class="file__name" data-file-name>PDF, JPG, PNG или DWG</span>
+      </label>
+    </div>
+  )}
+  <label class="consent" data-field="consent">
+    <input type="checkbox" name="consent" required />
+    <span>Даю <a href="/soglasie-pdn/" target="_blank">согласие на обработку персональных данных</a> в соответствии с <a href="/politika-pdn/" target="_blank">политикой</a> *</span>
+    <span class="err">Без согласия мы не можем принять заявку</span>
+  </label>
+  {!short && (
+    <label class="consent">
+      <input type="checkbox" name="ads" />
+      <span>Согласен получать полезные материалы и предложения (<a href="/soglasie-na-rassylku/" target="_blank">согласие на рассылку</a>) — необязательно</span>
+    </label>
+  )}
+  <button class="btn btn--primary btn--block" type="submit">{button}</button>
+  <p class="form-note">Перезвоним за 5 минут в рабочее время. Прототип: данные никуда не отправляются.</p>
+</form>
+
+<script>
+  // На телефоне поднимаем поле над клавиатурой.
+  document.querySelectorAll<HTMLInputElement>('form[data-lead] input[type="tel"], form[data-lead] input[type="text"], [data-quiz] input[type="text"]').forEach((i) => i.addEventListener('focus', () => {
+    if (matchMedia('(max-width: 900px)').matches) setTimeout(() => i.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300);
+  }));
+  document.querySelectorAll<HTMLInputElement>('[data-file]').forEach((inp) => inp.addEventListener('change', () => {
+    const out = inp.parentElement!.querySelector('[data-file-name]')!;
+    out.textContent = inp.files && inp.files[0] ? inp.files[0].name : 'PDF, JPG, PNG или DWG';
+  }));
+  document.querySelectorAll<HTMLFormElement>('form[data-lead]').forEach((form) => {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const phone = form.querySelector<HTMLInputElement>('input[name="phone"]')!;
+      const consent = form.querySelector<HTMLInputElement>('input[name="consent"]')!;
+      const phoneOk = phone.value.replace(/\D/g, '').length >= 10;
+      phone.closest('[data-field]')!.classList.toggle('has-error', !phoneOk);
+      consent.closest('[data-field]')!.classList.toggle('has-error', !consent.checked);
+      if (!phoneOk) { phone.focus(); return; }
+      if (!consent.checked) { consent.focus(); return; }
+      // Здесь будет отправка в CRM с записью о согласии (дата, время, IP, версия текста).
+      window.location.href = '/spasibo/';
+    });
+  });
+</script>

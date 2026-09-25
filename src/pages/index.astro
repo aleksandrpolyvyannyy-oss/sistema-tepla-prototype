@@ -1,0 +1,115 @@
+---
+// Ш1 — главная. Порядок блоков: ПЛАН-САЙТ.md раздел 4 + уточнения ЗАПУСК-ПРИОРИТЕТЫ.md раздел 3.
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import DirectAnswer from '../components/DirectAnswer.astro';
+import Section from '../components/Section.astro';
+import Packages from '../components/Packages.astro';
+import Quiz from '../components/Quiz.astro';
+import ObjectsGrid from '../components/ObjectsGrid.astro';
+import Steps from '../components/Steps.astro';
+import Guarantees from '../components/Guarantees.astro';
+import SampleEstimate from '../components/SampleEstimate.astro';
+import Reviews from '../components/Reviews.astro';
+import Faq from '../components/Faq.astro';
+import LeadSection from '../components/LeadSection.astro';
+import { photo, PHOTO_ALT } from '../lib/photos';
+import { PKG_HEATING, STEPS_MONTAGE } from '../data/common';
+import { GEO_AREAS } from '../data/site';
+
+const main = [
+  { t: 'Отопление', href: '/otoplenie/', img: '14', price: 'от 380 000 ₽ за дом 100 м²', d: 'Котельная, тёплый пол, радиаторы — газ или без газа.',
+    links: [['/otoplenie/kotelnaya/', 'Котельная под ключ'], ['/otoplenie/teplyj-pol/', 'Тёплый пол'], ['/otoplenie/radiatory/', 'Радиаторы'], ['/otoplenie/kotelnaya/ustanovka-gazovogo-kotla/', 'Установка газового котла']] },
+  { t: 'Вода и канализация по дому', href: '/vnutrennie-seti/', img: '42', price: 'от 3 500 ₽ за точку', d: 'Разводка воды от скважины, канализация, инсталляции — вместе с отоплением.',
+    links: [['/vnutrennie-seti/razvodka-vody/', 'Разводка воды'], ['/vnutrennie-seti/vnutrennyaya-kanalizaciya/', 'Внутренняя канализация'], ['/kompleks-pod-klyuch/', 'Всё под ключ']] },
+  { t: 'Запуск и наладка отопления', href: '/zapusk-otopleniya/', img: '07', price: 'от 7 000 ₽', d: 'Пусконаладка, первый пуск газового котла, опрессовка, балансировка.',
+    links: [['/zapusk-otopleniya/pusk-gazovogo-kotla/', 'Первый пуск газового котла'], ['/zapusk-otopleniya/opressovka/', 'Опрессовка'], ['/zapusk-otopleniya/balansirovka/', 'Балансировка']] },
+];
+
+const faq = [
+  { q: 'Сколько стоит отопление частного дома под ключ?', a: 'Для дома 100 м² — от 380 тыс ₽, 150 м² — от 520 тыс ₽, 200 м² — от 690 тыс ₽ с газовым котлом и оборудованием. Точную цену даём сметой через 24 часа после бесплатного замера и фиксируем в договоре.' },
+  { q: 'Сколько длится монтаж отопления?', a: 'Для дома 100–150 м² — 10–25 рабочих дней в зависимости от состава: котельная, радиаторы, тёплый пол. Сушка стяжки тёплого пола в срок монтажа не входит.' },
+  { q: 'Работаете ли вы в Ленинградской области?', a: 'Да, во всех районах области. Замер бесплатный в радиусе 60 км от КАД, дальше — 40 ₽ за км. Чаще всего работаем во Всеволожском, Гатчинском, Ломоносовском, Тосненском и Приозерском районах.' },
+  { q: 'Вы подключаете газ?', a: 'Подключение к газу и пуск газа выполняет газораспределительная организация. Мы монтируем котельную по проекту газоснабжения, а после пуска газа выполняем первый пуск и настройку котла — у нас есть разрешение на эти работы.' },
+  { q: 'Как устроена оплата?', a: 'Три платежа: 70% — аванс на материалы и оборудование с доставкой, 20% — после основного монтажа, 10% — после пусконаладки и сдачи. Работы в аванс не входят.' },
+  { q: 'Какая гарантия?', a: '3 года на монтажные работы по договору, на оборудование — гарантия производителя. Первый пуск оформляем актом, чтобы гарантия на котёл действовала.' },
+  { q: 'Можно сделать отопление и воду одним договором?', a: 'Да, и это выгоднее на 10–15%: общая котельная и бойлерная, одна бригада, один график и одна гарантия. Наружную канализацию, септик, ввод воды и дренаж можно включить в ту же смету.' },
+  { q: 'Запускаете системы, смонтированные другими?', a: 'Да. Сначала осматриваем и опрессовываем систему, фиксируем замечания в акте, при необходимости исправляем, затем запускаем и настраиваем.' },
+];
+---
+<Base title="Монтаж отопления частного дома под ключ в СПб и ЛО — Система тепла" description="Отопление, котельные, тёплый пол, разводка воды и канализации в частных домах Санкт-Петербурга и Ленобласти. Смета за 24 часа, цена в договоре, гарантия 3 года." quiz>
+  <Hero h1="Отопление частного дома под ключ в СПб и Ленобласти" offer="Котельная, тёплый пол, радиаторы и вода по дому — одним договором. Смета за 24 часа, цена фиксируется в договоре." img="44" eyebrow="Монтаж и автоматика отопления" price="от 380 000 ₽ за дом 100 м²" primary={{ href: '#raschet', label: 'Рассчитать стоимость' }} season
+    trust={[['24 ч', 'смета после замера'], ['3 года', 'гарантия на работы'], ['60 км', 'от КАД — замер бесплатно']]} />
+  <DirectAnswer label="Коротко о нас" text="«Система тепла» монтирует отопление, котельные и водоснабжение в частных домах Санкт-Петербурга и Ленинградской области. Отопление дома 150 м² с газовым котлом, тёплым полом и радиаторами стоит от 520 тыс ₽ под ключ и занимает 15–25 рабочих дней; вместе с разводкой воды и канализации — от 780 тыс ₽. Запуск и наладку отопления делаем за один выезд." />
+
+  <Section id="uslugi" eyebrow="Услуги" title="Три основных направления" lead="Всё, что нужно, чтобы в доме было тепло и была вода.">
+    <div class="grid grid--3">
+      {main.map((m) => (
+        <article class="svc">
+          <a href={m.href} tabindex="-1" aria-hidden="true"><Image src={photo(m.img)} alt={PHOTO_ALT[m.img]} widths={[400, 640]} sizes="(max-width: 620px) 100vw, 380px" /></a>
+          <div class="svc__body">
+            <h3><a href={m.href} style="text-decoration:none;color:inherit">{m.t}</a></h3>
+            <p>{m.d}</p>
+            <ul style="list-style:none;padding:0;margin:0 0 16px;display:grid;gap:6px;font-size:15px">
+              {m.links.map(([h, l]) => <li><a href={h}>{l}</a></li>)}
+            </ul>
+            <div class="svc__foot"><b>{m.price}</b><a class="svc__arrow" href={m.href} aria-label={`Подробнее: ${m.t}`}>→</a></div>
+          </div>
+        </article>
+      ))}
+    </div>
+    <div class="minor-line">
+      <span>Также делаем:</span>
+      <a class="chip" href="/kanalizaciya/">Наружная канализация и септики</a>
+      <a class="chip" href="/naruzhnoe-vodosnabzhenie/">Ввод воды и обвязка скважины</a>
+      <a class="chip" href="/drenazh-i-vodootvod/">Дренаж и отмостка</a>
+    </div>
+  </Section>
+
+  <Section id="ceny" variant="tint" eyebrow="Пакеты и цены" title="Сколько стоит отопление дома" lead="Цены «от» с оборудованием. Полный прайс — на странице цен.">
+    <Packages items={PKG_HEATING} />
+    <div class="mt-40"><SampleEstimate heading="h3" /></div>
+    <p class="mt-24"><a class="btn btn--ghost" href="/ceny/">Все цены и прайс работ</a></p>
+  </Section>
+
+  <Quiz preset="otoplenie" />
+
+  <ObjectsGrid title="Наши объекты" variant="plain" />
+
+  <Guarantees id="pochemu-my" eyebrow="Почему мы и гарантии" title="Один подрядчик — одна гарантия" lead="Не нужно стыковать сантехников с отопленцами и выяснять, кто виноват. Цена, сроки и гарантия — в договоре.">
+    <Fragment slot="before">
+      <div class="one one--dark">
+        <div class="one__node">Отопление<small>котельная, пол, радиаторы</small></div>
+        <span class="one__op">+</span>
+        <div class="one__node">Водоснабжение<small>разводка, водоподготовка</small></div>
+        <span class="one__op">+</span>
+        <div class="one__node">Канализация<small>внутренняя и наружная</small></div>
+        <span class="one__op">=</span>
+        <div class="one__node one__res">Один договор<small>один график, одна гарантия 3 года</small></div>
+      </div>
+      <p class="center" style="margin:20px 0 36px"><a class="on-dark" href="/kompleks-pod-klyuch/">Отопление и водоснабжение под ключ →</a></p>
+      <h3 class="guar__caption">Что мы фиксируем в договоре</h3>
+    </Fragment>
+  </Guarantees>
+
+  <Section id="etapy" eyebrow="Этапы и сроки" title="7 шагов от заявки до тёплого дома" lead="Дом 100–150 м² — 10–25 рабочих дней монтажа; срок каждого этапа — в графике к договору.">
+    <Steps items={STEPS_MONTAGE} />
+  </Section>
+
+  <Reviews variant="tint" />
+
+  <Section eyebrow="География" title="Работаем в СПб и по всей Ленобласти">
+    <div class="split">
+      <div class="map-stub"><div><b>Карта зоны работ</b>Яндекс Карта подключится после согласия на cookie. До этого — статичная схема.</div></div>
+      <div>
+        <p>Замер бесплатно в радиусе 60 км от КАД. Чаще всего работаем здесь:</p>
+        <div class="places" style="margin-bottom:20px">{GEO_AREAS.map((g) => <span>{g}</span>)}</div>
+        <a class="btn btn--ghost" href="/otoplenie/leningradskaya-oblast/">Отопление в Ленинградской области</a>
+      </div>
+    </div>
+  </Section>
+
+  <Faq items={faq} variant="tint" />
+  <LeadSection />
+</Base>

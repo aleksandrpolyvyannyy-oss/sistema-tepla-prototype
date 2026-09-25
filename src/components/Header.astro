@@ -1,0 +1,92 @@
+---
+import Logo from './Logo.astro';
+import { NAV, SITE } from '../data/site';
+const path = Astro.url.pathname;
+const calc = Astro.props.quiz ? '#raschet' : '/ceny/#raschet';
+const isActive = (href?: string) => href && path.startsWith(href);
+---
+<div class="topbar">
+  <div class="wrap">
+    <span>{SITE.area} · {SITE.hours}</span>
+    <nav class="topbar__links" aria-label="Дополнительное меню">
+      <a class="topbar__phone" href={SITE.phoneHref}>{SITE.phone}</a>
+      <a href="/otzyvy/">Отзывы</a>
+      <a href="/kontakty/">Контакты</a>
+      <a href="/karta-prototipa/">Карта прототипа</a>
+    </nav>
+  </div>
+</div>
+<header class="header" data-header>
+  <div class="wrap header__row">
+    <a class="brand" href="/" aria-label="Система тепла — на главную">
+      <Logo />
+      <span>
+        <span class="brand__name"><b>СИСТЕМА</b> <i>ТЕПЛА</i></span>
+        <span class="brand__sub">МОНТАЖ И АВТОМАТИКА ОТОПЛЕНИЯ</span>
+      </span>
+    </a>
+    <a class="header__phone" href={SITE.phoneHref}><b>{SITE.phone}</b><span>{SITE.hours}</span></a>
+    <a class="btn btn--primary header__cta" href={calc}>Рассчитать</a>
+    <a class="header__mobile-phone" href={SITE.phoneHref} aria-label={`Позвонить ${SITE.phone}`}>
+      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z"/></svg>
+    </a>
+    <button class="burger" type="button" aria-label="Открыть меню" aria-expanded="false" aria-controls="main-nav" data-burger><span></span><span></span><span></span></button>
+  </div>
+  <div class="header__navrow"><div class="wrap">
+    <nav class="nav" id="main-nav" aria-label="Основное меню">
+      <ul class="nav__list">
+        {NAV.map((item, i) => item.children ? (
+          <li class="nav__item" data-sub>
+            <button class="nav__btn" type="button" aria-expanded="false" aria-controls={`sub-${i}`}>
+              {item.label}
+              <svg viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+            <ul class="nav__sub" id={`sub-${i}`}>
+              {item.children.map((c) => (
+                <li><a href={c.href} aria-current={path === c.href ? 'page' : undefined}>{c.note && <small>{c.note}</small>}{c.label}</a></li>
+              ))}
+            </ul>
+          </li>
+        ) : (
+          <li class="nav__item"><a class="nav__link" href={item.href} aria-current={isActive(item.href) ? 'page' : undefined}>{item.label}</a></li>
+        ))}
+        <li class="nav__item nav__item--m"><a class="nav__link" href="/otzyvy/">Отзывы</a></li>
+        <li class="nav__item nav__item--m"><a class="nav__link" href="/kontakty/">Контакты</a></li>
+      </ul>
+    </nav>
+  </div></div>
+  <div class="scale"></div>
+</header>
+<script>
+  const header = document.querySelector<HTMLElement>('[data-header]')!;
+  const burger = header.querySelector<HTMLButtonElement>('[data-burger]')!;
+  const setMenu = (open: boolean) => {
+    // Меню занимает весь экран ниже шапки, где бы шапка ни находилась (над ней плашка прототипа).
+    header.style.setProperty('--menu-top', `${Math.max(0, header.getBoundingClientRect().bottom)}px`);
+    header.classList.toggle('is-menu', open);
+    burger.setAttribute('aria-expanded', String(open));
+    burger.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
+    document.documentElement.classList.toggle('menu-open', open);
+    document.documentElement.style.overflow = open ? 'hidden' : '';
+  };
+  burger.addEventListener('click', () => setMenu(!header.classList.contains('is-menu')));
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (header.classList.contains('is-menu')) { setMenu(false); burger.focus(); }
+    header.querySelectorAll('[data-sub].is-open').forEach((o) => { o.classList.remove('is-open'); o.querySelector('button')!.setAttribute('aria-expanded', 'false'); });
+  });
+  matchMedia('(min-width: 1360px)').addEventListener('change', (e) => { if (e.matches) setMenu(false); });
+  header.querySelectorAll<HTMLElement>('[data-sub]').forEach((li) => {
+    const btn = li.querySelector('button')!;
+    btn.addEventListener('click', () => {
+      const open = !li.classList.contains('is-open');
+      header.querySelectorAll('[data-sub].is-open').forEach((o) => { if (o !== li) { o.classList.remove('is-open'); o.querySelector('button')!.setAttribute('aria-expanded', 'false'); } });
+      li.classList.toggle('is-open', open);
+      btn.setAttribute('aria-expanded', String(open));
+    });
+  });
+  document.addEventListener('click', (e) => {
+    if (!header.contains(e.target as Node)) header.querySelectorAll('[data-sub].is-open').forEach((o) => o.classList.remove('is-open'));
+  });
+  header.querySelectorAll('.nav a').forEach((a) => a.addEventListener('click', () => setMenu(false)));
+</script>

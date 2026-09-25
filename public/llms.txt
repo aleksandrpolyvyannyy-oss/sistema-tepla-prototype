@@ -1,0 +1,40 @@
+# Система тепла
+
+> Монтаж отопления, котельных, водяного тёплого пола и радиаторов, внутренней разводки воды и канализации в частных домах Санкт-Петербурга и Ленинградской области. Запуск и пусконаладка систем отопления, первый пуск газового котла (разрешение есть). Смета за 24 часа после замера, цена и сроки фиксируются в договоре, гарантия на работы 3 года, оплата 70/20/10.
+
+Подключение к газу и пуск газа выполняет газораспределительная организация; компания монтирует котельную по проекту газоснабжения и выполняет первый пуск котла.
+
+Ключевые цифры (цены «от», обновлены 25.09.2026): отопление дома 100 м² — от 380 000 ₽, 150 м² — от 520 000 ₽, 200 м² — от 690 000 ₽ с оборудованием; тёплый пол — от 700 ₽/м² работа; разводка воды — от 3 500 ₽ за точку; первый пуск газового котла — от 7 000 ₽.
+
+## Отопление
+- [Монтаж отопления в частном доме под ключ](https://sistema-tepla.ru/otoplenie/): хаб раздела, пакеты по площади
+- [Котельная под ключ](https://sistema-tepla.ru/otoplenie/kotelnaya/)
+- [Установка газового котла](https://sistema-tepla.ru/otoplenie/kotelnaya/ustanovka-gazovogo-kotla/)
+- [Водяной тёплый пол](https://sistema-tepla.ru/otoplenie/teplyj-pol/)
+- [Монтаж радиаторов](https://sistema-tepla.ru/otoplenie/radiatory/)
+- [Газовое отопление](https://sistema-tepla.ru/otoplenie/gazovoe/)
+- [Отопление без газа](https://sistema-tepla.ru/otoplenie/bez-gaza/): сравнение электрокотла, теплового насоса, твёрдого топлива
+- [Отопление в Ленинградской области](https://sistema-tepla.ru/otoplenie/leningradskaya-oblast/)
+
+## Внутренние сети
+- [Разводка воды и канализации в частном доме](https://sistema-tepla.ru/vnutrennie-seti/)
+- [Разводка воды от скважины](https://sistema-tepla.ru/vnutrennie-seti/razvodka-vody/)
+- [Внутренняя канализация](https://sistema-tepla.ru/vnutrennie-seti/vnutrennyaya-kanalizaciya/)
+- [Отопление и водоснабжение под ключ](https://sistema-tepla.ru/kompleks-pod-klyuch/)
+
+## Запуск отопления
+- [Запуск и пусконаладка системы отопления](https://sistema-tepla.ru/zapusk-otopleniya/)
+- [Первый пуск газового котла](https://sistema-tepla.ru/zapusk-otopleniya/pusk-gazovogo-kotla/)
+- [Опрессовка](https://sistema-tepla.ru/zapusk-otopleniya/opressovka/)
+- [Балансировка и настройка тёплого пола](https://sistema-tepla.ru/zapusk-otopleniya/balansirovka/)
+
+## Другие работы
+- [Наружная канализация и септики](https://sistema-tepla.ru/kanalizaciya/)
+- [Ввод воды и обвязка скважины](https://sistema-tepla.ru/naruzhnoe-vodosnabzhenie/)
+- [Дренаж, отмостка, ливнёвка](https://sistema-tepla.ru/drenazh-i-vodootvod/)
+
+## Компания
+- [Цены и прайс работ](https://sistema-tepla.ru/ceny/)
+- [Объекты](https://sistema-tepla.ru/obekty/)
+- [О компании и реквизиты](https://sistema-tepla.ru/o-kompanii/)
+- [Контакты](https://sistema-tepla.ru/kontakty/)

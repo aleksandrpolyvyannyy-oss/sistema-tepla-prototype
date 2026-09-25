@@ -1,0 +1,40 @@
+---
+import { Image } from 'astro:assets';
+import Logo from './Logo.astro';
+import { photo, PHOTO_ALT } from '../lib/photos';
+interface Props {
+  h1: string; offer: string; price?: string; img: string; eyebrow?: string;
+  primary?: { href: string; label: string }; secondary?: { href: string; label: string };
+  trust?: [string, string][]; badge?: string; season?: boolean;
+}
+const { h1, offer, price, img, eyebrow, primary = { href: '#raschet', label: 'Рассчитать стоимость' }, secondary = { href: '/obekty/', label: 'Посмотреть объекты' },
+  trust = [['24 ч', 'смета после замера'], ['3 года', 'гарантия на работы по договору'], ['70/20/10', 'оплата по этапам, аванс — материалы']], badge, season } = Astro.props;
+---
+<section class="hero">
+  <div class="wrap hero__grid">
+    <div class="hero__text">
+      {eyebrow && <div class="eyebrow">{eyebrow}</div>}
+      <h1 class="hero__title">{h1}</h1>
+      <p class="hero__offer">{offer}</p>
+      {price && <div class="hero__price"><span>Цена</span> <b>{price}</b></div>}
+      <slot />
+      <div class="hero__actions">
+        <a class="btn btn--primary" href={primary.href}>{primary.label}</a>
+        {secondary && <a class="btn btn--ghost" href={secondary.href}>{secondary.label}</a>}
+      </div>
+      {season && (
+        <a class="hero__season" href="/zapusk-otopleniya/" style="text-decoration:none;color:inherit">
+          <span style="font-size:22px">❄</span>
+          <span><b>Запуск и наладка отопления</b> — выезд за 1–2 дня, первый пуск газового котла от 7 000 ₽. Плашка показывается с ноября по март.</span>
+        </a>
+      )}
+      <div class="hero__trust">
+        {trust.map(([b, s]) => <div><b>{b}</b><span>{s}</span></div>)}
+      </div>
+    </div>
+    <div class="hero__media">
+      <Image src={photo(img)} alt={PHOTO_ALT[img] ?? 'Объект компании'} widths={[480, 720, 960]} sizes="(max-width: 880px) 100vw, 520px" loading="eager" fetchpriority="high" />
+      {badge && <div class="hero__badge"><Logo /><span>{badge}</span></div>}
+    </div>
+  </div>
+</section>

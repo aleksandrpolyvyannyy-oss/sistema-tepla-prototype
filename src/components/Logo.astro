@@ -1,0 +1,7 @@
+---
+import { logoSvg, PAL } from '../lib/logo';
+interface Props { variant?: 'full' | 'onDark' | 'white'; deg?: boolean; size?: number }
+const { variant = 'full', deg = false, size } = Astro.props;
+const svg = logoSvg(`aria-hidden="true" focusable="false"${size ? ` width="${size}" height="${size}"` : ''}`, PAL[variant], deg);
+---
+<Fragment set:html={svg} />

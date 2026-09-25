@@ -1,0 +1,47 @@
+---
+// Баннер согласия на cookie. До согласия НИЧЕГО не загружается: ни Метрика, ни внешние виджеты.
+---
+<div class="cookie" role="dialog" aria-modal="false" aria-labelledby="cookie-title" data-cookie>
+  <p class="cookie__title" id="cookie-title">Мы используем файлы cookie</p>
+  <p style="margin:0">Необходимые cookie нужны для работы сайта. Аналитические (Яндекс Метрика) подключим только с вашего согласия. Подробнее — в <a href="/cookie/">политике cookie</a>.</p>
+  <div class="cookie__cats">
+    <label class="cookie__cat"><input type="checkbox" checked disabled /><span><b>Необходимые</b><br />Работа сайта, запоминание выбора в этом окне. Всегда включены.</span></label>
+    <label class="cookie__cat"><input type="checkbox" data-cookie-analytics /><span><b>Аналитика</b><br />Яндекс Метрика: посещаемость и работа форм. Выключено по умолчанию.</span></label>
+  </div>
+  <div class="cookie__actions">
+    <button class="btn btn--primary" type="button" data-cookie-all>Принять все</button>
+    <button class="btn btn--ghost" type="button" data-cookie-necessary>Только необходимые</button>
+    <button class="btn btn--ghost" type="button" data-cookie-custom>Настроить</button>
+    <button class="btn btn--primary" type="button" data-cookie-save hidden>Сохранить выбор</button>
+  </div>
+</div>
+<script>
+  const KEY = 'st-cookie-consent';
+  const VERSION = '2026-09-25';
+  const box = document.querySelector<HTMLElement>('[data-cookie]')!;
+  const analyticsBox = box.querySelector<HTMLInputElement>('[data-cookie-analytics]')!;
+  const read = () => { try { const v = JSON.parse(localStorage.getItem(KEY) || 'null'); return v && v.version === VERSION ? v : null; } catch { return null; } };
+  const loadAnalytics = () => {
+    if ((window as any).__stAnalytics) return;
+    (window as any).__stAnalytics = true;
+    // Прототип: здесь будет подключение Яндекс Метрики (mc.yandex.ru) — только после согласия.
+    console.info('[прототип] Согласие на аналитику получено — здесь подключится Яндекс Метрика.');
+  };
+  const save = (analytics: boolean) => {
+    try { localStorage.setItem(KEY, JSON.stringify({ necessary: true, analytics, version: VERSION, date: new Date().toISOString() })); } catch {}
+    box.classList.remove('is-visible', 'is-custom');
+    if (analytics) loadAnalytics();
+  };
+  const state = read();
+  if (!state) box.classList.add('is-visible');
+  else if (state.analytics) loadAnalytics();
+  box.querySelector('[data-cookie-all]')!.addEventListener('click', () => save(true));
+  box.querySelector('[data-cookie-necessary]')!.addEventListener('click', () => save(false));
+  const saveBtn = box.querySelector<HTMLButtonElement>('[data-cookie-save]')!;
+  box.querySelector('[data-cookie-custom]')!.addEventListener('click', () => { box.classList.add('is-custom'); saveBtn.hidden = false; });
+  saveBtn.addEventListener('click', () => save(analyticsBox.checked));
+  document.querySelectorAll('[data-cookie-open]').forEach((b) => b.addEventListener('click', () => {
+    const s = read(); analyticsBox.checked = !!(s && s.analytics);
+    box.classList.add('is-visible', 'is-custom'); saveBtn.hidden = false;
+  }));
+</script>

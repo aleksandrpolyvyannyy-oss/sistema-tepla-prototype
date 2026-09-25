@@ -1,0 +1,127 @@
+---
+// Ш2 — страница услуги (хаб, дочерняя, второстепенная).
+// Структура облегчена до 10 разделов H2: близкие блоки слиты (цены + состав работ, этапы + сроки + подготовка,
+// гарантии + оплата + смета, объекты + фото), под первым экраном — липкое меню разделов.
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import DirectAnswer from '../components/DirectAnswer.astro';
+import SectionNav from '../components/SectionNav.astro';
+import Section from '../components/Section.astro';
+import Packages from '../components/Packages.astro';
+import PriceTable from '../components/PriceTable.astro';
+import Quiz from '../components/Quiz.astro';
+import Compare from '../components/Compare.astro';
+import ObjectsGrid from '../components/ObjectsGrid.astro';
+import Steps from '../components/Steps.astro';
+import Guarantees from '../components/Guarantees.astro';
+import Faq from '../components/Faq.astro';
+import Related from '../components/Related.astro';
+import Reviews from '../components/Reviews.astro';
+import LeadSection from '../components/LeadSection.astro';
+import Expand from '../components/Expand.astro';
+import { type Page, pageBySlug, href, crumbsFor, serviceLd } from '../data/pages';
+import { STEPS_MONTAGE } from '../data/common';
+interface Props { page: Page }
+const { page: p } = Astro.props;
+const children = (p.children ?? []).map((s) => pageBySlug(s)!).filter(Boolean);
+const eyebrow = p.kind === 'hub' ? 'Раздел' : p.kind === 'secondary' ? 'Услуга' : 'Услуга';
+// У хаба сравнение вариантов живёт в блоке «что выбрать», у дочерней — отдельным разделом после калькулятора.
+const hasChoice = children.length > 0;
+const compareInChoice = hasChoice && !!p.compare;
+const compareOwn = !hasChoice && !!p.compare;
+const nav = [
+  hasChoice && { id: 'vybor', label: 'Что выбрать' },
+  p.anchors && { id: 'vidy', label: 'Виды работ' },
+  { id: 'ceny', label: 'Цены' },
+  { id: 'raschet', label: 'Расчёт' },
+  compareOwn && { id: 'varianty', label: 'Сравнение' },
+  { id: 'obekty', label: 'Объекты' },
+  { id: 'etapy', label: 'Этапы и сроки' },
+  { id: 'garantii', label: 'Гарантии' },
+  { id: 'otzyvy', label: 'Отзывы' },
+  { id: 'voprosy', label: 'Вопросы' },
+].filter(Boolean) as { id: string; label: string }[];
+---
+<Base title={p.title} description={p.description} crumbs={crumbsFor(p.slug)} jsonld={[serviceLd(p)]} quiz>
+  <Hero h1={p.h1} offer={p.offer} price={p.priceFrom} img={p.hero} eyebrow={`${eyebrow} · СПб и Ленобласть`}>
+    {p.anchors && (
+      <nav class="anchor-nav" aria-label="Виды работ" style="margin:0 0 20px">
+        {p.anchors.map((a) => <a class="chip" href={`#${a.id}`}>{a.title}</a>)}
+      </nav>
+    )}
+  </Hero>
+  <DirectAnswer text={p.answer} />
+  <SectionNav items={nav} />
+
+  {hasChoice && (
+    <Section id="vybor" eyebrow="Разделы" title={`${p.name}: что выбрать`}>
+      <div class="grid grid--3">
+        {children.map((c) => (
+          <a class="card card--link" href={href(c.slug)}>
+            <h3>{c.name}</h3>
+            <p class="muted" style="margin:0">{c.offer}</p>
+            <div class="card__price">{c.priceFrom}</div>
+          </a>
+        ))}
+      </div>
+      {compareInChoice && (
+        <div class="mt-40">
+          <h3>{p.compare!.title}</h3>
+          <Compare head={p.compare!.head} rows={p.compare!.rows} />
+        </div>
+      )}
+    </Section>
+  )}
+
+  {p.anchors && (
+    <Section id="vidy" variant="tint" eyebrow="Виды работ" title={`${p.name}: виды работ и цены`}>
+      <div class="kinds">
+        {p.anchors.map((a) => (
+          <div class="kind" id={a.id}>
+            <div>
+              <h3>{a.title}</h3>
+              <p>{a.text}</p>
+            </div>
+            <PriceTable rows={a.prices} caption={a.title} note={false} />
+          </div>
+        ))}
+      </div>
+    </Section>
+  )}
+
+  <Section id="ceny" eyebrow="Цены и состав работ" title={p.packages ? 'Цены: пакеты под ключ и прайс работ' : 'Цены на работы и что в них входит'} lead="Цены «от» — ориентир. Точную стоимость дадим сметой после замера и зафиксируем в договоре.">
+    {p.packages && <Packages items={p.packages} />}
+    <div class={p.packages ? 'mt-40' : ''}>
+      <PriceTable rows={p.prices} includes={p.includes} brands={p.brands} />
+    </div>
+  </Section>
+
+  <Quiz preset={p.quiz} />
+
+  {compareOwn && (
+    <Section id="varianty" eyebrow="Варианты решений" title={p.compare!.title}>
+      <Compare head={p.compare!.head} rows={p.compare!.rows} />
+    </Section>
+  )}
+
+  <ObjectsGrid tags={p.objTags} strict={p.kind === 'secondary'} variant={compareOwn ? 'tint' : 'plain'} gallery={p.gallery} />
+
+  <Section id="etapy" variant={compareOwn ? 'plain' : 'tint'} eyebrow="Этапы и сроки" title="Как мы работаем: этапы и сроки" lead="Сроки каждого этапа — в графике к договору.">
+    <Expand h={640} mobileOnly label="Показать все этапы">
+      <Steps items={p.steps ?? STEPS_MONTAGE} />
+    </Expand>
+    <div class="prep">
+      <h3>Что должно быть готово в доме</h3>
+      <Expand h={200} mobileOnly label="Показать весь список">
+        <ul class="checklist">{p.checklist.map((c) => <li>{c}</li>)}</ul>
+      </Expand>
+    </div>
+  </Section>
+
+  <Guarantees eyebrow="Почему нам доверяют" title="Гарантии, оплата по этапам и прозрачная смета" payment estimate={p.quiz} />
+
+  <Reviews />
+  <Faq items={p.faq} variant="tint" />
+  <Related slugs={p.related} />
+  <LeadSection />
+</Base>

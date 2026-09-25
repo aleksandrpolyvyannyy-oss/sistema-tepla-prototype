@@ -1,0 +1,47 @@
+---
+// Липкое меню разделов страницы услуги: якоря + подсветка текущего раздела (IntersectionObserver).
+// Ставится в поток сразу под первым экраном; прилипает под шапкой. На телефоне — горизонтальная прокрутка.
+interface Props { items: { id: string; label: string }[]; cta?: { href: string; label: string } | false }
+const { items, cta = { href: '#raschet', label: 'Рассчитать' } } = Astro.props;
+---
+<nav class="secnav" aria-label="Разделы страницы" data-secnav>
+  <div class="wrap secnav__in">
+    <ul class="secnav__list" data-secnav-list>
+      {items.map((i) => <li><a href={`#${i.id}`}>{i.label}</a></li>)}
+    </ul>
+    {cta && <a class="btn btn--primary secnav__cta" href={cta.href}>{cta.label}</a>}
+  </div>
+</nav>
+<script>
+  document.querySelectorAll<HTMLElement>('[data-secnav]').forEach((nav) => {
+    const list = nav.querySelector<HTMLElement>('[data-secnav-list]')!;
+    const pairs = [...list.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')]
+      .map((a) => [document.getElementById(decodeURIComponent(a.hash.slice(1))), a] as const)
+      .filter((p): p is readonly [HTMLElement, HTMLAnchorElement] => !!p[0]);
+    let current: HTMLAnchorElement | null = null;
+    const setActive = (a: HTMLAnchorElement | null) => {
+      if (a === current) return;
+      current?.classList.remove('is-active');
+      current?.removeAttribute('aria-current');
+      current = a;
+      if (!a) return;
+      a.classList.add('is-active');
+      a.setAttribute('aria-current', 'location');
+      // Держим активный пункт в поле зрения горизонтальной ленты (телефон), не трогая вертикальную прокрутку.
+      const left = a.offsetLeft - (list.clientWidth - a.offsetWidth) / 2;
+      list.scrollTo({ left: Math.max(0, left), behavior: 'smooth' });
+    };
+    const visible = new Set<Element>();
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => (e.isIntersecting ? visible.add(e.target) : visible.delete(e.target)));
+      const hit = pairs.find(([el]) => visible.has(el));
+      setActive(hit ? hit[1] : null);
+    }, { rootMargin: '-35% 0px -55% 0px' });
+    pairs.forEach(([el]) => io.observe(el));
+    // Тень у меню, когда оно прилипло.
+    const sentinel = document.createElement('div');
+    sentinel.setAttribute('aria-hidden', 'true');
+    nav.before(sentinel);
+    new IntersectionObserver(([e]) => nav.classList.toggle('is-stuck', !e.isIntersecting && e.boundingClientRect.top < 0)).observe(sentinel);
+  });
+</script>

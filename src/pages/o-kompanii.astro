@@ -1,0 +1,57 @@
+---
+// Ш7 — о компании: кто мы → команда → реквизиты → страхование и сертификаты → образец договора → гарантии → форма.
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Section from '../components/Section.astro';
+import Guarantees from '../components/Guarantees.astro';
+import LeadSection from '../components/LeadSection.astro';
+import { SITE } from '../data/site';
+import { photo, PHOTO_ALT } from '../lib/photos';
+const team = [
+  ['Генеральный директор', '15 лет в монтаже инженерных систем, ведёт крупные объекты'],
+  ['Руководитель проектов', 'Инженер-теплотехник, считает теплопотери и схемы котельных'],
+  ['Инженер по пусконаладке', 'Допуск к первому пуску газовых котлов, настройка автоматики'],
+  ['Бригадир монтажной бригады', '10 лет на объектах: котельные, тёплые полы, разводка'],
+];
+const reqs: [string, string][] = [
+  ['Полное наименование', SITE.legalName], ['ОГРН', SITE.ogrn], ['ИНН / КПП', `${SITE.inn} / ${SITE.kpp}`],
+  ['Юридический адрес', SITE.address], ['Телефон', SITE.phone], ['Эл. почта', SITE.email], ['Режим работы', SITE.hours],
+];
+---
+<Base title="О компании «Система тепла» — монтаж отопления в СПб и ЛО" description="«Система тепла» — монтаж отопления, котельных и водоснабжения в частных домах. Команда, реквизиты, страхование ответственности, гарантии, образец договора." crumbs={[{ href: '/o-kompanii/', label: 'О компании' }]}>
+  <section class="hero">
+    <div class="wrap split">
+      <div>
+        <div class="eyebrow">О компании</div>
+        <h1>«Система тепла» — монтаж и автоматика отопления</h1>
+        <p class="hero__offer">Мы монтируем отопление, котельные и внутренние сети в частных домах Санкт-Петербурга и Ленинградской области. Работаем по договору с фиксированной ценой и сроками, сами запускаем и настраиваем системы — у нас есть разрешение на первый пуск газовых котлов. На монтаж даём гарантию 3 года.</p>
+        <a class="btn btn--primary" href="#zayavka">Обсудить объект</a>
+      </div>
+      <Image src={photo('15')} alt={PHOTO_ALT['15']} widths={[480, 800]} sizes="(max-width: 860px) 100vw, 560px" loading="eager" />
+    </div>
+  </section>
+
+  <Section variant="tint" eyebrow="Команда" title="Кто работает на ваших объектах" lead="Фото и имена сотрудников появятся после фотосессии — в прототипе заглушки.">
+    <div class="team">
+      {team.map(([r, d]) => <div><div class="team__ph">Фото сотрудника</div><h3 style="font-size:16px;margin-bottom:4px">{r}</h3><p class="muted" style="font-size:14px;margin:0">{d}</p></div>)}
+    </div>
+  </Section>
+
+  <Section eyebrow="Документы" title="Реквизиты и документы">
+    <div class="split" style="align-items:start">
+      <dl class="passport" style="grid-template-columns:1fr">
+        {reqs.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}
+      </dl>
+      <div class="grid" style="gap:12px">
+        <div class="card"><h3>Страхование ответственности</h3><p class="muted" style="margin:0">Полис гражданской ответственности подрядчика — скан появится здесь. Показываем оригинал до подписания договора.</p></div>
+        <div class="card"><h3>Разрешение на первый пуск газовых котлов</h3><p class="muted" style="margin:0">Копия документа будет размещена после согласования с юристом.</p></div>
+        <div class="card"><h3>Дилерские сертификаты</h3><p class="muted" style="margin:0">Сертификаты производителей котлов и труб — место под сканы.</p></div>
+        <div class="card"><h3>Образец договора</h3><p class="muted" style="margin:0">PDF образца договора подряда с графиком и гарантией — в подготовке.</p></div>
+      </div>
+    </div>
+    <p class="table-note mt-24">Реквизиты — заглушки прототипа.</p>
+  </Section>
+
+  <Guarantees />
+  <LeadSection />
+</Base>

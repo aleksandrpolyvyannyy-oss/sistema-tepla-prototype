@@ -1,0 +1,17 @@
+---
+import type { Pkg } from '../data/common';
+interface Props { items: Pkg[]; calc?: string }
+const { items, calc = '#raschet' } = Astro.props;
+---
+<div class="grid grid--3 rail" style="padding-top:16px">
+  {items.map((p) => (
+    <article class:list={['pkg', { 'pkg--accent': p.accent }]}>
+      {p.accent && <span class="pkg__flag">Выбирают чаще</span>}
+      <h3 style="margin:0">{p.name}</h3>
+      <div class="pkg__area">{p.area}</div>
+      <div class="pkg__price">{p.price}</div>
+      <ul>{p.items.map((i) => <li>{i}</li>)}</ul>
+      <a class:list={['btn', p.accent ? 'btn--primary' : 'btn--ghost']} href={calc}>Рассчитать мой дом</a>
+    </article>
+  ))}
+</div>

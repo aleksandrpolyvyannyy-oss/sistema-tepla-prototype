@@ -1,0 +1,31 @@
+---
+// Ш8 — отзывы: виджеты Яндекс Карт и 2ГИС → как оставить отзыв → объекты.
+import Base from '../layouts/Base.astro';
+import Section from '../components/Section.astro';
+import Reviews from '../components/Reviews.astro';
+import ObjectsGrid from '../components/ObjectsGrid.astro';
+---
+<Base title="Отзывы о компании «Система тепла» — монтаж отопления СПб" description="Отзывы владельцев частных домов о монтаже отопления, котельных и запуске систем. Отзывы с Яндекс Карт и 2ГИС." crumbs={[{ href: '/otzyvy/', label: 'Отзывы' }]}>
+  <section class="hero" style="padding-bottom:0">
+    <div class="wrap">
+      <div class="eyebrow">Отзывы</div>
+      <h1>Отзывы о нашей работе</h1>
+      <p class="hero__offer">Мы не публикуем отзывы «от себя» — только с внешних площадок, где их нельзя отредактировать: Яндекс Карты и 2ГИС.</p>
+    </div>
+  </section>
+  <Section>
+    <div class="grid grid--2">
+      <div class="widget-stub" style="min-height:260px"><b>Виджет отзывов Яндекс Карт</b><br />Загружается только после согласия на cookie (152-ФЗ). В прототипе — заглушка.</div>
+      <div class="widget-stub" style="min-height:260px"><b>Виджет отзывов 2ГИС</b><br />Загружается только после согласия на cookie. В прототипе — заглушка.</div>
+    </div>
+  </Section>
+  <Reviews variant="tint" />
+  <Section eyebrow="Как оставить отзыв" title="Уже работали с нами?">
+    <ol class="steps">
+      <li><h3>Откройте карточку</h3><p>Найдите «Система тепла» в Яндекс Картах или 2ГИС — ссылки появятся после регистрации карточек.</p></li>
+      <li><h3>Поставьте оценку</h3><p>Напишите, что делали, сколько длилось и как работает система.</p></li>
+      <li><h3>Добавьте фото</h3><p>Фото котельной или тёплого пола помогают другим выбрать подрядчика.</p></li>
+    </ol>
+  </Section>
+  <ObjectsGrid title="Объекты, о которых пишут" />
+</Base>

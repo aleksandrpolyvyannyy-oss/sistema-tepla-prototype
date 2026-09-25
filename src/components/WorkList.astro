@@ -1,0 +1,6 @@
+---
+interface Props { items: string[]; brands?: string }
+const { items, brands } = Astro.props;
+---
+<ul class="checklist">{items.map((i) => <li>{i}</li>)}</ul>
+{brands && <p class="brands">{brands}</p>}

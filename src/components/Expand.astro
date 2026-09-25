@@ -1,0 +1,38 @@
+---
+// «Показать полностью»: содержимое всегда целиком в HTML, JS только ограничивает высоту и показывает кнопку.
+// Без JS блок раскрыт полностью. mobileOnly — сворачивать только на телефоне (до 720 px).
+interface Props { h?: number; label?: string; mobileOnly?: boolean; class?: string }
+const { h = 320, label = 'Показать полностью', mobileOnly = false, class: cls } = Astro.props;
+---
+<div class:list={['more', cls, { 'more--m': mobileOnly }]} data-more style={`--more-h:${h}px`}>
+  <div class="more__body" data-more-body><slot /></div>
+  <button class="more__btn" type="button" data-more-btn data-label={label} aria-expanded="false" hidden>{label}</button>
+</div>
+<script>
+  const mq = matchMedia('(max-width: 720px)');
+  const boxes = [...document.querySelectorAll<HTMLElement>('[data-more]')];
+  const update = (box: HTMLElement) => {
+    if (box.classList.contains('is-open')) return;
+    const body = box.querySelector<HTMLElement>('[data-more-body]')!;
+    const btn = box.querySelector<HTMLButtonElement>('[data-more-btn]')!;
+    const allowed = !box.classList.contains('more--m') || mq.matches;
+    box.classList.add('is-clamped');
+    const limit = parseFloat(getComputedStyle(box).getPropertyValue('--more-h')) || 320;
+    // Сворачиваем, только если прячем заметный кусок (больше 30% высоты), иначе смысла нет.
+    const over = allowed && body.scrollHeight > limit * 1.3;
+    box.classList.toggle('is-clamped', over);
+    btn.hidden = !over;
+  };
+  boxes.forEach((box) => {
+    const btn = box.querySelector<HTMLButtonElement>('[data-more-btn]')!;
+    btn.addEventListener('click', () => {
+      const open = box.classList.toggle('is-open');
+      btn.setAttribute('aria-expanded', String(open));
+      btn.textContent = open ? 'Свернуть' : btn.dataset.label!;
+      if (!open) { update(box); if (box.getBoundingClientRect().top < 0) box.scrollIntoView({ block: 'start' }); }
+    });
+    update(box);
+  });
+  let t: number | undefined;
+  addEventListener('resize', () => { clearTimeout(t); t = window.setTimeout(() => boxes.forEach(update), 150); });
+</script>

@@ -1,0 +1,18 @@
+---
+import Base from '../layouts/Base.astro';
+import { LEGAL_DOCS } from '../data/legal';
+import { LEGAL } from '../data/site';
+interface Props { slug: string }
+const doc = LEGAL_DOCS.find((d) => d.slug === Astro.props.slug)!;
+---
+<Base title={doc.title} description={doc.description} crumbs={[{ href: `/${doc.slug}/`, label: doc.title }]}>
+  <section class="section" style="padding-top:32px">
+    <div class="wrap prose">
+      <h1 style="font-size:clamp(28px,3.4vw,36px)">{doc.h1}</h1>
+      <div class="stub-note">Заглушка прототипа: структура документа. Финальный текст готовит юрист до включения форм и после подачи уведомления в Роскомнадзор.</div>
+      {doc.sections.map((s) => <><h2>{s.h}</h2>{s.p.map((t) => <p>{t}</p>)}</>)}
+      <h2>Другие документы</h2>
+      <ul>{LEGAL.filter((l) => l.href !== `/${doc.slug}/`).map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul>
+    </div>
+  </section>
+</Base>

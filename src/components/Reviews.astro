@@ -1,0 +1,23 @@
+---
+import Section from './Section.astro';
+interface Props { variant?: 'tint' | 'plain' }
+const reviews = [
+  { t: 'Смету прислали на следующий день после замера, итог по договору не изменился. Зиму прожили — пол тёплый, у окон не дует.', a: 'Андрей, Юкки', s: 'Яндекс Карты' },
+  { t: 'Запускали котёл после другой бригады — нашли ошибку в обвязке, исправили и всё настроили за один день. Акт выдали для гарантии.', a: 'Марина, Гатчина', s: '2ГИС' },
+  { t: 'Отопление и воду делала одна бригада, котельная и бойлерная в одном помещении, всё по договору. Фотоотчёт каждый день.', a: 'Сергей, Токсово', s: 'Яндекс Карты' },
+];
+---
+<Section id="otzyvy" variant={Astro.props.variant ?? 'plain'} eyebrow="Отзывы" title="Что говорят владельцы домов" lead="После запуска здесь будут виджеты Яндекс Карт и 2ГИС — они подключаются только после согласия на cookie.">
+  <div class="reviews">
+    <div class="rating">
+      <div class="rating__num">4,9</div>
+      <div class="stars" aria-label="Рейтинг 4,9 из 5">★★★★★</div>
+      <p class="muted" style="margin:8px 0 16px">Пример: рейтинг на Яндекс Картах и 2ГИС</p>
+      <div class="widget-stub">Место под виджет отзывов Яндекс Карт. Загружается только после согласия в cookie-баннере.</div>
+      <p style="margin:16px 0 0"><a href="/otzyvy/">Все отзывы</a></p>
+    </div>
+    <div class="grid grid--3 rail">
+      {reviews.map((r) => <div class="review"><div class="stars" aria-hidden="true">★★★★★</div><p>{r.t}</p><small>{r.a} · {r.s} · пример отзыва</small></div>)}
+    </div>
+  </div>
+</Section>

@@ -1,0 +1,63 @@
+---
+import Logo from './Logo.astro';
+import { SITE, LEGAL, GEO_AREAS } from '../data/site';
+---
+<footer class="footer">
+  <div class="wrap footer__grid">
+    <div class="footer__brand">
+      <Logo variant="onDark" deg />
+      <p><b style="color:#fff">СИСТЕМА ТЕПЛА</b><br />Монтаж и автоматика отопления в частных домах. {SITE.area}.</p>
+      <p><a class="footer__phone" href={SITE.phoneHref}>{SITE.phone}</a><br />{SITE.hours}<br /><a href={`mailto:${SITE.email}`}>{SITE.email}</a></p>
+      <p><a href={SITE.max}>MAX</a> · <a href={SITE.vk}>ВКонтакте</a></p>
+    </div>
+    <div>
+      <h3>Основные услуги</h3>
+      <ul>
+        <li><a href="/otoplenie/">Монтаж отопления</a></li>
+        <li><a href="/otoplenie/kotelnaya/">Котельная под ключ</a></li>
+        <li><a href="/otoplenie/kotelnaya/ustanovka-gazovogo-kotla/">Установка газового котла</a></li>
+        <li><a href="/otoplenie/teplyj-pol/">Водяной тёплый пол</a></li>
+        <li><a href="/otoplenie/radiatory/">Монтаж радиаторов</a></li>
+        <li><a href="/otoplenie/gazovoe/">Газовое отопление</a></li>
+        <li><a href="/otoplenie/bez-gaza/">Отопление без газа</a></li>
+        <li><a href="/vnutrennie-seti/">Вода и канализация по дому</a></li>
+        <li><a href="/zapusk-otopleniya/">Запуск и наладка отопления</a></li>
+        <li><a href="/kompleks-pod-klyuch/">Отопление и вода под ключ</a></li>
+      </ul>
+    </div>
+    <div>
+      <h3>Канализация, вода, дренаж</h3>
+      <ul>
+        <li><a href="/kanalizaciya/">Наружная канализация и септики</a></li>
+        <li><a href="/naruzhnoe-vodosnabzhenie/">Ввод воды, обвязка скважины</a></li>
+        <li><a href="/drenazh-i-vodootvod/">Дренаж, отмостка, ливнёвка</a></li>
+      </ul>
+      <h3 style="margin-top:24px">География</h3>
+      <ul>
+        <li><a href="/otoplenie/leningradskaya-oblast/">Отопление в Ленобласти</a></li>
+        <li class="muted" style="color:#8797ad">{GEO_AREAS.slice(0, 5).join(' · ')}</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Компания</h3>
+      <ul>
+        <li><a href="/o-kompanii/">О компании</a></li>
+        <li><a href="/obekty/">Объекты</a></li>
+        <li><a href="/ceny/">Цены</a></li>
+        <li><a href="/otzyvy/">Отзывы</a></li>
+        <li><a href="/blog/">Статьи</a></li>
+        <li><a href="/kontakty/">Контакты</a></li>
+      </ul>
+      <h3 style="margin-top:24px">Документы</h3>
+      <ul>
+        {LEGAL.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+        <li><button class="link-btn" type="button" data-cookie-open>Настройки cookie</button></li>
+      </ul>
+    </div>
+  </div>
+  <div class="wrap footer__bottom">
+    <span>© 2026 {SITE.legalName} · ОГРН {SITE.ogrn} · ИНН {SITE.inn} · {SITE.address}</span>
+    <span>Цены на сайте — ориентировочные, итог определяется сметой. Информация на сайте не является публичной офертой.</span>
+    <span class="footer__proto">{SITE.prototypeNote} Реквизиты — заглушки. <a href="/karta-prototipa/">Карта прототипа</a></span>
+  </div>
+</footer>

@@ -1,0 +1,18 @@
+---
+interface Props { id?: string; variant?: 'tint' | 'dark' | 'plain'; eyebrow?: string; title?: string; lead?: string; }
+const { id, variant = 'plain', eyebrow, title, lead } = Astro.props;
+---
+<section id={id} class:list={['section', { 'section--tint': variant === 'tint', 'section--dark': variant === 'dark' }]}>
+  <div class="wrap">
+    {(title || eyebrow) && (
+      <div class="section-head">
+        <div>
+          {eyebrow && <div class="eyebrow">{eyebrow}</div>}
+          {title && <h2>{title}</h2>}
+        </div>
+        {lead && <p>{lead}</p>}
+      </div>
+    )}
+    <slot />
+  </div>
+</section>

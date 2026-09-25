@@ -1,0 +1,43 @@
+---
+// «Почему мы + гарантии» одним блоком. По желанию внутри: оплата по этапам и смета-пример (H3, не отдельные разделы).
+import Section from './Section.astro';
+import Payment from './Payment.astro';
+import SampleEstimate from './SampleEstimate.astro';
+import { GUARANTEES } from '../data/common';
+interface Props {
+  id?: string; eyebrow?: string; title?: string; lead?: string;
+  payment?: boolean; estimate?: 'otoplenie' | 'seti' | 'zapusk' | 'kompleks' | false;
+}
+const {
+  id = 'garantii', eyebrow = 'Гарантии', title = 'Что мы фиксируем в договоре',
+  lead = 'Никаких «примерно» после подписания: цена, сроки и гарантия — на бумаге.', payment = false, estimate = false,
+} = Astro.props;
+const icons = [
+  'M12 2l8 3v6c0 5-3.4 9.4-8 11-4.6-1.6-8-6-8-11V5l8-3z',
+  'M4 6h16v12H4z M4 10h16',
+  'M12 7v5l3 3 M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z',
+  'M6 3h9l4 4v14H6z M9 12h7 M9 16h7',
+];
+---
+<Section id={id} variant="dark" eyebrow={eyebrow} title={title} lead={lead}>
+  <slot name="before" />
+  <div class="guar rail">
+    {GUARANTEES.map((g, i) => (
+      <div class="guar__item">
+        <div class="guar__icon"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d={icons[i]} fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg></div>
+        <h3>{g.t}</h3><p>{g.d}</p>
+      </div>
+    ))}
+  </div>
+  {payment && (
+    <div class="guar__block">
+      <div class="guar__block-head">
+        <h3>Оплата по этапам: 70 / 20 / 10</h3>
+        <p>Аванс — только материалы и оборудование. Работы оплачиваете, когда видите результат.</p>
+      </div>
+      <Payment />
+    </div>
+  )}
+  {estimate && <div class="guar__block"><SampleEstimate kind={estimate} heading="h3" /></div>}
+  <slot />
+</Section>

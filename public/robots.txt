@@ -1,0 +1,12 @@
+# Прототип «Система тепла». На тестовом адресе перед запуском — Disallow: / (закрыть от индексации).
+User-agent: *
+Allow: /
+Disallow: /spasibo/
+Disallow: /karta-prototipa/
+
+User-agent: Yandex
+Allow: /
+Disallow: /spasibo/
+Disallow: /karta-prototipa/
+
+Sitemap: https://sistema-tepla.ru/sitemap-index.xml

@@ -1,0 +1,37 @@
+---
+// Ш9 — контакты: каналы связи → адрес и карта → режим → реквизиты → зона выезда → форма.
+import Base from '../layouts/Base.astro';
+import Section from '../components/Section.astro';
+import LeadSection from '../components/LeadSection.astro';
+import { SITE, GEO_AREAS } from '../data/site';
+---
+<Base title="Контакты «Система тепла» — телефон, адрес, режим работы" description="Контакты компании «Система тепла»: телефон, MAX, ВКонтакте, почта, адрес офиса в Санкт-Петербурге, режим работы и зона выезда по Ленобласти." crumbs={[{ href: '/kontakty/', label: 'Контакты' }]}>
+  <section class="hero" style="padding-bottom:0">
+    <div class="wrap">
+      <div class="eyebrow">Контакты</div>
+      <h1>Контакты</h1>
+      <p class="hero__offer">Звоните или пишите — ответит инженер, а не колл-центр.</p>
+    </div>
+  </section>
+  <Section>
+    <div class="grid grid--4" id="messendzhery">
+      <a class="card card--link" href={SITE.phoneHref}><span class="muted">Телефон</span><h3 style="margin:6px 0 0">{SITE.phone}</h3><span class="card__more">{SITE.hours}</span></a>
+      <a class="card card--link" href={SITE.max}><span class="muted">Мессенджер</span><h3 style="margin:6px 0 0">MAX</h3><span class="card__more">Ссылка появится после регистрации</span></a>
+      <a class="card card--link" href={SITE.vk}><span class="muted">Соцсеть</span><h3 style="margin:6px 0 0">ВКонтакте</h3><span class="card__more">Сообщество компании</span></a>
+      <a class="card card--link" href={`mailto:${SITE.email}`}><span class="muted">Почта</span><h3 style="margin:6px 0 0;font-size:16px">{SITE.email}</h3><span class="card__more">Проекты и сметы</span></a>
+    </div>
+  </Section>
+  <Section variant="tint" eyebrow="Офис" title="Адрес и схема проезда">
+    <div class="split" style="align-items:start">
+      <div class="map-stub"><div><b>Карта Яндекса с офисом</b>Подключается после согласия на cookie.</div></div>
+      <dl class="passport" style="grid-template-columns:1fr">
+        <div><dt>Адрес офиса</dt><dd>{SITE.address}</dd></div>
+        <div><dt>Режим работы</dt><dd>{SITE.hours}, воскресенье — выходной</dd></div>
+        <div><dt>Реквизиты</dt><dd>{SITE.legalName}, ОГРН {SITE.ogrn}, ИНН {SITE.inn}</dd></div>
+        <div><dt>Зона выезда</dt><dd>{SITE.area}. Замер бесплатно в радиусе 60 км от КАД.</dd></div>
+      </dl>
+    </div>
+    <div class="places mt-24">{GEO_AREAS.map((g) => <span>{g}</span>)}</div>
+  </Section>
+  <LeadSection title="Напишите нам" uid="lead-contacts" />
+</Base>

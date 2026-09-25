@@ -1,0 +1,31 @@
+---
+import Section from './Section.astro';
+import { pageBySlug, href, type Page } from '../data/pages';
+interface Props { slugs: string[]; title?: string; showMinor?: boolean }
+const { slugs, title = 'Смежные услуги', showMinor = true } = Astro.props;
+const list = slugs.map((s) => pageBySlug(s)).filter((p): p is Page => !!p);
+const minor = ['kanalizaciya', 'naruzhnoe-vodosnabzhenie', 'drenazh-i-vodootvod']
+  .filter((s) => !slugs.includes(s) && Astro.url.pathname !== href(s))
+  .map((s) => pageBySlug(s))
+  .filter((p): p is Page => !!p);
+const showKompleks = !slugs.includes('kompleks-pod-klyuch') && Astro.url.pathname !== '/kompleks-pod-klyuch/';
+---
+<Section eyebrow="Что ещё нужно в доме" title={title} lead="Инженерию дома выгоднее делать одним договором: общая котельная, один график и одна гарантия.">
+  <div class="related rail">
+    {list.map((p) => (
+      <a class="card card--link" href={href(p.slug)}>
+        <h3>{p.name}</h3>
+        <p class="muted" style="margin:0">{p.offer}</p>
+        <div class="card__price">{p.priceFrom}</div>
+      </a>
+    ))}
+  </div>
+  {showMinor && (minor.length > 0 || showKompleks) && (
+    <div class="minor-line">
+      <span>Также делаем:</span>
+      {minor.map((p) => <a class="chip" href={href(p.slug)}>{p.name}</a>)}
+      {showKompleks && <a class="chip" href="/kompleks-pod-klyuch/">Всё одним договором</a>}
+    </div>
+  )}
+  <slot />
+</Section>

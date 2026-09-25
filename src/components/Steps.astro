@@ -1,0 +1,7 @@
+---
+import type { Step } from '../data/common';
+interface Props { items: Step[] }
+---
+<ol class="steps">
+  {Astro.props.items.map((s) => <li><h3>{s.t}</h3><p>{s.d}</p>{s.days && <span class="days">{s.days}</span>}</li>)}
+</ol>

@@ -1,0 +1,12 @@
+---
+interface Props { head: string[]; rows: string[][]; note?: string }
+const { head, rows, note = '* Ориентировочно для утеплённого дома при тарифах 2026 года.' } = Astro.props;
+---
+<p class="table-hint" aria-hidden="true">Таблица листается вбок →</p>
+<div class="table-wrap">
+  <table class="compare">
+    <thead><tr>{head.map((h) => <th scope="col">{h}</th>)}</tr></thead>
+    <tbody>{rows.map((r) => <tr>{r.map((c) => <td>{c}</td>)}</tr>)}</tbody>
+  </table>
+</div>
+{rows.some((r) => r.some((c) => c.includes('*'))) || head.some((h) => h.includes('*')) ? <p class="table-note">{note}</p> : null}

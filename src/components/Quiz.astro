@@ -1,0 +1,166 @@
+---
+// Единый квиз сайта: 5 шагов → вилка цены на экране → контакт. Только клиентский JS, на сервер ничего не уходит.
+// Шаг 1 — только основные направления, шаг 4 — второстепенные (ЗАПУСК-ПРИОРИТЕТЫ, раздел 3).
+import LeadForm from './LeadForm.astro';
+import Section from './Section.astro';
+interface Props { preset?: 'otoplenie' | 'seti' | 'zapusk' | 'kompleks'; title?: string }
+const { preset = 'otoplenie', title = 'Рассчитайте стоимость за 1 минуту' } = Astro.props;
+const services = [
+  { v: 'otoplenie', t: 'Отопление', d: 'котельная, тёплый пол, радиаторы' },
+  { v: 'seti', t: 'Внутренняя разводка', d: 'вода и канализация по дому' },
+  { v: 'zapusk', t: 'Запуск и наладка отопления', d: 'пусконаладка, первый пуск котла' },
+  { v: 'kompleks', t: 'Комплекс под ключ', d: 'отопление + вода + канализация' },
+];
+---
+<Section id="raschet" variant="tint" eyebrow="Калькулятор" title={title} lead="Пять коротких вопросов — и вилка стоимости на экране. Точную смету дадим после замера.">
+  <div class="quiz" data-quiz data-preset={preset}>
+    <div class="quiz__head">
+      <div class="quiz__meta"><span data-q-label>Шаг 1 из 5</span><span data-q-hint>Можно вернуться и изменить ответ</span></div>
+      <div class="quiz__progress" aria-hidden="true"><i data-q-bar></i></div>
+    </div>
+    <div class="quiz__body">
+      <fieldset class="quiz__step is-active" data-step="1" style="border:0;padding:0;margin:0">
+        <legend class="quiz__q">Что нужно сделать?</legend>
+        <p class="quiz__hint">Выберите основное направление</p>
+        <div class="opts">
+          {services.map((s) => (
+            <label class="opt"><input type="radio" name="q-service" value={s.v} checked={s.v === preset} /><span><span>{s.t}<small>{s.d}</small></span></span></label>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset class="quiz__step" data-step="2" style="border:0;padding:0;margin:0">
+        <legend class="quiz__q">Площадь дома и материал стен</legend>
+        <div class="range">
+          <label for="q-area" class="quiz__hint" style="display:block;margin:0">Площадь дома: <output data-q-area-out>150</output> м²</label>
+          <input id="q-area" type="range" min="50" max="400" step="10" value="150" data-q-area />
+          <div class="range__scale"><span>50 м²</span><span>200 м²</span><span>400 м²</span></div>
+        </div>
+        <div class="opts">
+          {['Газобетон, кирпич, блок', 'Каркас', 'Брус, бревно', 'Другое / не знаю'].map((w, i) => (
+            <label class="opt"><input type="radio" name="q-walls" value={String(i)} /><span>{w}</span></label>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset class="quiz__step" data-step="3" style="border:0;padding:0;margin:0">
+        <legend class="quiz__q">На какой стадии дом?</legend>
+        <div class="opts">
+          {['Коробка', 'Черновая отделка', 'Дом жилой'].map((w, i) => (
+            <label class="opt"><input type="radio" name="q-stage" value={String(i)} /><span>{w}</span></label>
+          ))}
+        </div>
+        <div class="quiz__sub">Источник тепла</div>
+        <div class="opts">
+          {['Магистральный газ', 'Электричество', 'Тепловой насос', 'Дрова, пеллеты', 'Ещё не решили'].map((w, i) => (
+            <label class="opt"><input type="radio" name="q-fuel" value={String(i)} /><span>{w}</span></label>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset class="quiz__step" data-step="4" style="border:0;padding:0;margin:0">
+        <legend class="quiz__q">Что ещё нужно в доме?</legend>
+        <p class="quiz__hint">Добавим в расчёт — вместе выходит дешевле. Можно пропустить.</p>
+        <div class="opts">
+          <label class="opt"><input type="checkbox" name="q-extra" value="septik" /><span><span>Наружная канализация и септик<small>от 145 000 ₽</small></span></span></label>
+          <label class="opt"><input type="checkbox" name="q-extra" value="voda" /><span><span>Ввод воды и обвязка скважины<small>от 45 000 ₽</small></span></span></label>
+          <label class="opt"><input type="checkbox" name="q-extra" value="drenazh" /><span><span>Дренаж и отмостка<small>от 2 400 ₽/п. м</small></span></span></label>
+        </div>
+      </fieldset>
+
+      <fieldset class="quiz__step" data-step="5" style="border:0;padding:0;margin:0">
+        <legend class="quiz__q">Где дом и когда начать?</legend>
+        <div class="field" style="margin-bottom:18px">
+          <label for="q-place">Населённый пункт</label>
+          <input id="q-place" type="text" placeholder="Например, Всеволожск" list="q-places" />
+          <datalist id="q-places"><option value="Санкт-Петербург" /><option value="Всеволожск" /><option value="Гатчина" /><option value="Токсово" /><option value="Тосно" /><option value="Приозерск" /></datalist>
+        </div>
+        <div class="opts">
+          {['Как можно скорее', 'В течение месяца', 'Через 1–3 месяца', 'Пока присматриваюсь'].map((w, i) => (
+            <label class="opt"><input type="radio" name="q-term" value={String(i)} /><span>{w}</span></label>
+          ))}
+        </div>
+      </fieldset>
+
+      <div class="quiz__step" data-step="6">
+        <div class="quiz__result">
+          <div class="quiz__fork" aria-live="polite">
+            <span style="color:#b8c5d8;font-size:14px">Ориентировочная стоимость</span>
+            <b data-q-fork>—</b>
+            <span style="color:#b8c5d8;font-size:14px" data-q-sum></span>
+            <ul>
+              <li>С оборудованием и материалами, по нашим объектам 2025–2026 годов</li>
+              <li>Точная смета — через 24 часа после бесплатного замера</li>
+              <li>Цена в смете фиксируется в договоре</li>
+            </ul>
+          </div>
+          <div>
+            <div class="quiz__q" style="margin-bottom:12px">Куда прислать подробный расчёт?</div>
+            <LeadForm uid="quiz" withFile={false} button="Получить расчёт" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="quiz__nav">
+      <button class="btn btn--ghost" type="button" data-q-prev disabled>Назад</button>
+      <button class="btn btn--primary" type="button" data-q-next>Далее</button>
+    </div>
+  </div>
+</Section>
+
+<script>
+  const fmt = (n: number) => n.toLocaleString('ru-RU');
+  document.querySelectorAll<HTMLElement>('[data-quiz]').forEach((quiz) => {
+    let step = 1;
+    const TOTAL = 5;
+    const steps = quiz.querySelectorAll<HTMLElement>('[data-step]');
+    const prev = quiz.querySelector<HTMLButtonElement>('[data-q-prev]')!;
+    const next = quiz.querySelector<HTMLButtonElement>('[data-q-next]')!;
+    const bar = quiz.querySelector<HTMLElement>('[data-q-bar]')!;
+    const label = quiz.querySelector<HTMLElement>('[data-q-label]')!;
+    const area = quiz.querySelector<HTMLInputElement>('[data-q-area]')!;
+    const areaOut = quiz.querySelector<HTMLOutputElement>('[data-q-area-out]')!;
+    const val = (name: string) => quiz.querySelector<HTMLInputElement>(`input[name="${name}"]:checked`)?.value;
+    const required: Record<number, string[]> = { 1: ['q-service'], 2: ['q-walls'], 3: ['q-stage'] };
+
+    area.addEventListener('input', () => (areaOut.value = area.value));
+
+    const canGo = () => (required[step] || []).every((n) => val(n) !== undefined);
+    const render = () => {
+      steps.forEach((s) => s.classList.toggle('is-active', Number(s.dataset.step) === step));
+      prev.disabled = step === 1;
+      next.hidden = step > TOTAL;
+      next.textContent = step === TOTAL ? 'Показать стоимость' : 'Далее';
+      next.disabled = !canGo();
+      bar.style.width = `${Math.min(step, TOTAL + 1) / (TOTAL + 1) * 100}%`;
+      label.textContent = step > TOTAL ? 'Готово — ваш расчёт' : `Шаг ${step} из ${TOTAL}`;
+      if (step > TOTAL) calc();
+    };
+    quiz.addEventListener('change', () => (next.disabled = !canGo()));
+    next.addEventListener('click', () => { if (canGo()) { step++; render(); quiz.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } });
+    prev.addEventListener('click', () => { if (step > 1) { step--; render(); } });
+
+    function calc() {
+      const s = val('q-service') || 'otoplenie';
+      const a = Number(area.value);
+      const wallK = [1, 0.95, 1.05, 1][Number(val('q-walls') ?? 0)];
+      const stageK = [1, 1.05, 1.18][Number(val('q-stage') ?? 0)];
+      const fuelK = [1, 0.85, 1.6, 1.15, 1][Number(val('q-fuel') ?? 4)];
+      let lo = 0, hi = 0, round = 10000;
+      if (s === 'otoplenie') { lo = a * 2600 * fuelK; hi = a * 4300 * fuelK; }
+      if (s === 'seti') { lo = a * 900; hi = a * 1500; }
+      if (s === 'kompleks') { lo = a * 3800 * fuelK; hi = a * 6000 * fuelK; }
+      if (s === 'zapusk') { lo = 12000 + a * 60; hi = 25000 + a * 180; round = 1000; }
+      if (s !== 'zapusk') { lo *= wallK * stageK; hi *= wallK * stageK; }
+      const extras: Record<string, [number, number, string]> = {
+        septik: [145000, 260000, 'септик'], voda: [90000, 180000, 'ввод воды'], drenazh: [120000, 300000, 'дренаж'],
+      };
+      const chosen = [...quiz.querySelectorAll<HTMLInputElement>('input[name="q-extra"]:checked')].map((i) => i.value);
+      chosen.forEach((c) => { lo += extras[c][0]; hi += extras[c][1]; });
+      const r = (n: number) => Math.round(n / round) * round;
+      quiz.querySelector('[data-q-fork]')!.textContent = `${fmt(r(lo))} – ${fmt(r(hi))} ₽`;
+      quiz.querySelector('[data-q-sum]')!.textContent = `Дом ${a} м²` + (chosen.length ? ` · плюс ${chosen.map((c) => extras[c][2]).join(', ')}` : '');
+    }
+    render();
+  });
+</script>

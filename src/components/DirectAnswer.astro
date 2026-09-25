@@ -1,0 +1,8 @@
+---
+import Expand from './Expand.astro';
+interface Props { text: string; label?: string }
+const { text, label = 'Коротко: цена и сроки' } = Astro.props;
+---
+<div class="wrap" style="margin-top:8px">
+  <div class="answer"><div><span class="answer__label">{label}</span><Expand h={150} mobileOnly><p>{text}</p></Expand></div></div>
+</div>

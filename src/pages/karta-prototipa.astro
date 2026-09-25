@@ -1,0 +1,72 @@
+---
+// Служебная страница: список всех страниц прототипа с шаблоном и статусом.
+import Base from '../layouts/Base.astro';
+import { PAGES, href } from '../data/pages';
+import { OBJECTS } from '../data/objects';
+import { LEGAL_DOCS } from '../data/legal';
+
+type Row = { url: string; name: string; tpl: string; group: string; status: string; st: 'ok' | 'wip' | 'q2' };
+const rows: Row[] = [
+  { url: '/', name: 'Главная', tpl: 'Ш1', group: 'Общие', status: 'Готово', st: 'ok' },
+  ...PAGES.map((p) => ({
+    url: href(p.slug), name: p.name, tpl: p.tpl,
+    group: p.priority === 'основная' ? 'Посадочная · основная' : 'Посадочная · второстепенная',
+    status: p.kind === 'secondary' ? 'Готово, объекты — после сдачи работ' : 'Готово', st: (p.kind === 'secondary' ? 'wip' : 'ok') as Row['st'],
+  })),
+  { url: '/ceny/', name: 'Цены', tpl: 'Ш6', group: 'Общие', status: 'Готово, цены примерные', st: 'ok' },
+  { url: '/obekty/', name: 'Каталог объектов', tpl: 'Ш4', group: 'Общие', status: 'Готово, 4 из 10 объектов', st: 'wip' },
+  ...OBJECTS.map((o) => ({ url: `/obekty/${o.slug}/`, name: `Объект: ${o.place}, ${o.area} м²`, tpl: 'Ш5', group: 'Карточка объекта', status: 'Параметры — пример', st: 'wip' as const })),
+  { url: '/o-kompanii/', name: 'О компании', tpl: 'Ш7', group: 'Служебные', status: 'Нужны фото команды и документы', st: 'wip' },
+  { url: '/otzyvy/', name: 'Отзывы', tpl: 'Ш8', group: 'Служебные', status: 'Виджеты — после регистрации карточек', st: 'wip' },
+  { url: '/kontakty/', name: 'Контакты', tpl: 'Ш9', group: 'Служебные', status: 'Реквизиты — заглушки', st: 'wip' },
+  ...LEGAL_DOCS.map((d) => ({ url: `/${d.slug}/`, name: d.title, tpl: 'Текст', group: 'Правовые', status: 'Структура, текст — от юриста', st: 'wip' as const })),
+  { url: '/spasibo/', name: 'Спасибо за заявку', tpl: 'Служ.', group: 'Служебные', status: 'Готово', st: 'ok' },
+  { url: '/404.html', name: 'Страница 404', tpl: 'Служ.', group: 'Служебные', status: 'Готово', st: 'ok' },
+  { url: '/karta-prototipa/', name: 'Карта прототипа (эта страница)', tpl: 'Служ.', group: 'Служебные', status: 'Только для прототипа', st: 'ok' },
+  { url: '/blog/', name: 'Статьи (список)', tpl: 'Ш11', group: 'Очередь 2 — образец', status: 'Образец шаблона', st: 'q2' },
+  { url: '/blog/chem-otaplivat-dom-bez-gaza/', name: 'Статья «Чем отапливать дом без газа»', tpl: 'Ш11', group: 'Очередь 2 — образец', status: 'Образец шаблона', st: 'q2' },
+];
+const tpls = [
+  ['Ш1', 'Главная'], ['Ш2', 'Страница услуги: хаб, дочерняя, второстепенная'], ['Ш3', 'Гео-страница'], ['Ш4', 'Каталог объектов'], ['Ш5', 'Карточка объекта'],
+  ['Ш6', 'Цены'], ['Ш7', 'О компании'], ['Ш8', 'Отзывы'], ['Ш9', 'Контакты'], ['Ш10', 'Быстрая посадочная (запуск отопления, сезон ноябрь–март)'], ['Ш11', 'Статья блога'],
+];
+const count = (t: string) => rows.filter((r) => r.tpl === t).length;
+const landing = PAGES.length;
+---
+<Base title="Карта прототипа — все страницы" description="Служебная страница прототипа сайта «Система тепла»: все страницы, шаблоны и статусы." crumbs={[{ href: '/karta-prototipa/', label: 'Карта прототипа' }]} noindex>
+  <section class="section" style="padding-top:32px">
+    <div class="wrap">
+      <div class="eyebrow">Служебная страница</div>
+      <h1 style="font-size:clamp(28px,4vw,40px)">Карта прототипа</h1>
+      <p class="hero__offer">Всего страниц: <b>{rows.length}</b>, из них посадочных запуска — <b>{landing}</b> (16 основных + 3 второстепенных по ЗАПУСК-ПРИОРИТЕТЫ.md, плюс главная, цены и объекты). Пройдите по списку, чтобы посмотреть каждую страницу.</p>
+
+      <h2 class="mt-40">Шаблоны</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Шаблон</th><th>Назначение</th><th>Страниц</th></tr></thead>
+          <tbody>{tpls.map(([t, d]) => <tr><td class="num">{t}</td><td>{d}</td><td>{count(t)}</td></tr>)}</tbody>
+        </table>
+      </div>
+
+      <h2 class="mt-40">Все страницы</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>№</th><th>Страница</th><th>Адрес</th><th>Шаблон</th><th>Группа</th><th>Статус</th></tr></thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr>
+                <td>{i + 1}</td>
+                <td><a href={r.url}>{r.name}</a></td>
+                <td><code style="font-size:13px">{r.url}</code></td>
+                <td class="num">{r.tpl}</td>
+                <td>{r.group}</td>
+                <td><span class:list={['tag', `tag--${r.st}`]}>{r.status}</span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="table-note">Также в сборке: <a href="/sitemap-index.xml">sitemap-index.xml</a>, <a href="/robots.txt">robots.txt</a>, <a href="/llms.txt">llms.txt</a>. Страницы «Спасибо», 404 и эта карта закрыты от индексации.</p>
+    </div>
+  </section>
+</Base>

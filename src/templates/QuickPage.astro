@@ -1,0 +1,65 @@
+---
+// Ш10 — быстрая посадочная (запуск отопления, сезон ноябрь–март): телефон крупно, цена, «как проходит по часам».
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import DirectAnswer from '../components/DirectAnswer.astro';
+import Section from '../components/Section.astro';
+import PriceTable from '../components/PriceTable.astro';
+import Steps from '../components/Steps.astro';
+import Guarantees from '../components/Guarantees.astro';
+import Reviews from '../components/Reviews.astro';
+import Faq from '../components/Faq.astro';
+import Related from '../components/Related.astro';
+import LeadForm from '../components/LeadForm.astro';
+import SectionNav from '../components/SectionNav.astro';
+import { SITE } from '../data/site';
+import { type Page, crumbsFor, serviceLd } from '../data/pages';
+interface Props { page: Page }
+const { page: p } = Astro.props;
+---
+<Base title={p.title} description={p.description} crumbs={crumbsFor(p.slug)} jsonld={[serviceLd(p)]}>
+  <Hero h1={p.h1} offer={p.offer} price={p.priceFrom} img={p.hero} eyebrow="Запуск отопления · выезд за 1–2 дня"
+    primary={{ href: '#perezvonite', label: 'Перезвоните мне' }} secondary={{ href: '/zapusk-otopleniya/', label: 'Все работы по запуску' }}
+    trust={[['1–2 дня', 'до выезда инженера'], ['2–4 часа', 'работа на объекте'], ['акт', 'для гарантии производителя']]}>
+    <a class="urgent-phone" href={SITE.phoneHref}><span>Звоните — ответит инженер</span><b>{SITE.phone}</b></a>
+  </Hero>
+  <DirectAnswer text={p.answer} />
+  <SectionNav items={[{ id: 'ceny', label: 'Цены' }, { id: 'etapy', label: 'Как проходит' }, { id: 'garantii', label: 'Гарантии' }, { id: 'otzyvy', label: 'Отзывы' }, { id: 'voprosy', label: 'Вопросы' }]} cta={{ href: '#perezvonite', label: 'Перезвоните мне' }} />
+
+  <Section id="ceny" eyebrow="Цены" title="Стоимость типовых работ">
+    <PriceTable rows={p.prices} />
+  </Section>
+
+  <Section id="etapy" variant="tint" eyebrow="Как проходит" title="Что делаем на объекте — по часам">
+    <Steps items={p.quick!.hours} />
+    <div class="grid grid--2 mt-40" style="align-items:start">
+      <div>
+        <h3>Оборудование, с которым работаем</h3>
+        <ul class="checklist checklist--one">{p.quick!.equipment.map((e) => <li>{e}</li>)}</ul>
+      </div>
+      <div>
+        <h3>Что подготовить к приезду инженера</h3>
+        <ul class="checklist checklist--one">{p.checklist.map((c) => <li>{c}</li>)}</ul>
+      </div>
+    </div>
+  </Section>
+
+  <Guarantees />
+  <Reviews />
+  <Faq items={p.faq} variant="tint" />
+  <Related slugs={p.related} title="Соседние работы по запуску" />
+
+  <section class="section" id="perezvonite">
+    <div class="wrap">
+      <div class="lead">
+        <div>
+          <div class="eyebrow" style="color:var(--amber)">Короткая форма</div>
+          <h2>Перезвоните мне</h2>
+          <p>Оставьте телефон — инженер перезвонит в течение 5 минут в рабочее время и согласует время выезда.</p>
+          <p><a class="footer__phone" href={SITE.phoneHref}>{SITE.phone}</a></p>
+        </div>
+        <LeadForm uid="callback" short button="Перезвоните мне" />
+      </div>
+    </div>
+  </section>
+</Base>

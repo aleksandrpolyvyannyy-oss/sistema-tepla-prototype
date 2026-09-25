@@ -1,0 +1,58 @@
+---
+// Ш3 — гео-страница. Уникальный текст об особенностях района обязателен (шаблонные страницы с заменой города запрещены).
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import DirectAnswer from '../components/DirectAnswer.astro';
+import Section from '../components/Section.astro';
+import Packages from '../components/Packages.astro';
+import PriceTable from '../components/PriceTable.astro';
+import Quiz from '../components/Quiz.astro';
+import ObjectsGrid from '../components/ObjectsGrid.astro';
+import Faq from '../components/Faq.astro';
+import LeadSection from '../components/LeadSection.astro';
+import Related from '../components/Related.astro';
+import SectionNav from '../components/SectionNav.astro';
+import { NAV } from '../data/site';
+import { type Page, crumbsFor, serviceLd } from '../data/pages';
+interface Props { page: Page }
+const { page: p } = Astro.props;
+const services = NAV.filter((n) => n.children).flatMap((n) => n.children!).filter((c) => c.href !== `/${p.slug}/`);
+---
+<Base title={p.title} description={p.description} crumbs={crumbsFor(p.slug)} jsonld={[serviceLd(p)]} quiz>
+  <Hero h1={p.h1} offer={p.offer} price={p.priceFrom} img={p.hero} eyebrow="География работ"
+    trust={[['1–2 дня', 'выезд замерщика по области'], ['60 км', 'от КАД — замер бесплатно'], ['3 года', 'гарантия на работы']]} />
+  <DirectAnswer text={p.answer} />
+  <SectionNav items={[{ id: 'osobennosti', label: 'Особенности района' }, { id: 'obekty', label: 'Объекты' }, { id: 'ceny', label: 'Цены' }, { id: 'raschet', label: 'Расчёт' }, { id: 'voprosy', label: 'Вопросы' }]} />
+
+  <Section id="osobennosti" eyebrow="Особенности района" title="Что важно для отопления в Ленинградской области" lead="Этот блок на каждой гео-странице пишется заново: газификация, грунты, типовые дома, посёлки.">
+    <div class="grid grid--2">
+      {p.geo!.features.map((f) => <div class="card"><h3>{f.t}</h3><p class="muted" style="margin:0">{f.d}</p></div>)}
+    </div>
+    <div class="split mt-40" style="align-items:start">
+      <div>
+        <h3>Куда выезжаем чаще всего</h3>
+        <div class="places">{p.geo!.places.map((pl) => <span>{pl}</span>)}</div>
+      </div>
+      <div>
+        <h3>Карта выезда</h3>
+        <div class="map-stub"><div><b>Здесь будет карта Яндекса с зоной выезда</b>Подключается после согласия на cookie. Радиус бесплатного замера — 60 км от КАД.</div></div>
+      </div>
+    </div>
+  </Section>
+
+  <ObjectsGrid tags={p.objTags} title="Объекты в Ленинградской области" gallery={p.gallery} />
+
+  <Section id="ceny" eyebrow="Цены" title="Пакеты и цены для области" lead="Цены одинаковые для СПб и области; доплата за выезд — только дальше 60 км от КАД.">
+    {p.packages && <Packages items={p.packages} />}
+    <div class="mt-40"><PriceTable rows={p.prices} /></div>
+  </Section>
+
+  <Quiz preset={p.quiz} />
+
+  <Faq items={p.faq} />
+
+  <Related slugs={p.related} title="Соседние направления">
+    <div class="minor-line"><span>Что ещё делаем в Ленобласти:</span>{services.map((s) => <a class="chip" href={s.href}>{s.label}</a>)}</div>
+  </Related>
+  <LeadSection title="Замер в вашем посёлке — за 1–2 дня" uid="lead-geo" />
+</Base>

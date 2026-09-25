@@ -1,0 +1,25 @@
+---
+// Объекты по услуге + (по желанию) лента фото монтажа — одним разделом. На телефоне — карусели.
+import ObjCard from './ObjCard.astro';
+import Section from './Section.astro';
+import Gallery from './Gallery.astro';
+import { objectsBy } from '../data/objects';
+interface Props { tags?: string[]; title?: string; limit?: number; strict?: boolean; variant?: 'tint' | 'plain'; gallery?: string[]; galleryTitle?: string }
+const { tags = [], title = 'Наши объекты по этой услуге', limit = 4, strict = false, variant = 'tint', gallery, galleryTitle = 'Как выглядит готовый монтаж' } = Astro.props;
+let list = objectsBy(tags, limit);
+if (strict) list = list.filter((o) => o.tags.some((t) => tags.includes(t)));
+---
+<Section id="obekty" variant={variant} eyebrow="Объекты" title={title} lead="Площадь, материал стен, срок и бюджет по каждому дому. Точные адреса не публикуем.">
+  {list.length ? (
+    <div class="grid grid--4 rail">{list.map((o) => <ObjCard o={o} />)}</div>
+  ) : (
+    <div class="widget-stub">Объекты по этому направлению появятся после сдачи первых работ: по правилу из ТЗ страница второстепенной услуги выходит с двумя своими объектами.</div>
+  )}
+  {gallery && gallery.length > 0 && (
+    <div class="mt-40">
+      <h3>{galleryTitle}</h3>
+      <Gallery ids={gallery} strip />
+    </div>
+  )}
+  <p class="mt-24"><a class="btn btn--ghost" href="/obekty/">Все объекты</a></p>
+</Section>

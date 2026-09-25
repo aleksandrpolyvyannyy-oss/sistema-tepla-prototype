@@ -1,0 +1,99 @@
+---
+// Ш6 — цены. Пакеты → ставки за м² → прайс по видам работ → сметы-примеры → оплата → что влияет → квиз → дата.
+import Base from '../layouts/Base.astro';
+import Section from '../components/Section.astro';
+import Packages from '../components/Packages.astro';
+import PriceTable from '../components/PriceTable.astro';
+import SampleEstimate from '../components/SampleEstimate.astro';
+import Payment from '../components/Payment.astro';
+import Quiz from '../components/Quiz.astro';
+import LeadSection from '../components/LeadSection.astro';
+import DirectAnswer from '../components/DirectAnswer.astro';
+import SectionNav from '../components/SectionNav.astro';
+import Expand from '../components/Expand.astro';
+import { PKG_HEATING } from '../data/common';
+import { PAGES, href } from '../data/pages';
+import { SITE } from '../data/site';
+
+const groups = [
+  { t: 'Отопление', slugs: ['otoplenie', 'otoplenie/kotelnaya', 'otoplenie/kotelnaya/ustanovka-gazovogo-kotla', 'otoplenie/teplyj-pol', 'otoplenie/radiatory', 'otoplenie/bez-gaza'] },
+  { t: 'Вода и канализация по дому', slugs: ['vnutrennie-seti', 'vnutrennie-seti/razvodka-vody', 'vnutrennie-seti/vnutrennyaya-kanalizaciya'] },
+  { t: 'Запуск и наладка отопления', slugs: ['zapusk-otopleniya', 'zapusk-otopleniya/pusk-gazovogo-kotla', 'zapusk-otopleniya/opressovka', 'zapusk-otopleniya/balansirovka'] },
+  { t: 'Канализация, водоснабжение, дренаж', slugs: ['kanalizaciya', 'naruzhnoe-vodosnabzhenie', 'drenazh-i-vodootvod'] },
+].map((g) => {
+  const seen = new Set<string>();
+  const rows: [string, string, string][] = [];
+  for (const s of g.slugs) {
+    const p = PAGES.find((x) => x.slug === s)!;
+    for (const r of p.prices) if (!seen.has(r[0])) { seen.add(r[0]); rows.push(r); }
+  }
+  return { ...g, rows, links: g.slugs.map((s) => PAGES.find((x) => x.slug === s)!) };
+});
+
+const rates: [string, string, string][] = [
+  ['Отопление на радиаторах с газовым котлом', 'м² дома', '2 600–3 400 ₽'],
+  ['Тёплый пол + радиаторы с газовым котлом', 'м² дома', '3 400–4 300 ₽'],
+  ['Отопление с электрокотлом', 'м² дома', '2 200–3 000 ₽'],
+  ['Разводка воды и канализации', 'м² дома', '900–1 500 ₽'],
+  ['Комплекс: отопление + вода + канализация', 'м² дома', '5 200–6 500 ₽'],
+];
+const factors = [
+  ['Источник тепла', 'Газовый котёл, электрокотёл, тепловой насос — разница в оборудовании до 500 тыс ₽.'],
+  ['Тёплый пол или радиаторы', 'Тёплый пол дороже в монтаже на 30–50%, но дешевле в эксплуатации.'],
+  ['Бренды оборудования', 'Один и тот же состав на разных брендах отличается в цене в 1,5–2 раза.'],
+  ['Стадия дома', 'В жилом доме с отделкой работы дороже на 15–20%: защита, штробы, уборка.'],
+  ['Количество санузлов', 'Каждый санузел — 6–10 точек воды и канализации.'],
+  ['Удалённость', 'Замер бесплатный до 60 км от КАД, дальше — 40 ₽ за км.'],
+];
+---
+<Base title="Цены на монтаж отопления и водоснабжения в СПб и ЛО — прайс 2026" description="Цены на монтаж отопления, котельных, тёплого пола, разводку воды и канализации, запуск отопления. Пакеты по площади дома, прайс работ, сметы-примеры." crumbs={[{ href: '/ceny/', label: 'Цены' }]} quiz>
+  <section class="hero" style="padding-bottom:24px">
+    <div class="wrap">
+      <div class="eyebrow">Цены обновлены {SITE.pricesUpdated}</div>
+      <h1>Цены на монтаж отопления и инженерных систем</h1>
+      <p class="hero__offer">Пакеты по площади дома, ставки за м² и прайс по каждому виду работ. Цены «от» — ориентир; итог фиксируем в договоре после замера.</p>
+    </div>
+  </section>
+  <DirectAnswer text="Отопление частного дома под ключ с газовым котлом стоит от 380 тыс ₽ за дом 100 м², от 520 тыс ₽ за 150 м² и от 690 тыс ₽ за 200 м² с оборудованием. Разводка воды и канализации — от 3 500 ₽ за точку, первый пуск газового котла — от 7 тыс ₽. Оплата в три этапа: 70% на материалы, 20% после монтажа, 10% после сдачи." />
+  <SectionNav items={[{ id: 'pakety', label: 'Пакеты' }, { id: 'stavki', label: 'Ставки за м²' }, ...groups.map((g, i) => ({ id: `prajs-${i}`, label: g.t })), { id: 'smeta', label: 'Смета и оплата' }]} cta={{ href: '#raschet', label: 'Калькулятор' }} />
+
+  <Section id="pakety" eyebrow="Пакеты и ставки" title="Пакеты отопления по площади дома">
+    <Packages items={PKG_HEATING} />
+    <div class="mt-40 anchor-block" id="stavki">
+      <h3>Ставки за м² дома</h3>
+      <p class="muted">Для быстрой оценки: умножьте площадь дома на ставку. Включены оборудование, материалы и работы.</p>
+      <PriceTable rows={rates} caption="Ставки за м²" />
+    </div>
+  </Section>
+
+  <Section id="prajs" variant="tint" eyebrow="Прайс" title="Прайс по видам работ" lead="Цены «от» за работу; оборудование и материалы — по смете.">
+    <div class="price-groups">
+      {groups.map((g, i) => (
+        <div class="anchor-block" id={`prajs-${i}`}>
+          <h3>{g.t}</h3>
+          <Expand h={430} label="Показать весь прайс">
+            <PriceTable rows={g.rows} caption={g.t} note={false} />
+          </Expand>
+          <div class="minor-line" style="background:transparent;padding:0;margin-top:14px">
+            <span>Подробнее:</span>
+            {g.links.map((p) => <a class="chip" href={href(p.slug)}>{p.name}</a>)}
+          </div>
+        </div>
+      ))}
+    </div>
+    <p class="table-note">Цены примерные, «от». Итоговая стоимость определяется сметой после замера. Цены обновлены {SITE.pricesUpdated}.</p>
+  </Section>
+
+  <Section id="smeta" eyebrow="Из чего складывается цена" title="Что влияет на стоимость, смета-пример и оплата">
+    <div class="grid grid--3 rail">{factors.map(([t, d]) => <div class="card"><h3>{t}</h3><p class="muted" style="margin:0">{d}</p></div>)}</div>
+    <div class="mt-40"><SampleEstimate heading="h3" /></div>
+    <div class="mt-40" id="oplata">
+      <h3>Оплата по этапам: 70 / 20 / 10</h3>
+      <Payment />
+    </div>
+  </Section>
+
+  <Quiz preset="otoplenie" />
+  <p class="wrap table-note" style="margin-top:16px">Цены обновлены {SITE.pricesUpdated}. Пересматриваются раз в квартал. Информация на сайте не является публичной офертой.</p>
+  <LeadSection />
+</Base>

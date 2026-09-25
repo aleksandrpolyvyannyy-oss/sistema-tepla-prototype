@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import Section from '../components/Section.astro';
+import SampleEstimate from '../components/SampleEstimate.astro';
+import { SITE } from '../data/site';
+---
+<Base title="Спасибо за заявку" description="Заявка принята. Инженер перезвонит в течение 5 минут в рабочее время." noindex>
+  <section class="hero">
+    <div class="wrap" style="max-width:860px">
+      <div class="eyebrow">Заявка принята</div>
+      <h1>Спасибо! Перезвоним в течение 5 минут</h1>
+      <p class="hero__offer">В рабочее время ({SITE.hours}) инженер перезвонит в течение 5 минут. Если заявка пришла вечером — утром следующего дня.</p>
+      <ol class="steps mt-40">
+        <li><h3>Звонок инженера</h3><p>Уточним задачу, площадь и сроки.</p><span class="days">5 минут</span></li>
+        <li><h3>Бесплатный замер</h3><p>Приедем на объект в удобное время.</p><span class="days">1–3 дня</span></li>
+        <li><h3>Смета</h3><p>Подробная смета по позициям.</p><span class="days">24 часа</span></li>
+      </ol>
+      <p class="mt-40"><a class="btn btn--primary" href="/obekty/">Посмотреть наши объекты</a> <a class="btn btn--ghost" href="/ceny/">Цены и образец сметы</a></p>
+      <p class="table-note">Прототип: данные формы никуда не отправлялись.</p>
+    </div>
+  </section>
+  <Section variant="tint"><SampleEstimate /></Section>
+</Base>

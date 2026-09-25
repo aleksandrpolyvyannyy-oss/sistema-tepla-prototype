@@ -1,0 +1,18 @@
+---
+import { Image } from 'astro:assets';
+import { photo, PHOTO_ALT } from '../lib/photos';
+import type { Obj } from '../data/objects';
+interface Props { o: Obj }
+const { o } = Astro.props;
+---
+<a class="obj" href={`/obekty/${o.slug}/`} data-tags={o.tags.join(' ')}>
+  <div class="obj__img">
+    <Image src={photo(o.cover)} alt={PHOTO_ALT[o.cover]} widths={[400, 640]} sizes="(max-width: 620px) 100vw, (max-width: 960px) 50vw, 300px" />
+    <span class="obj__place">{o.district}</span>
+  </div>
+  <div class="obj__body">
+    <h3>{o.title}</h3>
+    <div class="obj__params"><span>{o.area} м²</span><span>{o.walls}</span><span>{o.term}</span></div>
+    <div class="obj__budget">{o.budget}</div>
+  </div>
+</a>

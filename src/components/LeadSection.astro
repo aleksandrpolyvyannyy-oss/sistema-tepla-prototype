@@ -1,0 +1,22 @@
+---
+import LeadForm from './LeadForm.astro';
+interface Props { title?: string; text?: string; uid?: string }
+const { title = 'Получите смету за 24 часа', text = 'Оставьте телефон — инженер перезвонит, уточнит задачу и договорится о бесплатном замере. Можно сразу приложить проект дома.', uid = 'lead' } = Astro.props;
+---
+<section class="section" id="zayavka">
+  <div class="wrap">
+    <div class="lead">
+      <div>
+        <div class="eyebrow" style="color:var(--amber)">Заявка</div>
+        <h2>{title}</h2>
+        <p>{text}</p>
+        <ul class="lead__points">
+          <li>Замер бесплатно в радиусе 60 км от КАД</li>
+          <li>Смета по позициям через 24 часа после замера</li>
+          <li>Цена и сроки фиксируются в договоре</li>
+        </ul>
+      </div>
+      <LeadForm uid={uid} />
+    </div>
+  </div>
+</section>

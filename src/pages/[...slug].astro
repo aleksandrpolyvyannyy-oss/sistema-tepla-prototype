@@ -1,0 +1,15 @@
+---
+// Все посадочные страницы запуска (Ш2, Ш3, Ш10) генерируются из src/data/pages.ts.
+import ServicePage from '../templates/ServicePage.astro';
+import GeoPage from '../templates/GeoPage.astro';
+import QuickPage from '../templates/QuickPage.astro';
+import { PAGES, type Page } from '../data/pages';
+
+export function getStaticPaths() {
+  return PAGES.map((page) => ({ params: { slug: page.slug }, props: { page } }));
+}
+const { page } = Astro.props as { page: Page };
+---
+{page.tpl === 'Ш2' && <ServicePage page={page} />}
+{page.tpl === 'Ш3' && <GeoPage page={page} />}
+{page.tpl === 'Ш10' && <QuickPage page={page} />}

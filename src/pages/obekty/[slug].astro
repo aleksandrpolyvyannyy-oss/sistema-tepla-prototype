@@ -1,0 +1,84 @@
+---
+// Ш5 — карточка объекта.
+import Base from '../../layouts/Base.astro';
+import Section from '../../components/Section.astro';
+import Gallery from '../../components/Gallery.astro';
+import ObjCard from '../../components/ObjCard.astro';
+import { OBJECTS, type Obj } from '../../data/objects';
+import { PAGES, href } from '../../data/pages';
+
+export function getStaticPaths() {
+  return OBJECTS.map((o) => ({ params: { slug: o.slug }, props: { o } }));
+}
+const { o } = Astro.props as { o: Obj };
+const similar = OBJECTS.filter((x) => x.slug !== o.slug)
+  .map((x) => ({ x, s: x.tags.filter((t) => o.tags.includes(t)).length }))
+  .sort((a, b) => b.s - a.s).slice(0, 3).map((v) => v.x);
+const tagToPage: Record<string, string> = {
+  kotelnaya: 'otoplenie/kotelnaya', 'teplyj-pol': 'otoplenie/teplyj-pol', radiatory: 'otoplenie/radiatory', gaz: 'otoplenie/gazovoe',
+  'bez-gaza': 'otoplenie/bez-gaza', voda: 'vnutrennie-seti/razvodka-vody', kanalizaciya: 'vnutrennie-seti/vnutrennyaya-kanalizaciya',
+  zapusk: 'zapusk-otopleniya', balansirovka: 'zapusk-otopleniya/balansirovka', kompleks: 'kompleks-pod-klyuch',
+};
+const services = o.tags.map((t) => tagToPage[t]).filter(Boolean).map((s) => PAGES.find((p) => p.slug === s)!).filter(Boolean);
+const passport: [string, string][] = [
+  ['Населённый пункт', `${o.place}, ${o.district}`], ['Площадь дома', `${o.area} м²`], ['Материал стен', o.walls],
+  ['Система', o.system], ['Срок монтажа', o.term], ['Бюджет', o.budget],
+];
+---
+<Base title={`${o.title} — объект`} description={`${o.title}. ${o.system}. Срок ${o.term}, бюджет ${o.budget}. Фото, состав работ и оборудование.`} crumbs={[{ href: '/obekty/', label: 'Объекты' }, { href: `/obekty/${o.slug}/`, label: `${o.place}, ${o.area} м²` }]}>
+  <section class="hero" style="padding-bottom:24px">
+    <div class="wrap">
+      <div class="eyebrow">Объект · {o.district}</div>
+      <h1>{o.title}</h1>
+      <dl class="passport mt-24">
+        {passport.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}
+      </dl>
+    </div>
+  </section>
+
+  <Section eyebrow="Фото" title="Фотографии с объекта" lead="Прототип: фото объектов — до финальной обработки.">
+    <Gallery ids={o.gallery} />
+  </Section>
+
+  <Section variant="tint" eyebrow="Задача и решение" title="Что было сложного и как решили">
+    <div class="split" style="align-items:start">
+      <div>{o.task.map((t) => <p>{t}</p>)}</div>
+      <div class="card">
+        <h3>Состав работ</h3>
+        <ul>{o.works.map((w) => <li>{w}</li>)}</ul>
+        <h3 class="mt-24">Оборудование</h3>
+        <ul>{o.equipment.map((w) => <li>{w}</li>)}</ul>
+      </div>
+    </div>
+  </Section>
+
+  <Section eyebrow="Схема" title="Упрощённая схема системы">
+    <div class="table-wrap" style="padding:20px">
+      <svg viewBox="0 0 760 180" width="100%" role="img" aria-label="Схема: источник тепла, котельная, коллекторы, контуры отопления">
+        <defs><linearGradient id="sg" x1="0" x2="1"><stop offset="0" stop-color="#2B6CD9"/><stop offset=".5" stop-color="#F2A23A"/><stop offset="1" stop-color="#E2452B"/></linearGradient></defs>
+        <rect x="10" y="60" width="150" height="60" rx="12" fill="#1E3A5F"/><text x="85" y="95" fill="#fff" font-size="14" font-weight="700" text-anchor="middle" font-family="Montserrat, sans-serif">{o.tags.includes('bez-gaza') ? 'Электрокотёл' : 'Газовый котёл'}</text>
+        <rect x="210" y="60" width="150" height="60" rx="12" fill="#fff" stroke="#1E3A5F" stroke-width="2"/><text x="285" y="95" fill="#1E3A5F" font-size="14" font-weight="700" text-anchor="middle" font-family="Montserrat, sans-serif">Котельная</text>
+        <rect x="410" y="60" width="150" height="60" rx="12" fill="#fff" stroke="#1E3A5F" stroke-width="2"/><text x="485" y="95" fill="#1E3A5F" font-size="14" font-weight="700" text-anchor="middle" font-family="Montserrat, sans-serif">Коллекторы</text>
+        <rect x="610" y="20" width="140" height="40" rx="10" fill="#FFF4EC"/><text x="680" y="45" fill="#cf5319" font-size="13" font-weight="700" text-anchor="middle" font-family="Montserrat, sans-serif">Тёплый пол</text>
+        <rect x="610" y="70" width="140" height="40" rx="10" fill="#FFF4EC"/><text x="680" y="95" fill="#cf5319" font-size="13" font-weight="700" text-anchor="middle" font-family="Montserrat, sans-serif">{o.tags.includes('radiatory') ? 'Радиаторы' : 'Конвекторы'}</text>
+        <rect x="610" y="120" width="140" height="40" rx="10" fill="#FFF4EC"/><text x="680" y="145" fill="#cf5319" font-size="13" font-weight="700" text-anchor="middle" font-family="Montserrat, sans-serif">Бойлер ГВС</text>
+        <path d="M160 90 H210 M360 90 H410 M560 90 H610 M585 90 V40 H610 M585 90 V140 H610" stroke="url(#sg)" stroke-width="4" fill="none"/>
+      </svg>
+    </div>
+  </Section>
+
+  {o.review && (
+    <Section variant="tint" eyebrow="Отзыв владельца" title="Что говорит владелец">
+      <div class="review" style="max-width:760px"><div class="stars" aria-hidden="true">★★★★★</div><p style="font-size:18px">{o.review.text}</p><small>{o.review.author} · пример отзыва</small></div>
+    </Section>
+  )}
+
+  <Section eyebrow="Услуги на объекте" title="Какие работы выполнены">
+    <div class="places">{services.map((p) => <a class="chip" href={href(p.slug)}>{p.name}</a>)}</div>
+    <p class="mt-40"><a class="btn btn--primary" href="/ceny/#raschet">Рассчитать для моего дома</a></p>
+  </Section>
+
+  <Section variant="tint" eyebrow="Похожие объекты" title="Посмотрите ещё">
+    <div class="grid grid--3">{similar.map((x) => <ObjCard o={x} />)}</div>
+  </Section>
+</Base>

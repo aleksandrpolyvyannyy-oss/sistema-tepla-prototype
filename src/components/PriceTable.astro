@@ -1,0 +1,22 @@
+---
+// Прайс. С includes — единый блок «цены + что входит в работу» в одной рамке.
+import { SITE } from '../data/site';
+import { PRICE_TOTAL_NOTE } from '../data/common';
+interface Props { rows: [string, string, string][]; caption?: string; includes?: string[]; brands?: string; includesTitle?: string; note?: boolean }
+const { rows, caption = 'Прайс на основные работы', includes = [], brands, includesTitle = 'Что входит в работу', note = true } = Astro.props;
+---
+<div class:list={['table-wrap', { 'ptable': includes.length > 0 }]}>
+  <table class="price">
+    <caption class="visually-hidden">{caption}</caption>
+    <thead><tr><th scope="col">Работа</th><th scope="col">Ед.</th><th scope="col">Цена</th></tr></thead>
+    <tbody>{rows.map(([w, u, p]) => <tr><td>{w}</td><td>{u}</td><td class="num">{p}</td></tr>)}</tbody>
+  </table>
+  {includes.length > 0 && (
+    <div class="ptable__inc">
+      <h3>{includesTitle}</h3>
+      <ul class="inc">{includes.map((i) => <li>{i}</li>)}</ul>
+      {brands && <p class="brands">{brands}</p>}
+    </div>
+  )}
+</div>
+{note && <p class="table-note">{PRICE_TOTAL_NOTE} Цены обновлены {SITE.pricesUpdated}.</p>}
