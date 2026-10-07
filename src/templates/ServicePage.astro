@@ -111,7 +111,7 @@ const nav = [
     </Section>
   )}
 
-  <Section id="ceny" eyebrow="Цены и состав работ" title={p.packages ? 'Цены: пакеты под ключ и прайс работ' : 'Цены на работы и что в них входит'} lead="Цены «от» — ориентир. Точную стоимость дадим сметой после замера и зафиксируем в договоре.">
+  <Section id="ceny" eyebrow="Цены и состав работ" title={p.packages ? 'Цены: готовые пакеты и прайс работ' : 'Цены на работы и что в них входит'} lead="Цены «от» — ориентир. Точную стоимость дадим сметой после замера и зафиксируем в договоре.">
     {p.packages && <Packages items={p.packages} />}
     <div class={p.packages ? 'mt-40' : ''}>
       <PriceTable rows={p.prices} includes={p.includes} brands={p.brands} />

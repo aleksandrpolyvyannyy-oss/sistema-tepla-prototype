@@ -78,7 +78,7 @@ const hasPreset = !!(preset.people || preset.mode || preset.gw);
               <div><span>Станция</span><b>{rub(s.price)}</b></div>
               <div><span>Монтаж</span><b>{rub(MONTAGE_FROM)}</b></div>
             </div>
-            <a class="btn btn--primary pcard__btn" href="#raschet">Рассчитать под ключ</a>
+            <a class="btn btn--primary pcard__btn" href="#raschet">Рассчитать с монтажом</a>
             <a class="pcard__more" href={s.url === here ? `#${PICKER_ID}` : s.url}>О станциях {s.brand}</a>
           </article>
         ))}

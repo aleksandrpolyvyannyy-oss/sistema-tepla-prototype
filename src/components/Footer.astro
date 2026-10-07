@@ -4,7 +4,7 @@ import Logo from './Logo.astro';
 import { SITE, LEGAL, GEO_AREAS, TOP_LINKS } from '../data/site';
 import { pageBySlug, href } from '../data/pages';
 const col = (slugs: string[]) => slugs.map((s) => pageBySlug(s)!).filter(Boolean).map((p) => ({ href: href(p.slug), label: p.name }));
-const heating = col(['otoplenie/kotelnaya', 'otoplenie/kotelnaya/ustanovka-gazovogo-kotla', 'otoplenie/teplyj-pol', 'otoplenie/radiatory', 'otoplenie/avtomatika', 'otoplenie/gazovoe', 'otoplenie/bez-gaza', 'otoplenie/leningradskaya-oblast', 'kompleks-pod-klyuch']);
+const heating = col(['otoplenie/kotelnaya', 'otoplenie/kotelnaya/ustanovka-gazovogo-kotla', 'otoplenie/teplyj-pol', 'otoplenie/radiatory', 'otoplenie/avtomatika', 'otoplenie/gazovoe', 'otoplenie/bez-gaza', 'otoplenie/leningradskaya-oblast', 'otoplenie-i-vodosnabzhenie']);
 const water = col(['vodosnabzhenie/vnutrennee', 'vodosnabzhenie/vnutrennee/razvodka-vody', 'vodosnabzhenie/vnutrennee/vnutrennyaya-kanalizaciya', 'vodosnabzhenie/naruzhnoe', 'vodosnabzhenie/filtraciya']);
 const sewer = col(['kanalizaciya/yunilos-astra', 'kanalizaciya/topas', 'kanalizaciya/evrolos', 'kanalizaciya/na-3-cheloveka', 'kanalizaciya/na-4-5-chelovek', 'kanalizaciya/na-6-8-chelovek', 'kanalizaciya/na-10-chelovek', 'kanalizaciya/dlya-chastnogo-doma', 'kanalizaciya/dlya-dachi', 'kanalizaciya/vysokie-gruntovye-vody']);
 const launch = col(['zapusk-gazovyh-kotlov/opressovka', 'zapusk-gazovyh-kotlov/balansirovka']);

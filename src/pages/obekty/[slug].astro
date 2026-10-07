@@ -17,7 +17,7 @@ const similar = OBJECTS.filter((x) => x.slug !== o.slug)
 const tagToPage: Record<string, string> = {
   kotelnaya: 'otoplenie/kotelnaya', 'teplyj-pol': 'otoplenie/teplyj-pol', radiatory: 'otoplenie/radiatory', gaz: 'otoplenie/gazovoe',
   'bez-gaza': 'otoplenie/bez-gaza', voda: 'vodosnabzhenie/vnutrennee/razvodka-vody', kanalizaciya: 'vodosnabzhenie/vnutrennee/vnutrennyaya-kanalizaciya',
-  zapusk: 'zapusk-gazovyh-kotlov', balansirovka: 'zapusk-gazovyh-kotlov/balansirovka', kompleks: 'kompleks-pod-klyuch',
+  zapusk: 'zapusk-gazovyh-kotlov', balansirovka: 'zapusk-gazovyh-kotlov/balansirovka', kompleks: 'otoplenie-i-vodosnabzhenie',
 };
 const services = o.tags.map((t) => tagToPage[t]).filter(Boolean).map((s) => pageBySlug(s)!).filter(Boolean);
 const passport: [string, string][] = [

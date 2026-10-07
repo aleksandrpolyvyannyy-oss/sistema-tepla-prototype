@@ -16,7 +16,7 @@ const minor = ['kanalizaciya', 'vodosnabzhenie/naruzhnoe', 'otoplenie/leningrads
   .filter((s) => !uniq.includes(s) && here !== href(s))
   .map((s) => pageBySlug(s))
   .filter((p): p is Page => !!p);
-const showKompleks = !uniq.includes('kompleks-pod-klyuch') && here !== '/kompleks-pod-klyuch/';
+const showKompleks = !uniq.includes('otoplenie-i-vodosnabzhenie') && here !== '/otoplenie-i-vodosnabzhenie/';
 const hasLine = more.length > 0 || minor.length > 0 || showKompleks;
 const extra = links.filter((u) => u in STATIC_LINKS && u !== here);
 ---
@@ -35,7 +35,7 @@ const extra = links.filter((u) => u in STATIC_LINKS && u !== here);
       <span>Также делаем:</span>
       {more.map((p) => <a class="chip" href={href(p.slug)}>{p.name}</a>)}
       {minor.map((p) => <a class="chip" href={href(p.slug)}>{p.name}</a>)}
-      {showKompleks && <a class="chip" href="/kompleks-pod-klyuch/">Всё одним договором</a>}
+      {showKompleks && <a class="chip" href="/otoplenie-i-vodosnabzhenie/">Всё одним договором</a>}
       {extra.map((u) => <a class="chip" href={u}>{STATIC_LINKS[u]}</a>)}
     </div>
   )}

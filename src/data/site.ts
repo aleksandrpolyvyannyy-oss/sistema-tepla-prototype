@@ -30,9 +30,9 @@ export type NavItem = { label: string; href?: string; children?: NavLink[]; grou
 // Основное меню (PRAVKI-V2.md, п. 1–2). Порядок вкладок менять нельзя.
 export const NAV: NavItem[] = [
   {
-    label: 'Отопление', match: ['/otoplenie/', '/kompleks-pod-klyuch/'],
+    label: 'Отопление', match: ['/otoplenie/', '/otoplenie-i-vodosnabzhenie/'],
     children: [
-      { href: '/otoplenie/', label: 'Отопление под ключ', note: 'весь раздел' },
+      { href: '/otoplenie/', label: 'Отопление частного дома', note: 'весь раздел' },
       { href: '/otoplenie/kotelnaya/', label: 'Котельная' },
       { href: '/otoplenie/teplyj-pol/', label: 'Тёплые полы' },
       { href: '/otoplenie/radiatory/', label: 'Радиаторы' },

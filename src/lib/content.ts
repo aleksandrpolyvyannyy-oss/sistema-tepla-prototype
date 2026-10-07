@@ -154,7 +154,7 @@ export const contentFor = (url: string): Content | undefined => get().map.get(ke
 export const contentKeys = (): string[] => [...get().map.keys()];
 export const contentErrors = (): string[] => get().errors;
 
-/** Число из строки цены «от 45 000 ₽ под ключ» → 45000 (для JSON-LD). */
+/** Число из строки цены «от 45 000 ₽ с монтажом» → 45000 (для JSON-LD). */
 export function priceNumber(s?: string): number | undefined {
   const m = s?.match(/\d[\d\s  ]*/);
   if (!m) return undefined;
