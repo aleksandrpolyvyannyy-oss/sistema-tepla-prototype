@@ -122,10 +122,11 @@ ul { padding-left: 1.2em; }
   position: relative; padding-inline: 14px;
 }
 .nav__link:hover, .nav__btn:hover, .nav__item:focus-within > .nav__btn { color: var(--orange-600); background: var(--tint); }
-.nav__link[aria-current], .nav__btn[aria-current] { color: var(--orange-600); }
-/* Активная вкладка раздела: цвет + нижняя линия-шкала (на странице раздела и на всех его подстраницах). */
-.nav__item.is-active > .nav__link::after, .nav__item.is-active > .nav__btn::after {
-  content: ''; position: absolute; left: 14px; right: 14px; bottom: -3px; height: 4px; border-radius: 3px 3px 0 0; background: var(--scale);
+/* Активная вкладка раздела выделена целиком: тёмно-синяя заливка, белый текст (на странице раздела и на всех его подстраницах). */
+.nav__item.is-active > .nav__link, .nav__item.is-active > .nav__btn,
+.nav__item.is-active > .nav__link:hover, .nav__item.is-active > .nav__btn:hover,
+.nav__item.is-active:focus-within > .nav__btn {
+  background: var(--navy); color: #fff; box-shadow: 0 2px 8px rgba(30, 58, 95, .25);
 }
 .nav__btn svg { width: 10px; transition: transform .15s; }
 .nav__sub {
@@ -176,14 +177,13 @@ ul { padding-left: 1.2em; }
   .header__navrow .nav__list { margin-left: 0; gap: 0; }
   .nav__item--m { display: block; }
   .nav__link, .nav__btn { width: 100%; justify-content: space-between; font-size: 17px; min-height: 56px; padding: 12px 4px; }
-  /* В открытом меню линия-шкала идёт под всей строкой активного раздела */
+  /* В открытом меню строка активного раздела залита целиком */
   .nav__item.is-active { border-bottom-color: transparent; }
-  .nav__item.is-active > .nav__link::after, .nav__item.is-active > .nav__btn::after { left: 0; right: 0; bottom: 0; height: 3px; border-radius: 2px; }
-  .nav__item.is-active.is-open > .nav__btn::after { bottom: 2px; }
+  .nav__item.is-active > .nav__link, .nav__item.is-active > .nav__btn { padding-inline: 14px; border-radius: 10px; box-shadow: none; }
   /* «Цены / Объекты / Отзывы / Контакты» — внизу мобильного меню, вторым планом */
   .nav__item--m-first { margin-top: 20px; border-top: 1px solid var(--line); }
   .nav__item--m .nav__link { font-size: 15.5px; min-height: 50px; font-weight: 600; color: var(--muted); }
-  .nav__item--m .nav__link[aria-current] { color: var(--orange-600); }
+  .nav__item--m .nav__link[aria-current] { color: #fff; }
   .nav__sub { position: static; opacity: 1; visibility: visible; transform: none; box-shadow: none; border: 0; padding: 0 0 12px; display: none; min-width: 0; }
   .nav__sub::before { display: none; }
   .nav__item.is-open > .nav__sub { display: block; }
