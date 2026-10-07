@@ -129,6 +129,16 @@ ul { padding-left: 1.2em; }
   background: var(--navy); color: #fff; box-shadow: 0 2px 8px rgba(30, 58, 95, .25);
 }
 .nav__btn svg { width: 10px; transition: transform .15s; }
+/* Вкладка с подразделами: название — ссылка на раздел, стрелка — отдельная кнопка, раскрывающая список. Выделяются вместе, одной плашкой. */
+.nav__head { display: flex; align-items: center; border-radius: 8px; color: var(--ink); }
+.nav__head .nav__link, .nav__head .nav__link:hover { background: none; color: inherit; box-shadow: none; padding-right: 2px; }
+.nav__toggle { display: inline-flex; align-items: center; justify-content: center; width: 30px; min-height: 44px; margin-right: 4px; padding: 0; border: 0; background: none; color: inherit; cursor: pointer; border-radius: 8px; }
+.nav__toggle svg { width: 10px; transition: transform .15s; }
+.nav__item:hover > .nav__head, .nav__item:focus-within > .nav__head, .nav__item.is-open > .nav__head { background: var(--tint); color: var(--orange-600); }
+.nav__item.is-active > .nav__head, .nav__item.is-active:hover > .nav__head, .nav__item.is-active:focus-within > .nav__head, .nav__item.is-active.is-open > .nav__head {
+  background: var(--navy); color: #fff; box-shadow: 0 2px 8px rgba(30, 58, 95, .25);
+}
+.nav__item:hover .nav__toggle svg, .nav__item.is-open .nav__toggle svg { transform: rotate(180deg); }
 .nav__sub {
   position: absolute; top: 100%; left: 0; min-width: 290px; list-style: none; margin: 0; padding: 10px;
   background: #fff; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
@@ -177,6 +187,18 @@ ul { padding-left: 1.2em; }
   .header__navrow .nav__list { margin-left: 0; gap: 0; }
   .nav__item--m { display: block; }
   .nav__link, .nav__btn { width: 100%; justify-content: space-between; font-size: 17px; min-height: 56px; padding: 12px 4px; }
+  /* В мобильном меню: название ведёт в раздел, стрелка справа раскрывает подразделы */
+  .nav__head { width: 100%; border-radius: 10px; }
+  .nav__head .nav__link, .nav__head .nav__link:hover { flex: 1; width: auto; justify-content: flex-start; padding-right: 8px; }
+  .nav__toggle { width: 56px; min-height: 56px; margin: 0; border-left: 1px solid var(--line); border-radius: 0 10px 10px 0; }
+  .nav__toggle svg { width: 13px; }
+  .nav__item:hover > .nav__head { background: none; color: var(--ink); }
+  .nav__item.is-open > .nav__head { background: var(--tint); color: var(--orange-600); }
+  .nav__item:hover .nav__toggle svg { transform: none; }
+  .nav__item.is-open .nav__toggle svg { transform: rotate(180deg); }
+  .nav__item.is-active > .nav__head, .nav__item.is-active:hover > .nav__head { background: var(--navy); color: #fff; box-shadow: none; }
+  .nav__item.is-active > .nav__head .nav__link { padding-inline: 14px; }
+  .nav__item.is-active .nav__toggle { border-left-color: rgba(255, 255, 255, .25); }
   /* В открытом меню строка активного раздела залита целиком */
   .nav__item.is-active { border-bottom-color: transparent; }
   .nav__item.is-active > .nav__link, .nav__item.is-active > .nav__btn { padding-inline: 14px; border-radius: 10px; box-shadow: none; }

@@ -11,6 +11,8 @@ const activeIdx = navIndexFor(path);
 // aria-current: «page» — это сама страница, «true» — страница внутри раздела.
 const cur = (href: string) => (path === href ? 'page' : inSection(path, href) ? 'true' : undefined);
 // Пункт выпадающего списка: точное совпадение или самый длинный адрес-предок текущей страницы (кроме «весь раздел»).
+// Название вкладки — ссылка на страницу раздела; стрелка рядом раскрывает подразделы (на компьютере список открывается и по наведению).
+const hubOf = (item: (typeof NAV)[number]) => item.href ?? item.children?.find((c) => c.note)?.href ?? item.children?.[0]?.href ?? '/';
 function subCurrent(children: { href: string; note?: string }[], href: string) {
   if (path === href) return 'page';
   if (children.some((c) => c.href === path)) return undefined;
@@ -46,38 +48,35 @@ function subCurrent(children: { href: string; note?: string }[], href: string) {
   <div class="header__navrow"><div class="wrap">
     <nav class="nav" id="main-nav" aria-label="Основное меню">
       <ul class="nav__list">
-        {NAV.map((item, i) => item.groups ? (
-          <li class:list={['nav__item', { 'is-active': i === activeIdx }]} data-sub data-active={i === activeIdx ? '' : undefined}>
-            <button class="nav__btn" type="button" aria-expanded="false" aria-controls={`sub-${i}`} aria-current={i === activeIdx ? 'true' : undefined}>
-              {item.label}
-              <svg viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-            </button>
-            <div class="nav__sub nav__sub--cols" id={`sub-${i}`}>
-              <a class="nav__all" href={item.href} aria-current={path === item.href ? 'page' : undefined}><small>весь раздел</small>{item.label}: септики и станции очистки</a>
-              <div class="nav__cols">
-                {item.groups.map((g) => (
-                  <div class="nav__col">
-                    <div class="nav__col-title">{g.title}</div>
-                    <ul>
-                      {g.links.map((c) => <li><a href={c.href} aria-current={path === c.href ? 'page' : undefined}>{c.label}</a></li>)}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-              {item.cta && <a class="btn btn--primary nav__cta" href={item.cta.href}>{item.cta.label}</a>}
+        {NAV.map((item, i) => (item.groups || item.children) ? (
+          <li class:list={['nav__item', 'nav__item--split', { 'is-active': i === activeIdx }]} data-sub data-active={i === activeIdx ? '' : undefined}>
+            <div class="nav__head">
+              <a class="nav__link" href={hubOf(item)} aria-current={i === activeIdx ? (path === hubOf(item) ? 'page' : 'true') : undefined}>{item.label}</a>
+              <button class="nav__toggle" type="button" aria-expanded="false" aria-controls={`sub-${i}`} aria-label={`Подразделы: ${item.label}`}>
+                <svg viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </button>
             </div>
-          </li>
-        ) : item.children ? (
-          <li class:list={['nav__item', { 'is-active': i === activeIdx }]} data-sub data-active={i === activeIdx ? '' : undefined}>
-            <button class="nav__btn" type="button" aria-expanded="false" aria-controls={`sub-${i}`} aria-current={i === activeIdx ? 'true' : undefined}>
-              {item.label}
-              <svg viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-            </button>
-            <ul class="nav__sub" id={`sub-${i}`}>
-              {item.children.map((c) => (
-                <li><a href={c.href} aria-current={subCurrent(item.children!, c.href)}>{c.note && <small>{c.note}</small>}{c.label}</a></li>
-              ))}
-            </ul>
+            {item.groups ? (
+              <div class="nav__sub nav__sub--cols" id={`sub-${i}`}>
+                <div class="nav__cols">
+                  {item.groups.map((g) => (
+                    <div class="nav__col">
+                      <div class="nav__col-title">{g.title}</div>
+                      <ul>
+                        {g.links.map((c) => <li><a href={c.href} aria-current={path === c.href ? 'page' : undefined}>{c.label}</a></li>)}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+                {item.cta && <a class="btn btn--primary nav__cta" href={item.cta.href}>{item.cta.label}</a>}
+              </div>
+            ) : (
+              <ul class="nav__sub" id={`sub-${i}`}>
+                {item.children!.filter((c) => !c.note).map((c) => (
+                  <li><a href={c.href} aria-current={subCurrent(item.children!, c.href)}>{c.label}</a></li>
+                ))}
+              </ul>
+            )}
           </li>
         ) : (
           <li class:list={['nav__item', { 'is-active': i === activeIdx }]}>
