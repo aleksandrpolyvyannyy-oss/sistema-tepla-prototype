@@ -2,7 +2,7 @@
 export const SITE = {
   name: 'Система тепла',
   legalName: 'ООО «Система тепла»', // заглушка
-  tagline: 'Монтаж и автоматика отопления',
+  tagline: 'Инженерные сети',
   url: 'https://sistema-tepla.ru', // заглушка
   phone: '+7 (812) 000-00-00',
   phoneHref: 'tel:+78120000000',
@@ -17,52 +17,92 @@ export const SITE = {
   inn: '7800000000', // заглушка
   kpp: '780000000', // заглушка
   area: 'Санкт-Петербург и Ленинградская область',
-  pricesUpdated: '25.09.2026',
+  pricesUpdated: '07.10.2026',
   prototypeNote: 'Прототип. Фото объектов — до финальной обработки.',
 };
 
 export type NavLink = { href: string; label: string; note?: string };
-export type NavItem = { label: string; href?: string; children?: NavLink[] };
+// match — префиксы адресов, которые относятся к вкладке (в т. ч. SEO-страницы вне меню): по ним подсвечивается вкладка.
+// children — обычный выпадающий список; groups — компактный блок в несколько колонок с кнопкой cta (вкладка «Канализация»).
+export type NavGroup = { title: string; links: NavLink[] };
+export type NavItem = { label: string; href?: string; children?: NavLink[]; groups?: NavGroup[]; cta?: NavLink; match: string[] };
 
+// Основное меню (PRAVKI-V2.md, п. 1–2). Порядок вкладок менять нельзя.
 export const NAV: NavItem[] = [
   {
-    label: 'Отопление',
+    label: 'Отопление', match: ['/otoplenie/', '/kompleks-pod-klyuch/'],
     children: [
-      { href: '/otoplenie/', label: 'Монтаж отопления под ключ', note: 'весь раздел' },
-      { href: '/otoplenie/kotelnaya/', label: 'Котельная под ключ' },
-      { href: '/otoplenie/kotelnaya/ustanovka-gazovogo-kotla/', label: 'Установка газового котла' },
-      { href: '/otoplenie/teplyj-pol/', label: 'Водяной тёплый пол' },
-      { href: '/otoplenie/radiatory/', label: 'Монтаж радиаторов' },
-      { href: '/otoplenie/gazovoe/', label: 'Газовое отопление' },
-      { href: '/otoplenie/bez-gaza/', label: 'Отопление без газа' },
-      { href: '/otoplenie/leningradskaya-oblast/', label: 'Отопление в Ленобласти' },
+      { href: '/otoplenie/', label: 'Отопление под ключ', note: 'весь раздел' },
+      { href: '/otoplenie/kotelnaya/', label: 'Котельная' },
+      { href: '/otoplenie/teplyj-pol/', label: 'Тёплые полы' },
+      { href: '/otoplenie/radiatory/', label: 'Радиаторы' },
+      { href: '/otoplenie/avtomatika/', label: 'Автоматика' },
     ],
   },
   {
-    label: 'Внутренние сети',
+    label: 'Водоснабжение', match: ['/vodosnabzhenie/'],
     children: [
-      { href: '/vnutrennie-seti/', label: 'Вода и канализация по дому', note: 'весь раздел' },
-      { href: '/vnutrennie-seti/razvodka-vody/', label: 'Разводка воды' },
-      { href: '/vnutrennie-seti/vnutrennyaya-kanalizaciya/', label: 'Внутренняя канализация' },
-      { href: '/kompleks-pod-klyuch/', label: 'Отопление и вода под ключ' },
+      { href: '/vodosnabzhenie/', label: 'Водоснабжение дома', note: 'весь раздел' },
+      { href: '/vodosnabzhenie/vnutrennee/', label: 'Внутреннее водоснабжение и водоотведение' },
+      { href: '/vodosnabzhenie/naruzhnoe/', label: 'Наружное водоснабжение' },
+      { href: '/vodosnabzhenie/filtraciya/', label: 'Система фильтрации' },
     ],
   },
   {
-    label: 'Запуск отопления',
+    // PRAVKI-V2.md, п. 3а: компактный блок в 3 короткие колонки + кнопка «Подобрать станцию», без мега-меню.
+    label: 'Канализация', href: '/kanalizaciya/', match: ['/kanalizaciya/'],
+    groups: [
+      { title: 'Производитель', links: [
+        { href: '/kanalizaciya/yunilos-astra/', label: 'Юнилос Астра' },
+        { href: '/kanalizaciya/topas/', label: 'Топас' },
+        { href: '/kanalizaciya/evrolos/', label: 'Евролос' },
+      ] },
+      { title: 'Число жильцов', links: [
+        { href: '/kanalizaciya/na-3-cheloveka/', label: 'До 3 человек' },
+        { href: '/kanalizaciya/na-4-5-chelovek/', label: '4–5 человек' },
+        { href: '/kanalizaciya/na-6-8-chelovek/', label: '6–8 человек' },
+        { href: '/kanalizaciya/na-10-chelovek/', label: '10 и больше' },
+      ] },
+      { title: 'Условия', links: [
+        { href: '/kanalizaciya/dlya-chastnogo-doma/', label: 'Для частного дома' },
+        { href: '/kanalizaciya/dlya-dachi/', label: 'Для дачи' },
+        { href: '/kanalizaciya/vysokie-gruntovye-vody/', label: 'Высокие грунтовые воды' },
+      ] },
+    ],
+    cta: { href: '/kanalizaciya/#podbor', label: 'Подобрать станцию' },
+  },
+  { label: 'Запуск газовых котлов', href: '/zapusk-gazovyh-kotlov/', match: ['/zapusk-gazovyh-kotlov/'] },
+  {
+    label: 'Сервис', match: ['/servis/'],
     children: [
-      { href: '/zapusk-otopleniya/', label: 'Запуск и наладка отопления', note: 'весь раздел' },
-      { href: '/zapusk-otopleniya/pusk-gazovogo-kotla/', label: 'Первый пуск газового котла' },
-      { href: '/zapusk-otopleniya/opressovka/', label: 'Опрессовка системы' },
-      { href: '/zapusk-otopleniya/balansirovka/', label: 'Балансировка и настройка' },
+      { href: '/servis/', label: 'Сервисное обслуживание', note: 'весь раздел' },
+      { href: '/servis/obsluzhivanie-kotelnyh/', label: 'Обслуживание котельных' },
+      { href: '/servis/obsluzhivanie-vodosnabzheniya/', label: 'Обслуживание водоснабжения' },
+      { href: '/servis/obsluzhivanie-otopleniya/', label: 'Обслуживание систем отопления' },
+      { href: '/servis/obsluzhivanie-septikov/', label: 'Обслуживание септиков' },
     ],
   },
-  { label: 'Канализация / ЛОС / септик', href: '/kanalizaciya/' },
-  { label: 'Водоснабжение', href: '/naruzhnoe-vodosnabzhenie/' },
-  { label: 'Отмостка / дренаж', href: '/drenazh-i-vodootvod/' },
-  { label: 'Цены', href: '/ceny/' },
-  { label: 'Объекты', href: '/obekty/' },
-  { label: 'О компании', href: '/o-kompanii/' },
+  { label: 'О компании', href: '/o-kompanii/', match: ['/o-kompanii/'] },
 ];
+
+// Страницы вне основного меню: верхняя тонкая строка, низ мобильного меню и подвал.
+export const TOP_LINKS: NavLink[] = [
+  { href: '/ceny/', label: 'Цены' },
+  { href: '/obekty/', label: 'Объекты' },
+  { href: '/otzyvy/', label: 'Отзывы' },
+  { href: '/kontakty/', label: 'Контакты' },
+];
+
+// Адрес страницы без префикса подпапки (сборка под GitHub Pages идёт с BASE_PATH).
+export function cleanPath(pathname: string) {
+  const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+  let p = base && pathname.startsWith(base) ? pathname.slice(base.length) : pathname;
+  if (!p.startsWith('/')) p = '/' + p;
+  if (!p.endsWith('/') && !/\.[a-z0-9]+$/i.test(p)) p += '/';
+  return p;
+}
+export const inSection = (path: string, prefix: string) => path === prefix || path.startsWith(prefix);
+export const navIndexFor = (path: string) => NAV.findIndex((n) => n.match.some((m) => inSection(path, m)));
 
 export const LEGAL: NavLink[] = [
   { href: '/politika-pdn/', label: 'Политика обработки персональных данных' },

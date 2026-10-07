@@ -1,5 +1,7 @@
 ---
-// Ш10 — быстрая посадочная (запуск отопления, сезон ноябрь–март): телефон крупно, цена, «как проходит по часам».
+// Ш10 — быстрая посадочная: телефон крупно, цена, «как проходит по часам», короткая форма.
+// На ней собраны «Запуск газовых котлов» (одна страница с полным описанием услуги и разделами
+// «Опрессовка» и «Балансировка» со ссылками) и две вспомогательные SEO-страницы.
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
 import DirectAnswer from '../components/DirectAnswer.astro';
@@ -12,25 +14,41 @@ import Faq from '../components/Faq.astro';
 import Related from '../components/Related.astro';
 import LeadForm from '../components/LeadForm.astro';
 import SectionNav from '../components/SectionNav.astro';
+import Prose from '../components/Prose.astro';
+import ObjectsGrid from '../components/ObjectsGrid.astro';
 import { SITE } from '../data/site';
 import { type Page, crumbsFor, serviceLd } from '../data/pages';
 interface Props { page: Page }
 const { page: p } = Astro.props;
+const isMain = p.slug === 'zapusk-gazovyh-kotlov';
+const hasText = (p.intro ?? []).length > 0 || (p.sections ?? []).length > 0 || (p.subs ?? []).length > 0;
+const subIds = (p.subs ?? []).map((s) => ({ id: s.id, label: s.id === 'opressovka' ? 'Опрессовка' : s.id === 'balansirovka' ? 'Балансировка' : s.title }));
+const nav = [
+  hasText && { id: 'podrobno', label: isMain ? 'Первый пуск' : 'Подробно' },
+  ...subIds,
+  { id: 'ceny', label: 'Цены' },
+  { id: 'etapy', label: 'Как проходит' },
+  { id: 'garantii', label: 'Гарантии' },
+  { id: 'otzyvy', label: 'Отзывы' },
+  { id: 'voprosy', label: 'Вопросы' },
+].filter(Boolean) as { id: string; label: string }[];
 ---
 <Base title={p.title} description={p.description} crumbs={crumbsFor(p.slug)} jsonld={[serviceLd(p)]}>
-  <Hero h1={p.h1} offer={p.offer} price={p.priceFrom} img={p.hero} eyebrow="Запуск отопления · выезд за 1–2 дня"
-    primary={{ href: '#perezvonite', label: 'Перезвоните мне' }} secondary={{ href: '/zapusk-otopleniya/', label: 'Все работы по запуску' }}
+  <Hero h1={p.h1} offer={p.offer} price={p.priceFrom} img={p.hero} facts={p.facts} eyebrow={p.eyebrow ?? 'Запуск газовых котлов · выезд за 1–2 дня'}
+    primary={{ href: '#perezvonite', label: 'Перезвоните мне' }} secondary={isMain ? { href: '#ceny', label: 'Цены на запуск' } : { href: '/zapusk-gazovyh-kotlov/', label: 'Запуск газовых котлов' }}
     trust={[['1–2 дня', 'до выезда инженера'], ['2–4 часа', 'работа на объекте'], ['акт', 'для гарантии производителя']]}>
     <a class="urgent-phone" href={SITE.phoneHref}><span>Звоните — ответит инженер</span><b>{SITE.phone}</b></a>
   </Hero>
   <DirectAnswer text={p.answer} />
-  <SectionNav items={[{ id: 'ceny', label: 'Цены' }, { id: 'etapy', label: 'Как проходит' }, { id: 'garantii', label: 'Гарантии' }, { id: 'otzyvy', label: 'Отзывы' }, { id: 'voprosy', label: 'Вопросы' }]} cta={{ href: '#perezvonite', label: 'Перезвоните мне' }} />
+  <SectionNav items={nav} cta={{ href: '#perezvonite', label: 'Перезвоните мне' }} />
 
-  <Section id="ceny" eyebrow="Цены" title="Стоимость типовых работ">
-    <PriceTable rows={p.prices} />
+  <Prose intro={p.intro} sections={p.sections} subs={p.subs} updated={p.updated} draft={p.draft} />
+
+  <Section id="ceny" variant={hasText ? 'tint' : 'plain'} eyebrow="Цены" title={isMain ? 'Цены на запуск и наладку' : 'Стоимость типовых работ'}>
+    <PriceTable rows={p.prices} includes={p.includes} includesTitle="Что входит в запуск" />
   </Section>
 
-  <Section id="etapy" variant="tint" eyebrow="Как проходит" title="Что делаем на объекте — по часам">
+  <Section id="etapy" variant={hasText ? 'plain' : 'tint'} eyebrow="Как проходит" title="Что делаем на объекте — по часам">
     <Steps items={p.quick!.hours} />
     <div class="grid grid--2 mt-40" style="align-items:start">
       <div>
@@ -44,10 +62,12 @@ const { page: p } = Astro.props;
     </div>
   </Section>
 
+  {isMain && <ObjectsGrid tags={p.objTags} gallery={p.gallery} title="Объекты, которые мы запускали" />}
+
   <Guarantees />
   <Reviews />
   <Faq items={p.faq} variant="tint" />
-  <Related slugs={p.related} title="Соседние работы по запуску" />
+  <Related slugs={p.related} links={p.relatedLinks} title={isMain ? 'Смежные услуги' : 'Соседние работы по запуску'} />
 
   <section class="section" id="perezvonite">
     <div class="wrap">

@@ -11,7 +11,8 @@ import MobileBar from '../components/MobileBar.astro';
 import CookieBanner from '../components/CookieBanner.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
 import JsonLd from '../components/JsonLd.astro';
-import { SITE } from '../data/site';
+import { SITE, cleanPath } from '../data/site';
+import { plain } from '../lib/content';
 
 interface Props {
   title: string;
@@ -21,9 +22,13 @@ interface Props {
   quiz?: boolean;
   noindex?: boolean;
 }
-const { title, description, crumbs, jsonld = [], quiz = false, noindex = false } = Astro.props;
-const canonical = new URL(Astro.url.pathname, SITE.url).href;
-const fullTitle = title.includes('Система тепла') ? title : `${title} | Система тепла`;
+const { title, crumbs, jsonld = [], quiz = false, noindex = false } = Astro.props;
+const description = plain(Astro.props.description);
+// Канонический адрес — без префикса подпапки (сборка для GitHub Pages идёт с BASE_PATH).
+const canonical = new URL(cleanPath(Astro.url.pathname), SITE.url).href;
+// Приставку с названием компании добавляем, только если заголовок с ней укладывается в 60 знаков (требование к title).
+const withBrand = `${title} | Система тепла`;
+const fullTitle = title.includes('Система тепла') || [...withBrand].length > 60 ? title : withBrand;
 
 const org = {
   '@context': 'https://schema.org',
@@ -31,7 +36,7 @@ const org = {
   '@id': `${SITE.url}/#org`,
   name: SITE.name,
   legalName: SITE.legalName,
-  description: 'Монтаж отопления, котельных, тёплого пола, внутренней разводки воды и канализации в частных домах. Запуск и пусконаладка систем отопления.',
+  description: 'Инженерные сети частного дома: отопление, котельные, тёплый пол, водоснабжение, канализация. Первый пуск газовых котлов и сервисное обслуживание систем.',
   url: SITE.url,
   telephone: '+78120000000',
   email: SITE.email,
@@ -49,6 +54,7 @@ const org = {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />

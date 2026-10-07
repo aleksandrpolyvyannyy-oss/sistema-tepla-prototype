@@ -1,43 +1,52 @@
 ---
-// Ш7 — о компании: кто мы → команда → реквизиты → страхование и сертификаты → образец договора → гарантии → форма.
-import { Image } from 'astro:assets';
+// Ш7 — о компании: кто мы → история компании (заглушка, текст готовит руководитель) → реквизиты и документы → гарантии → форма.
+// PRAVKI-V2.md, п. 2: фото и блок сотрудников убраны. Тексты можно перекрыть файлом content/o-kompanii.json.
 import Base from '../layouts/Base.astro';
 import Section from '../components/Section.astro';
 import Guarantees from '../components/Guarantees.astro';
 import LeadSection from '../components/LeadSection.astro';
+import Prose from '../components/Prose.astro';
+import Faq from '../components/Faq.astro';
 import { SITE } from '../data/site';
-import { photo, PHOTO_ALT } from '../lib/photos';
-const team = [
-  ['Генеральный директор', '15 лет в монтаже инженерных систем, ведёт крупные объекты'],
-  ['Руководитель проектов', 'Инженер-теплотехник, считает теплопотери и схемы котельных'],
-  ['Инженер по пусконаладке', 'Допуск к первому пуску газовых котлов, настройка автоматики'],
-  ['Бригадир монтажной бригады', '10 лет на объектах: котельные, тёплые полы, разводка'],
-];
+import { contentFor, rich } from '../lib/content';
+const c = contentFor('/o-kompanii/');
 const reqs: [string, string][] = [
   ['Полное наименование', SITE.legalName], ['ОГРН', SITE.ogrn], ['ИНН / КПП', `${SITE.inn} / ${SITE.kpp}`],
   ['Юридический адрес', SITE.address], ['Телефон', SITE.phone], ['Эл. почта', SITE.email], ['Режим работы', SITE.hours],
 ];
+const offer = c?.offer ?? 'Мы монтируем отопление, котельные, водоснабжение и канализацию в частных домах Санкт-Петербурга и Ленинградской области. Работаем по договору с фиксированной ценой и сроками, сами запускаем и настраиваем системы — у нас есть разрешение на первый пуск газовых котлов. На монтаж даём гарантию 3 года.';
+// Раздел «История компании»: пока руководитель не написал текст, показываем плашку-заглушку (видна только в прототипе).
+// Раздел автора с пометкой «готовит руководитель» — тоже заглушка: вместо него выводим плашку.
+const isHistory = (s: { h2: string }) => /истори/i.test(s.h2);
+const isStub = (s: { paragraphs?: string[] }) => /готовит\s+руководитель/i.test((s.paragraphs ?? []).join(' '));
+const sections = (c?.sections ?? []).filter((s) => !(isHistory(s) && isStub(s)));
+const realHistory = sections.some(isHistory);
+const hasText = !!(c?.intro?.length || sections.length);
 ---
-<Base title="О компании «Система тепла» — монтаж отопления в СПб и ЛО" description="«Система тепла» — монтаж отопления, котельных и водоснабжения в частных домах. Команда, реквизиты, страхование ответственности, гарантии, образец договора." crumbs={[{ href: '/o-kompanii/', label: 'О компании' }]}>
+<Base title={c?.title ?? 'О компании «Система тепла» — инженерные сети в СПб и ЛО'} description={c?.description ?? '«Система тепла» — монтаж отопления, котельных, водоснабжения и канализации в частных домах. Реквизиты, страхование ответственности, гарантии, образец договора.'} crumbs={[{ href: '/o-kompanii/', label: 'О компании' }]}>
   <section class="hero">
-    <div class="wrap split">
-      <div>
-        <div class="eyebrow">О компании</div>
-        <h1>«Система тепла» — монтаж и автоматика отопления</h1>
-        <p class="hero__offer">Мы монтируем отопление, котельные и внутренние сети в частных домах Санкт-Петербурга и Ленинградской области. Работаем по договору с фиксированной ценой и сроками, сами запускаем и настраиваем системы — у нас есть разрешение на первый пуск газовых котлов. На монтаж даём гарантию 3 года.</p>
-        <a class="btn btn--primary" href="#zayavka">Обсудить объект</a>
-      </div>
-      <Image src={photo('15')} alt={PHOTO_ALT['15']} widths={[480, 800]} sizes="(max-width: 860px) 100vw, 560px" loading="eager" />
+    <div class="wrap" style="max-width:920px;margin-left:auto;margin-right:auto">
+      <div class="eyebrow">{c?.eyebrow ?? 'О компании'}</div>
+      <h1>{c?.h1 ?? '«Система тепла» — инженерные сети частного дома'}</h1>
+      <p class="hero__offer" style="max-width:none" set:html={rich(offer)} />
+      <a class="btn btn--primary" href="#zayavka">Обсудить объект</a>
     </div>
   </section>
 
-  <Section variant="tint" eyebrow="Команда" title="Кто работает на ваших объектах" lead="Фото и имена сотрудников появятся после фотосессии — в прототипе заглушки.">
-    <div class="team">
-      {team.map(([r, d]) => <div><div class="team__ph">Фото сотрудника</div><h3 style="font-size:16px;margin-bottom:4px">{r}</h3><p class="muted" style="font-size:14px;margin:0">{d}</p></div>)}
-    </div>
-  </Section>
+  {hasText && <Prose id="podrobno" intro={c?.intro} sections={sections} updated={c?.updated} variant="tint" />}
 
-  <Section eyebrow="Документы" title="Реквизиты и документы">
+  {!realHistory && (
+    <Section id="istoriya" eyebrow="История" title="История компании">
+      {/* Заглушка видна только в прототипе: перед запуском заменяется текстом руководителя (content/o-kompanii.json). */}
+      <div class="history-stub">
+        <b>Текст истории компании готовит руководитель</b>
+        <p>Здесь будет рассказ о том, как появилась компания, какие объекты мы делали и как пришли к нынешнему подходу к работе.</p>
+        <small>Заглушка прототипа</small>
+      </div>
+    </Section>
+  )}
+
+  <Section variant="tint" eyebrow="Документы" title="Реквизиты и документы">
     <div class="split" style="align-items:start">
       <dl class="passport" style="grid-template-columns:1fr">
         {reqs.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}
@@ -45,7 +54,7 @@ const reqs: [string, string][] = [
       <div class="grid" style="gap:12px">
         <div class="card"><h3>Страхование ответственности</h3><p class="muted" style="margin:0">Полис гражданской ответственности подрядчика — скан появится здесь. Показываем оригинал до подписания договора.</p></div>
         <div class="card"><h3>Разрешение на первый пуск газовых котлов</h3><p class="muted" style="margin:0">Копия документа будет размещена после согласования с юристом.</p></div>
-        <div class="card"><h3>Дилерские сертификаты</h3><p class="muted" style="margin:0">Сертификаты производителей котлов и труб — место под сканы.</p></div>
+        <div class="card"><h3>Свидетельства об обучении</h3><p class="muted" style="margin:0">Свидетельства монтажников и инженеров об обучении работе с оборудованием — место под сканы.</p></div>
         <div class="card"><h3>Образец договора</h3><p class="muted" style="margin:0">PDF образца договора подряда с графиком и гарантией — в подготовке.</p></div>
       </div>
     </div>
@@ -53,5 +62,6 @@ const reqs: [string, string][] = [
   </Section>
 
   <Guarantees />
+  {c?.faq && <Faq items={c.faq} />}
   <LeadSection />
 </Base>

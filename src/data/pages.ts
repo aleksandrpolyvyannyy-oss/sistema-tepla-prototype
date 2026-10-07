@@ -1,8 +1,16 @@
-// Посадочные страницы запуска (ЗАПУСК-ПРИОРИТЕТЫ.md, раздел 2): 16 основных + 3 второстепенных.
-// Шаблоны: Ш2 — услуга (хаб/дочерняя), Ш3 — гео, Ш10 — быстрая посадочная запуска (сезон ноябрь–март).
+// Посадочные страницы. Структура и адреса — по PRAVKI-V2.md (п. 2): пять разделов меню + SEO-страницы вне меню.
+// Здесь страницы, которые были в первой версии прототипа; новые страницы-заготовки — в pages-v2.ts.
+// Тексты авторов из content/<ключ>.json перекрывают эти данные при сборке (src/lib/content.ts).
+// Шаблоны: Ш2 — услуга (хаб/дочерняя), Ш3 — гео, Ш10 — быстрая посадочная (запуск, опрессовка, балансировка).
 // Цены — примерные «от» для прототипа, заменяются прайсом заказчика.
 import type { Faq, Pkg, Step } from './common';
 import { PKG_HEATING, CHECK_HEATING, CHECK_SETI, CHECK_ZAPUSK } from './common';
+import { V2_PAGES, SEPTIC_LANDINGS } from './pages-v2';
+import { OBJECTS } from './objects';
+import { contentFor, contentVersion, plain, priceNumber } from '../lib/content';
+
+export type QuizKind = 'otoplenie' | 'voda' | 'kanalizaciya' | 'zapusk' | 'servis' | 'kompleks';
+export type PageSection = { id: string; h2: string; paragraphs?: string[]; list?: string[]; table?: { head: string[]; rows: string[][] } };
 
 export type Page = {
   slug: string;
@@ -14,12 +22,26 @@ export type Page = {
   title: string;
   description: string;
   h1: string;
+  eyebrow?: string;
   offer: string;
   priceFrom: string;
   priceMin: number;
-  hero: string;
+  /** id фото первого экрана; если фото по теме нет — вместо него карточка facts */
+  hero?: string;
+  facts?: [string, string][];
   answer: string;
+  /** вводные абзацы и разделы основного текста (их перекрывает content/<ключ>.json) */
+  intro?: string[];
+  sections?: PageSection[];
+  /** родитель для хлебных крошек, если он не следует из адреса */
+  parent?: string;
   children?: string[];
+  /** SEO-страницы вне меню: блок «Также по теме» */
+  also?: string[];
+  /** блок «Подбор станции» с выставленным заранее фильтром (посадочные канализации) */
+  picker?: { people?: '3' | '4-5' | '6-8' | '10'; mode?: 'dom' | 'dacha'; gw?: 'low' | 'high' };
+  /** разделы со ссылкой на дочернюю страницу (опрессовка, балансировка) */
+  subs?: { id: string; slug: string; title: string; text: string }[];
   packages?: Pkg[];
   prices: [string, string, string][];
   includes: string[];
@@ -29,17 +51,23 @@ export type Page = {
   checklist: string[];
   faq: Faq[];
   related: string[];
+  /** ссылки из content-файла на страницы вне PAGES (цены, объекты и т. п.) */
+  relatedLinks?: string[];
   objTags: string[];
-  quiz: 'otoplenie' | 'seti' | 'zapusk' | 'kompleks';
+  quiz: QuizKind;
   gallery?: string[];
   anchors?: { id: string; title: string; text: string; prices: [string, string, string][]; photo?: string }[];
   geo?: { features: { t: string; d: string }[]; places: string[] };
   quick?: { hours: Step[]; equipment: string[] };
+  /** дата из content-файла: «Обновлено …» */
+  updated?: string;
+  /** страница-заготовка: текст временный, его перекроет автор */
+  draft?: boolean;
+  /** подхвачен content/<ключ>.json */
+  hasContent?: boolean;
 };
 
-const SECONDARY = ['kanalizaciya', 'naruzhnoe-vodosnabzhenie', 'drenazh-i-vodootvod'];
-
-export const PAGES: Page[] = [
+const CORE: Page[] = [
   // ───────────── ОТОПЛЕНИЕ ─────────────
   {
     slug: 'otoplenie', tpl: 'Ш2', kind: 'hub', priority: 'основная', name: 'Отопление',
@@ -50,7 +78,8 @@ export const PAGES: Page[] = [
     offer: 'Смета за 24 часа после замера, цена и сроки фиксируются в договоре',
     priceFrom: 'от 380 000 ₽ за дом 100 м²', priceMin: 380000, hero: '44',
     answer: 'Отопление частного дома 150 м² под ключ с газовым котлом, тёплым полом на первом этаже и радиаторами на втором стоит от 520 до 780 тыс ₽ с оборудованием, монтаж занимает 15–25 рабочих дней. Для дома 100 м² — от 380 тыс ₽ и 10–15 дней. Работаем в Санкт-Петербурге и по всей Ленинградской области, замер бесплатный в радиусе 60 км от КАД.',
-    children: ['otoplenie/kotelnaya', 'otoplenie/teplyj-pol', 'otoplenie/radiatory', 'otoplenie/gazovoe', 'otoplenie/bez-gaza', 'otoplenie/leningradskaya-oblast'],
+    children: ['otoplenie/kotelnaya', 'otoplenie/teplyj-pol', 'otoplenie/radiatory', 'otoplenie/avtomatika'],
+    also: ['otoplenie/kotelnaya/ustanovka-gazovogo-kotla', 'otoplenie/gazovoe', 'otoplenie/bez-gaza', 'otoplenie/leningradskaya-oblast', 'kompleks-pod-klyuch'],
     packages: PKG_HEATING,
     prices: [
       ['Проект отопления', 'дом', 'от 25 000 ₽'],
@@ -81,7 +110,7 @@ export const PAGES: Page[] = [
       { q: 'Что если бюджет меньше пакета?', a: 'Можно разделить работы на очереди: сначала котельная и радиаторы, тёплый пол — позже. Закладываем выпуски на коллекторах заранее, чтобы потом не переделывать.' },
       { q: 'Вы работаете по договору?', a: 'Всегда. В договоре фиксируются цена, состав работ, график и гарантия 3 года на монтаж. Аванс — 70%, и это только материалы и оборудование с доставкой.' },
     ],
-    related: ['vnutrennie-seti', 'zapusk-otopleniya', 'kompleks-pod-klyuch'],
+    related: ['vodosnabzhenie', 'zapusk-gazovyh-kotlov', 'servis'],
     objTags: ['otoplenie'], quiz: 'otoplenie', gallery: ['44', '03', '40', '11', '15', '31'],
   },
   {
@@ -117,7 +146,8 @@ export const PAGES: Page[] = [
       { q: 'Кто подключает газ?', a: 'Подключение к газу и пуск газа выполняет газораспределительная организация. После этого мы делаем первый пуск котла и наладку: у нас есть разрешение на эти работы.' },
       { q: 'Сколько места нужно под котельную?', a: 'Для котла, бойлера и трёх контуров хватает 4–6 м². Каскад котлов с бойлером на 300 литров — от 8 м². На замере покажем раскладку оборудования на стенах.' },
     ],
-    related: ['otoplenie/teplyj-pol', 'otoplenie/radiatory', 'zapusk-otopleniya'],
+    also: ['otoplenie/gazovoe', 'otoplenie/bez-gaza'],
+    related: ['otoplenie/avtomatika', 'zapusk-gazovyh-kotlov', 'servis/obsluzhivanie-kotelnyh'],
     objTags: ['kotelnaya'], quiz: 'otoplenie', gallery: ['14', '01', '04', '15', '41', '52'],
   },
   {
@@ -156,7 +186,7 @@ export const PAGES: Page[] = [
       { q: 'Что входит в цену установки?', a: 'Монтаж котла, обвязка запорной арматурой и фильтром, группа безопасности, подключение к дымоходу, отоплению и электропитанию. Котёл, дымоход и материалы оплачиваются отдельно по смете.' },
       { q: 'Даёте ли гарантию на установку?', a: 'Да, 3 года на монтажные работы по договору. На сам котёл действует гарантия производителя — для неё важен акт первого пуска, который мы оформляем.' },
     ],
-    related: ['otoplenie/kotelnaya', 'zapusk-otopleniya/pusk-gazovogo-kotla', 'otoplenie/gazovoe'],
+    related: ['otoplenie/kotelnaya', 'zapusk-gazovyh-kotlov', 'otoplenie/gazovoe'],
     objTags: ['gaz', 'kotelnaya'], quiz: 'otoplenie', gallery: ['52', '24', '01', '02'],
   },
   {
@@ -201,7 +231,7 @@ export const PAGES: Page[] = [
       { q: 'Делаете ли тёплый пол на деревянные перекрытия?', a: 'Да, на лагах по алюминиевым пластинам или в тонкой стяжке. Такая система стоит дороже на 20–30%, мы рассчитываем её отдельно под конструкцию перекрытия.' },
       { q: 'Сколько стоит тёплый пол на 150 м²?', a: 'Под ключ с материалами, без стяжки — от 360 тыс ₽. Цена зависит от числа контуров, коллекторов и того, нужны ли термостаты в каждой комнате.' },
     ],
-    related: ['otoplenie/kotelnaya', 'otoplenie/radiatory', 'zapusk-otopleniya/balansirovka'],
+    related: ['otoplenie/kotelnaya', 'otoplenie/radiatory', 'zapusk-gazovyh-kotlov/balansirovka'],
     objTags: ['teplyj-pol'], quiz: 'otoplenie', gallery: ['03', '23', '31', '13', '12', '47'],
   },
   {
@@ -239,7 +269,7 @@ export const PAGES: Page[] = [
       { q: 'Можно ли поставить радиаторы после отделки?', a: 'Если трубы уже выведены из пола — да, это финальный этап. Если разводки нет, придётся штробить пол, поэтому трубы лучше прокладывать до стяжки, а радиаторы вешать после покраски стен.' },
       { q: 'Что делать с панорамными окнами?', a: 'Ставить внутрипольные конвекторы: они в полу, не перекрывают вид и отсекают холодный поток от стекла. Их закладываем на этапе стяжки.' },
     ],
-    related: ['otoplenie/teplyj-pol', 'otoplenie/kotelnaya', 'zapusk-otopleniya/balansirovka'],
+    related: ['otoplenie/teplyj-pol', 'otoplenie/kotelnaya', 'zapusk-gazovyh-kotlov/balansirovka'],
     objTags: ['radiatory'], quiz: 'otoplenie', gallery: ['11', '19', '05', '28'],
   },
   {
@@ -278,7 +308,7 @@ export const PAGES: Page[] = [
       { q: 'Сколько газа расходует дом 150 м²?', a: 'Утеплённый дом 150 м² в Ленобласти расходует около 1 400–1 700 м³ газа за отопительный сезон, то есть 3–5 тыс ₽ в месяц зимой. Тёплый пол и погодная автоматика снижают расход на 10–20%.' },
       { q: 'Какой котёл лучше для газового отопления?', a: 'Для дома до 200 м² — настенный конденсационный котёл с бойлером: он экономичнее и компактнее. Напольные котлы нужны для больших домов и при высоком разборе горячей воды.' },
     ],
-    related: ['otoplenie/kotelnaya/ustanovka-gazovogo-kotla', 'zapusk-otopleniya/pusk-gazovogo-kotla', 'otoplenie/bez-gaza'],
+    related: ['otoplenie/kotelnaya/ustanovka-gazovogo-kotla', 'zapusk-gazovyh-kotlov', 'otoplenie/bez-gaza'],
     objTags: ['gaz'], quiz: 'otoplenie', gallery: ['01', '15', '52', '24'],
   },
   {
@@ -352,13 +382,13 @@ export const PAGES: Page[] = [
       { q: 'Как защитить систему, если в доме живут только по выходным?', a: 'Автоматика держит в доме 8–10 °C, присылает сообщение при падении температуры или отключении света. Для редких приездов систему можно заполнить незамерзающим теплоносителем.' },
       { q: 'Работаете ли в садоводствах без газа?', a: 'Да, это частый случай. Ставим электрокотёл, тепловой насос или твердотопливный котёл — сравнение вариантов на странице отопления без газа.' },
     ],
-    related: ['otoplenie/bez-gaza', 'naruzhnoe-vodosnabzhenie', 'kanalizaciya'],
+    related: ['otoplenie/bez-gaza', 'vodosnabzhenie/naruzhnoe', 'kanalizaciya'],
     objTags: ['otoplenie'], quiz: 'otoplenie', gallery: ['45', '14', '23', '27'],
   },
 
   // ───────────── ВНУТРЕННИЕ СЕТИ ─────────────
   {
-    slug: 'vnutrennie-seti', tpl: 'Ш2', kind: 'hub', priority: 'основная', name: 'Внутренние сети',
+    slug: 'vodosnabzhenie/vnutrennee', tpl: 'Ш2', kind: 'hub', priority: 'основная', name: 'Внутреннее водоснабжение и водоотведение',
     query: 'разводка воды и канализации в частном доме · внутренняя разводка цена',
     title: 'Разводка воды и канализации в частном доме — цена в СПб и ЛО',
     description: 'Внутренняя разводка водоснабжения и канализации в частном доме: коллекторная схема, инсталляции, бойлерная. От 3 500 ₽ за точку, монтаж вместе с отоплением.',
@@ -366,7 +396,7 @@ export const PAGES: Page[] = [
     offer: 'Делаем вместе с отоплением — одна бригада, один график, одна гарантия',
     priceFrom: 'от 3 500 ₽ за точку', priceMin: 3500, hero: '42',
     answer: 'Внутренняя разводка воды и канализации в частном доме стоит от 3 500 ₽ за точку подключения, для дома 150 м² с двумя санузлами и кухней — от 180 тыс ₽ с материалами. Монтаж занимает 5–8 рабочих дней. Если одновременно делаем отопление, водоснабжение и котельную собираем в одном техпомещении.',
-    children: ['vnutrennie-seti/razvodka-vody', 'vnutrennie-seti/vnutrennyaya-kanalizaciya'],
+    children: ['vodosnabzhenie/vnutrennee/razvodka-vody', 'vodosnabzhenie/vnutrennee/vnutrennyaya-kanalizaciya'],
     packages: [
       { name: 'Один санузел', area: 'дом до 100 м²', price: 'от 110 000 ₽', items: ['Санузел + кухня', 'Водонагреватель', 'Канализация до выпуска', 'Опрессовка'] },
       { name: 'Два санузла', area: 'дом до 150 м²', price: 'от 180 000 ₽', accent: true, items: ['2 санузла + кухня + постирочная', 'Коллекторная разводка воды', 'Рециркуляция горячей воды', 'Инсталляции'] },
@@ -389,11 +419,11 @@ export const PAGES: Page[] = [
       { q: 'Когда делать разводку воды?', a: 'После возведения стен и перегородок, до стяжки и черновой отделки. К этому моменту должны быть известны места сантехники — лучше по дизайн-проекту.' },
       { q: 'Вы делаете наружную часть — ввод воды и септик?', a: 'Да, это отдельные направления: ввод воды и обвязка скважины, наружная канализация и септики. Их можно добавить в одну смету с внутренними сетями.' },
     ],
-    related: ['otoplenie', 'kompleks-pod-klyuch', 'naruzhnoe-vodosnabzhenie'],
-    objTags: ['seti', 'voda'], quiz: 'seti', gallery: ['42', '09', '25', '43', '28'],
+    related: ['vodosnabzhenie/naruzhnoe', 'vodosnabzhenie/filtraciya', 'kompleks-pod-klyuch'],
+    objTags: ['seti', 'voda'], quiz: 'voda', gallery: ['42', '09', '25', '43', '28'],
   },
   {
-    slug: 'vnutrennie-seti/razvodka-vody', tpl: 'Ш2', kind: 'child', priority: 'основная', name: 'Разводка воды',
+    slug: 'vodosnabzhenie/vnutrennee/razvodka-vody', tpl: 'Ш2', kind: 'child', priority: 'основная', name: 'Разводка воды',
     query: 'разводка воды в частном доме от скважины · цена',
     title: 'Разводка воды в частном доме от скважины — цена монтажа',
     description: 'Разводка водоснабжения в частном доме от скважины: узел ввода, водоподготовка, коллекторы, рециркуляция ГВС. От 3 500 ₽ за точку, монтаж 3–6 дней.',
@@ -417,11 +447,11 @@ export const PAGES: Page[] = [
       { q: 'Какие трубы использовать для разводки?', a: 'Сшитый полиэтилен PE-Xa на аксиальных фитингах или полипропилен. PE-Xa можно прокладывать в стяжке без соединений в полу. Металлопластик на прессах тоже допустим, но соединения должны оставаться доступными.' },
       { q: 'Вы делаете и ввод воды от скважины в дом?', a: 'Да, это наружное водоснабжение: обвязка скважины, кессон или адаптер, утеплённая труба до дома.' },
     ],
-    related: ['vnutrennie-seti/vnutrennyaya-kanalizaciya', 'naruzhnoe-vodosnabzhenie', 'otoplenie/kotelnaya'],
-    objTags: ['voda', 'seti'], quiz: 'seti', gallery: ['43', '42', '54', '35'],
+    related: ['vodosnabzhenie/vnutrennee/vnutrennyaya-kanalizaciya', 'vodosnabzhenie/naruzhnoe', 'vodosnabzhenie/filtraciya'],
+    objTags: ['voda', 'seti'], quiz: 'voda', gallery: ['43', '42', '54', '35'],
   },
   {
-    slug: 'vnutrennie-seti/vnutrennyaya-kanalizaciya', tpl: 'Ш2', kind: 'child', priority: 'основная', name: 'Внутренняя канализация',
+    slug: 'vodosnabzhenie/vnutrennee/vnutrennyaya-kanalizaciya', tpl: 'Ш2', kind: 'child', priority: 'основная', name: 'Внутренняя канализация',
     query: 'внутренняя канализация в частном доме · монтаж цена за работу',
     title: 'Внутренняя канализация в частном доме — монтаж, цена за работу',
     description: 'Монтаж внутренней канализации в частном доме: стояки, лежаки, выводы под сантехнику, инсталляции, шумоизоляция. От 2 500 ₽ за точку.',
@@ -445,11 +475,11 @@ export const PAGES: Page[] = [
       { q: 'Что делать, если выпуск канализации уже есть?', a: 'Подключаемся к существующему выпуску, проверив его глубину и уклон. Если выпуска нет, делаем его вместе с наружной канализацией и септиком.' },
       { q: 'Сколько стоит канализация в доме с двумя санузлами?', a: 'Работа — от 60 тыс ₽, с материалами — от 85 тыс ₽ без сантехники. Точную цену даём по дизайн-проекту или после замера.' },
     ],
-    related: ['vnutrennie-seti/razvodka-vody', 'kanalizaciya', 'kompleks-pod-klyuch'],
-    objTags: ['kanalizaciya', 'seti'], quiz: 'seti', gallery: ['09', '25', '37', '38'],
+    related: ['vodosnabzhenie/vnutrennee/razvodka-vody', 'kanalizaciya', 'kompleks-pod-klyuch'],
+    objTags: ['kanalizaciya', 'seti'], quiz: 'voda', gallery: ['09', '25', '37', '38'],
   },
   {
-    slug: 'kompleks-pod-klyuch', tpl: 'Ш2', kind: 'hub', priority: 'основная', name: 'Отопление и вода под ключ',
+    slug: 'kompleks-pod-klyuch', parent: 'otoplenie', tpl: 'Ш2', kind: 'hub', priority: 'основная', name: 'Отопление и вода под ключ',
     query: 'отопление и водоснабжение под ключ цена',
     title: 'Отопление и водоснабжение дома под ключ — одним договором',
     description: 'Отопление, водоснабжение и канализация частного дома под ключ одним договором: общая котельная, один график, гарантия 3 года. От 780 000 ₽ за дом 150 м².',
@@ -486,85 +516,13 @@ export const PAGES: Page[] = [
       { q: 'Как оплачивать комплекс?', a: 'Так же, как любой наш договор: 70% — материалы и оборудование, 20% — после основного монтажа, 10% — после сдачи. Для большого комплекса аванс можно разбить по этапам.' },
       { q: 'Кто отвечает, если что-то протечёт?', a: 'Мы — по договору, гарантия 3 года на все смонтированные системы. Не нужно выяснять, чья зона ответственности.' },
     ],
-    related: ['otoplenie', 'vnutrennie-seti', 'naruzhnoe-vodosnabzhenie'],
+    related: ['otoplenie', 'vodosnabzhenie', 'kanalizaciya'],
     objTags: ['kompleks', 'seti', 'otoplenie'], quiz: 'kompleks', gallery: ['40', '44', '42', '09'],
   },
 
-  // ───────────── ЗАПУСК ОТОПЛЕНИЯ ─────────────
+  // ───────────── ЗАПУСК ГАЗОВЫХ КОТЛОВ: вспомогательные страницы (главная страница раздела — в pages-v2.ts) ─────────────
   {
-    slug: 'zapusk-otopleniya', tpl: 'Ш2', kind: 'hub', priority: 'основная', name: 'Запуск отопления',
-    query: 'запуск системы отопления · пусконаладка · первый пуск газового котла',
-    title: 'Запуск системы отопления и пусконаладка в СПб и ЛО',
-    description: 'Пусконаладка системы отопления частного дома: первый пуск газового котла, опрессовка, балансировка, настройка автоматики. Выезд за 1–2 дня, от 7 000 ₽.',
-    h1: 'Запуск и пусконаладка системы отопления',
-    offer: 'Выезд за 1–2 дня, запуск за один визит, акт для гарантии производителя',
-    priceFrom: 'от 7 000 ₽', priceMin: 7000, hero: '07',
-    answer: 'Пусконаладка системы отопления частного дома стоит от 18 тыс ₽ и занимает 1 день: опрессовка, заполнение, удаление воздуха, настройка котла и автоматики. Отдельно первый пуск газового котла — от 7 тыс ₽ после подключения газа газораспределительной организацией. Выезжаем в течение 1–2 дней, в том числе к системам, смонтированным другими подрядчиками.',
-    children: ['zapusk-otopleniya/pusk-gazovogo-kotla', 'zapusk-otopleniya/opressovka', 'zapusk-otopleniya/balansirovka'],
-    prices: [
-      ['Первый пуск газового котла', 'шт', 'от 7 000 ₽'],
-      ['Опрессовка системы отопления', 'объект', 'от 6 000 ₽'],
-      ['Балансировка тёплого пола', 'контур', 'от 600 ₽'],
-      ['Пусконаладка системы под ключ', 'объект', 'от 18 000 ₽'],
-      ['Настройка погодной автоматики', 'комплект', 'от 5 000 ₽'],
-      ['Заполнение незамерзающим теплоносителем', 'объект', 'от 8 000 ₽'],
-    ],
-    includes: ['Осмотр системы и проверка монтажа', 'Опрессовка с актом', 'Заполнение и удаление воздуха', 'Первый пуск котла', 'Настройка автоматики и насосов', 'Балансировка контуров', 'Акт пусконаладки'],
-    steps: [
-      { t: 'Заявка', d: 'Уточняем тип котла, схему и что уже смонтировано.', days: 'день 1' },
-      { t: 'Выезд', d: 'Инженер приезжает с оборудованием для опрессовки и настройки.', days: 'через 1–2 дня' },
-      { t: 'Проверка', d: 'Осматриваем монтаж, опрессовываем, фиксируем замечания.', days: '1–2 часа' },
-      { t: 'Запуск и наладка', d: 'Пуск котла, настройка автоматики, балансировка.', days: '2–5 часов' },
-      { t: 'Акт', d: 'Акт пусконаладки — нужен для гарантии производителя котла.', days: 'в тот же день' },
-    ],
-    checklist: CHECK_ZAPUSK,
-    faq: [
-      { q: 'Запускаете системы, которые монтировали другие?', a: 'Да. Сначала осматриваем и опрессовываем систему. Если находим ошибки монтажа, фиксируем их в акте и предлагаем исправление — запуск с явными ошибками не делаем.' },
-      { q: 'Есть ли у вас разрешение на пуск газового котла?', a: 'Да, у компании есть разрешение на первый пуск газовых котлов. Пуск газа в дом выполняет газораспределительная организация, после этого мы запускаем и настраиваем котёл.' },
-      { q: 'Зачем нужен акт пусконаладки?', a: 'Большинство производителей котлов дают гарантию только при запуске квалифицированным специалистом с оформленным актом. Без него производитель может отказать в гарантии.' },
-      { q: 'Сколько длится запуск?', a: 'Для типовой системы дома 100–200 м² — один рабочий день. Балансировка тёплого пола с большим числом контуров может занять ещё один визит после прогрева стяжки.' },
-    ],
-    related: ['otoplenie', 'otoplenie/kotelnaya', 'otoplenie/teplyj-pol'],
-    objTags: ['zapusk'], quiz: 'zapusk', gallery: ['07', '41', '24', '52'],
-  },
-  {
-    slug: 'zapusk-otopleniya/pusk-gazovogo-kotla', tpl: 'Ш10', kind: 'quick', priority: 'основная', name: 'Первый пуск газового котла',
-    query: 'первый пуск газового котла · запуск котла цена',
-    title: 'Первый пуск газового котла — цена, выезд за 1–2 дня',
-    description: 'Первый пуск газового котла в частном доме после подключения газа: проверка, запуск, настройка, акт для гарантии. От 7 000 ₽, разрешение на пуск есть.',
-    h1: 'Первый пуск газового котла',
-    offer: 'Разрешение на пуск есть. Выезд за 1–2 дня, акт для гарантии производителя',
-    priceFrom: 'от 7 000 ₽', priceMin: 7000, hero: '24',
-    answer: 'Первый пуск газового котла стоит от 7 тыс ₽ и занимает 2–3 часа: проверка обвязки и дымохода, заполнение системы, запуск, настройка мощности и автоматики, оформление акта для гарантии производителя. Выполняется после того, как газораспределительная организация подключила газ. Выезжаем в течение 1–2 дней.',
-    prices: [
-      ['Первый пуск настенного котла', 'шт', 'от 7 000 ₽'],
-      ['Первый пуск напольного котла', 'шт', 'от 10 000 ₽'],
-      ['Пуск с опрессовкой системы', 'объект', 'от 12 000 ₽'],
-      ['Настройка погодозависимой автоматики', 'комплект', 'от 5 000 ₽'],
-      ['Выезд дальше 60 км от КАД', 'км', '40 ₽'],
-    ],
-    includes: [],
-    quick: {
-      hours: [
-        { t: 'Проверка', d: 'Смотрим обвязку, дымоход, электропитание, заземление, давление в системе.', days: '30 мин' },
-        { t: 'Заполнение', d: 'Доводим давление, удаляем воздух из котла и контуров.', days: '30–60 мин' },
-        { t: 'Пуск и настройка', d: 'Запускаем котёл, настраиваем мощность, режимы ГВС и отопления.', days: '1 час' },
-        { t: 'Акт и инструктаж', d: 'Оформляем акт первого пуска, показываем владельцу управление.', days: '20 мин' },
-      ],
-      equipment: ['Настенные и напольные газовые котлы', 'Buderus, Viessmann, Vaillant, Baxi, Navien, Ariston, Protherm', 'Одноконтурные с бойлером и двухконтурные', 'Каскады из двух котлов'],
-    },
-    checklist: CHECK_ZAPUSK,
-    faq: [
-      { q: 'Кто может делать первый пуск газового котла?', a: 'Специалист с допуском к работе на газовом оборудовании — у нас есть такое разрешение. Пуск газа в дом и подключение к газопроводу выполняет газораспределительная организация, а первый пуск котла и его настройку — мы.' },
-      { q: 'Что нужно подготовить к пуску?', a: 'Газ подключён, есть проект газоснабжения и документы на котёл, система отопления смонтирована и заполнена или готова к заполнению, у котла есть розетка с заземлением.' },
-      { q: 'Зачем акт первого пуска?', a: 'Производитель котла даёт гарантию при запуске квалифицированным специалистом. Акт с датой, параметрами и подписью — основание для гарантийного обращения.' },
-      { q: 'Можно ли запустить котёл самостоятельно?', a: 'Технически котёл включается кнопкой, но без проверки и настройки он часто работает с частыми включениями, перерасходом газа и без гарантии производителя.' },
-    ],
-    related: ['zapusk-otopleniya/opressovka', 'otoplenie/kotelnaya/ustanovka-gazovogo-kotla', 'zapusk-otopleniya/balansirovka'],
-    objTags: ['gaz', 'zapusk'], quiz: 'zapusk',
-  },
-  {
-    slug: 'zapusk-otopleniya/opressovka', tpl: 'Ш10', kind: 'quick', priority: 'основная', name: 'Опрессовка',
+    slug: 'zapusk-gazovyh-kotlov/opressovka', tpl: 'Ш10', kind: 'quick', priority: 'основная', name: 'Опрессовка',
     query: 'опрессовка системы отопления цена',
     title: 'Опрессовка системы отопления в частном доме — цена',
     description: 'Опрессовка системы отопления и тёплого пола в частном доме: гидравлическое испытание с актом, поиск протечек. От 6 000 ₽, выезд за 1–2 дня.',
@@ -594,11 +552,11 @@ export const PAGES: Page[] = [
       { q: 'Каким давлением опрессовывают?', a: 'В 1,5 раза выше рабочего, но не ниже 6 бар для тёплого пола и 4–6 бар для радиаторной системы. Котёл при этом отсекают — его испытывают отдельно по паспорту.' },
       { q: 'Что если давление падает?', a: 'Ищем место протечки: чаще всего это резьбовое соединение или непрожатый фитинг. Устраняем и повторяем испытание. Всё фиксируем в акте.' },
     ],
-    related: ['zapusk-otopleniya/balansirovka', 'zapusk-otopleniya/pusk-gazovogo-kotla', 'otoplenie/teplyj-pol'],
+    related: ['zapusk-gazovyh-kotlov/balansirovka', 'zapusk-gazovyh-kotlov', 'otoplenie/teplyj-pol'],
     objTags: ['zapusk', 'teplyj-pol'], quiz: 'zapusk',
   },
   {
-    slug: 'zapusk-otopleniya/balansirovka', tpl: 'Ш10', kind: 'quick', priority: 'основная', name: 'Балансировка',
+    slug: 'zapusk-gazovyh-kotlov/balansirovka', tpl: 'Ш10', kind: 'quick', priority: 'основная', name: 'Балансировка',
     query: 'балансировка системы отопления · настройка тёплого пола',
     title: 'Балансировка системы отопления и настройка тёплого пола',
     description: 'Балансировка тёплого пола и радиаторов в частном доме: настройка расходов по контурам, погодной автоматики, насосов. Комнаты греются равномерно. От 9 000 ₽.',
@@ -628,13 +586,13 @@ export const PAGES: Page[] = [
       { q: 'Когда делать балансировку тёплого пола?', a: 'После того как стяжка высохла и прошла первый плавный прогрев. Балансировка на мокрой стяжке даёт неверный результат.' },
       { q: 'Даёт ли балансировка экономию?', a: 'Да, обычно 5–15% топлива: котёл работает ровно, без перегрева ближних комнат ради дальних, а погодная автоматика снижает температуру подачи в тёплые дни.' },
     ],
-    related: ['zapusk-otopleniya/opressovka', 'otoplenie/teplyj-pol', 'otoplenie/radiatory'],
+    related: ['zapusk-gazovyh-kotlov/opressovka', 'otoplenie/teplyj-pol', 'otoplenie/radiatory'],
     objTags: ['balansirovka', 'teplyj-pol'], quiz: 'zapusk',
   },
 
   // ───────────── ВТОРОСТЕПЕННЫЕ ─────────────
   {
-    slug: 'kanalizaciya', tpl: 'Ш2', kind: 'secondary', priority: 'второстепенная', name: 'Наружная канализация и септики',
+    slug: 'kanalizaciya', tpl: 'Ш2', kind: 'secondary', priority: 'основная', name: 'Канализация',
     query: 'септик под ключ Ленинградская область · наружная канализация',
     title: 'Наружная канализация и септики под ключ в СПб и ЛО',
     description: 'Наружная канализация частного дома, септики и станции биологической очистки под ключ в Ленобласти. Монтаж за 1–2 дня, септик от 145 000 ₽.',
@@ -650,18 +608,20 @@ export const PAGES: Page[] = [
       ['Выпуск из дома через фундамент', 'шт', 'от 7 000 ₽'],
     ],
     includes: ['Выезд и оценка грунта', 'Подбор септика или станции', 'Земляные работы', 'Монтаж и подключение', 'Утепление труб', 'Пуск станции'],
-    brands: 'Топас, Астра (Юнилос), Термит, Танк.',
+    brands: 'Монтируем станции Юнилос Астра, Топас и Евролос, а также накопительные ёмкости. Модель подбираем под число жильцов, грунт и уровень грунтовых вод.',
+    children: ['kanalizaciya/yunilos-astra', 'kanalizaciya/topas', 'kanalizaciya/evrolos'],
+    also: [...SEPTIC_LANDINGS, 'vodosnabzhenie/vnutrennee/vnutrennyaya-kanalizaciya', 'servis/obsluzhivanie-septikov'],
     checklist: ['Известно число жильцов и режим проживания', 'Понятно место под септик (не ближе 5 м от дома)', 'Есть подъезд для техники'],
     faq: [
       { q: 'Какой септик нужен для высоких грунтовых вод?', a: 'Станция биологической очистки с принудительным отводом или септик с анкеровкой и насосным колодцем. Обычный накопитель в высоких водах может выдавить из грунта — крепим его к бетонной плите.' },
       { q: 'Сколько стоит септик для дачи?', a: 'Для непостоянного проживания 2–4 человек — от 145 тыс ₽ под ключ. Станцию биологической очистки для дачи выбирают реже: ей нужен постоянный приток стоков.' },
       { q: 'Вы делаете всё на одном выезде?', a: 'Септик и наружную канализацию монтируем за 1–2 дня одной бригадой с экскаватором. Внутреннюю канализацию дома подключаем к выпуску в тот же выезд.' },
     ],
-    related: ['vnutrennie-seti/vnutrennyaya-kanalizaciya', 'drenazh-i-vodootvod', 'naruzhnoe-vodosnabzhenie'],
-    objTags: ['kanalizaciya'], quiz: 'seti', gallery: ['53', '09'],
+    related: ['vodosnabzhenie/vnutrennee/vnutrennyaya-kanalizaciya', 'vodosnabzhenie/naruzhnoe', 'servis/obsluzhivanie-septikov'],
+    objTags: ['kanalizaciya'], quiz: 'voda', gallery: ['53', '09'],
   },
   {
-    slug: 'naruzhnoe-vodosnabzhenie', tpl: 'Ш2', kind: 'secondary', priority: 'второстепенная', name: 'Ввод воды и обвязка скважины',
+    slug: 'vodosnabzhenie/naruzhnoe', tpl: 'Ш2', kind: 'child', priority: 'основная', name: 'Наружное водоснабжение',
     query: 'ввод воды в дом · обвязка скважины · кессон',
     title: 'Ввод воды в дом и обвязка скважины под ключ — цены',
     description: 'Наружное водоснабжение частного дома: обвязка скважины в кессоне или с адаптером, ввод воды в дом, утепление. Под ключ от 120 000 ₽.',
@@ -684,53 +644,94 @@ export const PAGES: Page[] = [
       { q: 'На какой глубине прокладывать водопровод?', a: 'Ниже глубины промерзания — для Ленобласти это 1,5–1,8 м. Если мешают грунтовые воды или скальный грунт, прокладываем мельче, но с утеплением и греющим кабелем.' },
       { q: 'Вы бурите скважины?', a: 'Нет, бурение делает специализированная организация. Мы приезжаем после бурения: обвязка, ввод в дом и разводка по дому.' },
     ],
-    related: ['vnutrennie-seti/razvodka-vody', 'kanalizaciya', 'kompleks-pod-klyuch'],
-    objTags: ['voda'], quiz: 'seti', gallery: ['21', '43', '54'],
-  },
-  {
-    slug: 'drenazh-i-vodootvod', tpl: 'Ш2', kind: 'secondary', priority: 'второстепенная', name: 'Дренаж, отмостка, ливнёвка',
-    query: 'дренаж участка · дренаж вокруг дома и отмостка · ливнёвка',
-    title: 'Дренаж участка, отмостка и ливнёвка — цены в СПб и ЛО',
-    description: 'Дренаж участка и вокруг дома, отмостка, ливневая канализация в Ленинградской области. Цены за погонный метр, работы вместе с инженерными сетями.',
-    h1: 'Дренаж, отмостка и ливневая канализация',
-    offer: 'Отводим воду от фундамента и с участка — считаем уклоны по нивелиру',
-    priceFrom: 'от 2 000 ₽ за п. м', priceMin: 2000, hero: '53',
-    answer: 'Дренаж вокруг дома стоит от 2 400 ₽ за погонный метр, отмостка — от 3 200 ₽, ливневая канализация — от 2 000 ₽. Для дома 10×12 м дренаж с отмосткой обходится от 280 тыс ₽ и занимает 5–7 дней. Работы делаем как дополнение к инженерным сетям дома, чтобы не перекапывать участок дважды.',
-    prices: [
-      ['Дренаж вокруг дома', 'п. м', 'от 2 400 ₽'],
-      ['Дренаж участка', 'п. м', 'от 1 900 ₽'],
-      ['Отмостка утеплённая', 'п. м', 'от 3 200 ₽'],
-      ['Ливневая канализация', 'п. м', 'от 2 000 ₽'],
-      ['Дренажный колодец', 'шт', 'от 12 000 ₽'],
-    ],
-    includes: [],
-    anchors: [
-      { id: 'drenazh', title: 'Дренаж участка и вокруг дома', text: 'Кольцевой дренаж отводит грунтовую воду от фундамента, дренаж участка — осушает газон и грядки. Трубу в геотекстиле укладываем в щебень с уклоном не менее 5 мм на метр, воду отводим в колодец или канаву.', prices: [['Дренаж вокруг дома', 'п. м', 'от 2 400 ₽'], ['Дренаж участка', 'п. м', 'от 1 900 ₽'], ['Дренажный колодец', 'шт', 'от 12 000 ₽']] },
-      { id: 'otmostka', title: 'Отмостка', text: 'Утеплённая отмостка шириной от 1 м защищает фундамент от воды и пучения. Бетонная, мягкая под плитку или газон — выбираем по фундаменту и ландшафту.', prices: [['Отмостка утеплённая бетонная', 'п. м', 'от 3 200 ₽'], ['Мягкая отмостка', 'п. м', 'от 2 600 ₽']] },
-      { id: 'livnevka', title: 'Ливневая канализация', text: 'Собираем воду с водостоков в дождеприёмники и отводим закрытыми трубами в колодец или канаву — дорожки и отмостка не размываются.', prices: [['Ливневая канализация', 'п. м', 'от 2 000 ₽'], ['Дождеприёмник', 'шт', 'от 3 500 ₽']] },
-    ],
-    checklist: ['Известна отметка фундамента', 'Понятно, куда отводить воду', 'Подъезд для техники'],
-    faq: [
-      { q: 'Нужен ли дренаж, если участок сухой?', a: 'Если грунт песчаный и грунтовые воды глубже 2 м — часто нет, достаточно отмостки и ливнёвки. На глинах Ленобласти вода весной стоит у фундамента, и дренаж нужен почти всегда.' },
-      { q: 'Чем ливнёвка отличается от дренажа?', a: 'Ливнёвка собирает дождевую воду с крыши и дорожек, дренаж — грунтовую воду из почвы. Это разные системы, смешивать их в одной трубе нельзя.' },
-      { q: 'Когда делать дренаж и отмостку?', a: 'После обратной засыпки фундамента и до благоустройства участка. Удобно совместить с вводом воды и наружной канализацией — одна техника и одна траншея.' },
-    ],
-    related: ['kanalizaciya', 'naruzhnoe-vodosnabzhenie', 'otoplenie/leningradskaya-oblast'],
-    objTags: [], quiz: 'kompleks',
+    related: ['vodosnabzhenie/vnutrennee/razvodka-vody', 'vodosnabzhenie/filtraciya', 'kanalizaciya'],
+    objTags: ['voda'], quiz: 'voda', gallery: ['21', '43', '54'],
   },
 ];
 
-export const isSecondary = (slug: string) => SECONDARY.includes(slug);
-export const pageBySlug = (slug: string) => PAGES.find((p) => p.slug === slug);
+// ───────────── Сборка списка страниц ─────────────
+// Порядок — как в карте адресов PRAVKI-V2.md: раздел меню, его подуслуги, затем SEO-страницы вне меню.
+const ORDER = [
+  'otoplenie', 'otoplenie/kotelnaya', 'otoplenie/teplyj-pol', 'otoplenie/radiatory', 'otoplenie/avtomatika',
+  'otoplenie/kotelnaya/ustanovka-gazovogo-kotla', 'otoplenie/gazovoe', 'otoplenie/bez-gaza', 'otoplenie/leningradskaya-oblast', 'kompleks-pod-klyuch',
+  'vodosnabzhenie', 'vodosnabzhenie/vnutrennee', 'vodosnabzhenie/vnutrennee/razvodka-vody', 'vodosnabzhenie/vnutrennee/vnutrennyaya-kanalizaciya',
+  'vodosnabzhenie/naruzhnoe', 'vodosnabzhenie/filtraciya',
+  'kanalizaciya', 'kanalizaciya/yunilos-astra', 'kanalizaciya/topas', 'kanalizaciya/evrolos', ...SEPTIC_LANDINGS,
+  'zapusk-gazovyh-kotlov', 'zapusk-gazovyh-kotlov/opressovka', 'zapusk-gazovyh-kotlov/balansirovka',
+  'servis', 'servis/obsluzhivanie-kotelnyh', 'servis/obsluzhivanie-vodosnabzheniya', 'servis/obsluzhivanie-otopleniya', 'servis/obsluzhivanie-septikov',
+];
+const RAW = [...CORE, ...V2_PAGES];
+const BASE: Page[] = ORDER.map((slug) => {
+  const p = RAW.find((x) => x.slug === slug);
+  if (!p) throw new Error(`Нет данных страницы ${slug}`);
+  return p;
+});
+if (RAW.length !== BASE.length) throw new Error('Страница не попала в ORDER: ' + RAW.filter((p) => !ORDER.includes(p.slug)).map((p) => p.slug).join(', '));
+
 export const href = (slug: string) => (slug ? `/${slug}/` : '/');
+const toSlug = (url: string) => url.replace(/^\/+|\/+$/g, '');
+
+// Страницы вне списка посадочных: на них тоже можно ссылаться из текстов и поля related.
+export const STATIC_LINKS: Record<string, string> = {
+  '/': 'Главная', '/ceny/': 'Цены', '/obekty/': 'Объекты', '/otzyvy/': 'Отзывы', '/kontakty/': 'Контакты', '/o-kompanii/': 'О компании',
+  '/blog/': 'Статьи', '/blog/chem-otaplivat-dom-bez-gaza/': 'Чем отапливать дом без газа',
+};
+const BASE_URLS = new Set(BASE.map((p) => href(p.slug)));
+/** Существует ли страница с таким адресом (для ссылок из авторских текстов). */
+export const knownUrl = (url: string) => BASE_URLS.has(url) || url in STATIC_LINKS || OBJECTS.some((o) => url === `/obekty/${o.slug}/`);
+
+// Поля из content/<ключ>.json перекрывают дефолтные данные страницы.
+function withContent(p: Page): Page {
+  const c = contentFor(href(p.slug));
+  if (!c) return p;
+  const out: Page = { ...p, hasContent: true, draft: false };
+  // Разметка ссылок [текст](/адрес/) остаётся только там, где текст выводится через rich():
+  // answer, intro, sections, faq.a. В остальных полях она снимается.
+  for (const f of ['title', 'description', 'h1', 'eyebrow', 'offer', 'priceFrom', 'updated'] as const) if (c[f]) out[f] = plain(c[f]!);
+  if (c.answer) out.answer = c.answer;
+  if (c.priceFrom) out.priceMin = priceNumber(c.priceFrom) ?? p.priceMin;
+  if (c.intro) out.intro = c.intro;
+  if (c.sections) {
+    // id раздела текста не должен совпасть с якорем «видов работ» той же страницы.
+    const taken = new Set((p.anchors ?? []).map((a) => a.id));
+    out.sections = c.sections.map((s) => (taken.has(s.id) ? { ...s, id: `o-${s.id}` } : s));
+  }
+  if (c.prices) out.prices = c.prices.map((r) => r.map(plain) as [string, string, string]);
+  if (c.included) out.includes = c.included.map(plain);
+  if (c.steps) {
+    const steps = c.steps.map((s) => ({ ...s, t: plain(s.t), d: plain(s.d) }));
+    if (p.tpl === 'Ш10' && p.quick) out.quick = { ...p.quick, hours: steps };
+    else out.steps = steps;
+  }
+  if (c.faq) out.faq = c.faq.map((f) => ({ q: plain(f.q), a: f.a }));
+  if (c.related) {
+    const urls = [...new Set(c.related)].filter((u) => u !== href(p.slug));
+    const slugs = urls.filter((u) => BASE_URLS.has(u)).map(toSlug);
+    if (slugs.length) out.related = slugs;
+    out.relatedLinks = urls.filter((u) => !BASE_URLS.has(u) && knownUrl(u));
+  }
+  return out;
+}
+
+let cache: { v: number; pages: Page[] } | null = null;
+/** Все посадочные страницы с учётом текстов авторов. */
+export function allPages(): Page[] {
+  const v = contentVersion();
+  if (!cache || cache.v !== v) cache = { v, pages: BASE.map(withContent) };
+  return cache.pages;
+}
+export const pageSlugs = () => ORDER;
+export const pageBySlug = (slug: string) => allPages().find((p) => p.slug === slug);
+
+const parentOf = (p: Page) => p.parent ?? (p.slug.includes('/') ? p.slug.slice(0, p.slug.lastIndexOf('/')) : '');
 
 export function crumbsFor(slug: string) {
-  const parts = slug.split('/');
   const out: { href: string; label: string }[] = [];
-  for (let i = 1; i <= parts.length; i++) {
-    const s = parts.slice(0, i).join('/');
-    const p = pageBySlug(s);
-    if (p) out.push({ href: href(s), label: p.name });
+  let cur = pageBySlug(slug);
+  while (cur) {
+    out.unshift({ href: href(cur.slug), label: cur.name });
+    const up = parentOf(cur);
+    cur = up ? pageBySlug(up) : undefined;
   }
   return out;
 }
@@ -741,7 +742,7 @@ export function serviceLd(p: Page) {
     '@type': 'Service',
     name: p.h1,
     serviceType: p.name,
-    description: p.description,
+    description: plain(p.description),
     provider: { '@id': 'https://sistema-tepla.ru/#org' },
     areaServed: [{ '@type': 'City', name: 'Санкт-Петербург' }, { '@type': 'AdministrativeArea', name: 'Ленинградская область' }],
     url: `https://sistema-tepla.ru${href(p.slug)}`,

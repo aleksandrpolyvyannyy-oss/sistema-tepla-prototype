@@ -1,15 +1,18 @@
 ---
 // Единый квиз сайта: 5 шагов → вилка цены на экране → контакт. Только клиентский JS, на сервер ничего не уходит.
-// Шаг 1 — только основные направления, шаг 4 — второстепенные (ЗАПУСК-ПРИОРИТЕТЫ, раздел 3).
+// Шаг 1 — разделы сайта (PRAVKI-V2.md): отопление, водоснабжение, канализация, запуск газового котла, сервис, комплекс.
 import LeadForm from './LeadForm.astro';
 import Section from './Section.astro';
-interface Props { preset?: 'otoplenie' | 'seti' | 'zapusk' | 'kompleks'; title?: string }
+import type { QuizKind } from '../data/pages';
+interface Props { preset?: QuizKind; title?: string }
 const { preset = 'otoplenie', title = 'Рассчитайте стоимость за 1 минуту' } = Astro.props;
 const services = [
   { v: 'otoplenie', t: 'Отопление', d: 'котельная, тёплый пол, радиаторы' },
-  { v: 'seti', t: 'Внутренняя разводка', d: 'вода и канализация по дому' },
-  { v: 'zapusk', t: 'Запуск и наладка отопления', d: 'пусконаладка, первый пуск котла' },
-  { v: 'kompleks', t: 'Комплекс под ключ', d: 'отопление + вода + канализация' },
+  { v: 'voda', t: 'Водоснабжение', d: 'ввод воды, фильтрация, разводка по дому' },
+  { v: 'kanalizaciya', t: 'Канализация', d: 'станция очистки, септик, наружные сети' },
+  { v: 'zapusk', t: 'Запуск газового котла', d: 'первый пуск, пусконаладка, опрессовка' },
+  { v: 'servis', t: 'Сервис', d: 'обслуживание котельной, отопления, воды, септика' },
+  { v: 'kompleks', t: 'Всё под ключ', d: 'отопление + вода + канализация' },
 ];
 ---
 <Section id="raschet" variant="tint" eyebrow="Калькулятор" title={title} lead="Пять коротких вопросов — и вилка стоимости на экране. Точную смету дадим после замера.">
@@ -21,7 +24,7 @@ const services = [
     <div class="quiz__body">
       <fieldset class="quiz__step is-active" data-step="1" style="border:0;padding:0;margin:0">
         <legend class="quiz__q">Что нужно сделать?</legend>
-        <p class="quiz__hint">Выберите основное направление</p>
+        <p class="quiz__hint">Выберите раздел</p>
         <div class="opts">
           {services.map((s) => (
             <label class="opt"><input type="radio" name="q-service" value={s.v} checked={s.v === preset} /><span><span>{s.t}<small>{s.d}</small></span></span></label>
@@ -62,9 +65,9 @@ const services = [
         <legend class="quiz__q">Что ещё нужно в доме?</legend>
         <p class="quiz__hint">Добавим в расчёт — вместе выходит дешевле. Можно пропустить.</p>
         <div class="opts">
-          <label class="opt"><input type="checkbox" name="q-extra" value="septik" /><span><span>Наружная канализация и септик<small>от 145 000 ₽</small></span></span></label>
+          <label class="opt"><input type="checkbox" name="q-extra" value="septik" /><span><span>Станция очистки или септик<small>от 145 000 ₽</small></span></span></label>
           <label class="opt"><input type="checkbox" name="q-extra" value="voda" /><span><span>Ввод воды и обвязка скважины<small>от 45 000 ₽</small></span></span></label>
-          <label class="opt"><input type="checkbox" name="q-extra" value="drenazh" /><span><span>Дренаж и отмостка<small>от 2 400 ₽/п. м</small></span></span></label>
+          <label class="opt"><input type="checkbox" name="q-extra" value="filtr" /><span><span>Система фильтрации воды<small>от 60 000 ₽</small></span></span></label>
         </div>
       </fieldset>
 
@@ -148,14 +151,17 @@ const services = [
       const fuelK = [1, 0.85, 1.6, 1.15, 1][Number(val('q-fuel') ?? 4)];
       let lo = 0, hi = 0, round = 10000;
       if (s === 'otoplenie') { lo = a * 2600 * fuelK; hi = a * 4300 * fuelK; }
-      if (s === 'seti') { lo = a * 900; hi = a * 1500; }
+      if (s === 'voda') { lo = a * 900; hi = a * 1500; }
+      if (s === 'kanalizaciya') { lo = 180000 + a * 100; hi = 290000 + a * 300; }
+      if (s === 'servis') { lo = 6000 + a * 20; hi = 15000 + a * 40; round = 1000; }
       if (s === 'kompleks') { lo = a * 3800 * fuelK; hi = a * 6000 * fuelK; }
       if (s === 'zapusk') { lo = 12000 + a * 60; hi = 25000 + a * 180; round = 1000; }
-      if (s !== 'zapusk') { lo *= wallK * stageK; hi *= wallK * stageK; }
+      if (s === 'otoplenie' || s === 'voda' || s === 'kompleks') { lo *= wallK * stageK; hi *= wallK * stageK; }
       const extras: Record<string, [number, number, string]> = {
-        septik: [145000, 260000, 'септик'], voda: [90000, 180000, 'ввод воды'], drenazh: [120000, 300000, 'дренаж'],
+        septik: [145000, 260000, 'септик'], voda: [90000, 180000, 'ввод воды'], filtr: [60000, 140000, 'фильтрация'],
       };
-      const chosen = [...quiz.querySelectorAll<HTMLInputElement>('input[name="q-extra"]:checked')].map((i) => i.value);
+      // Допуслуга, совпадающая с выбранным разделом, второй раз не считается.
+      const chosen = [...quiz.querySelectorAll<HTMLInputElement>('input[name="q-extra"]:checked')].map((i) => i.value).filter((c) => !(s === 'kanalizaciya' && c === 'septik'));
       chosen.forEach((c) => { lo += extras[c][0]; hi += extras[c][1]; });
       const r = (n: number) => Math.round(n / round) * round;
       quiz.querySelector('[data-q-fork]')!.textContent = `${fmt(r(lo))} – ${fmt(r(hi))} ₽`;

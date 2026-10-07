@@ -1,18 +1,29 @@
 ---
+// Шапка (PRAVKI-V2.md, п. 1): подпись «ИНЖЕНЕРНЫЕ СЕТИ», основное меню из шести вкладок,
+// «Цены / Объекты / Отзывы / Контакты» — в верхней тонкой строке (на телефоне — внизу мобильного меню).
+// Подсветка: вкладка раздела активна на странице раздела и на любой его подстранице, включая SEO-страницы вне меню;
+// в выпадающем списке отмечена текущая подуслуга (или подуслуга-родитель текущей страницы).
 import Logo from './Logo.astro';
-import { NAV, SITE } from '../data/site';
-const path = Astro.url.pathname;
+import { NAV, TOP_LINKS, SITE, cleanPath, inSection, navIndexFor } from '../data/site';
+const path = cleanPath(Astro.url.pathname);
 const calc = Astro.props.quiz ? '#raschet' : '/ceny/#raschet';
-const isActive = (href?: string) => href && path.startsWith(href);
+const activeIdx = navIndexFor(path);
+// aria-current: «page» — это сама страница, «true» — страница внутри раздела.
+const cur = (href: string) => (path === href ? 'page' : inSection(path, href) ? 'true' : undefined);
+// Пункт выпадающего списка: точное совпадение или самый длинный адрес-предок текущей страницы (кроме «весь раздел»).
+function subCurrent(children: { href: string; note?: string }[], href: string) {
+  if (path === href) return 'page';
+  if (children.some((c) => c.href === path)) return undefined;
+  const best = children.filter((c) => !c.note && inSection(path, c.href)).sort((a, b) => b.href.length - a.href.length)[0];
+  return best?.href === href ? 'true' : undefined;
+}
 ---
 <div class="topbar">
   <div class="wrap">
-    <span>{SITE.area} · {SITE.hours}</span>
+    <span class="topbar__info">{SITE.area} · {SITE.hours}</span>
     <nav class="topbar__links" aria-label="Дополнительное меню">
+      {TOP_LINKS.map((l) => <a href={l.href} aria-current={cur(l.href)}>{l.label}</a>)}
       <a class="topbar__phone" href={SITE.phoneHref}>{SITE.phone}</a>
-      <a href="/otzyvy/">Отзывы</a>
-      <a href="/kontakty/">Контакты</a>
-      <a href="/karta-prototipa/">Карта прототипа</a>
     </nav>
   </div>
 </div>
@@ -22,7 +33,7 @@ const isActive = (href?: string) => href && path.startsWith(href);
       <Logo />
       <span>
         <span class="brand__name"><b>СИСТЕМА</b> <i>ТЕПЛА</i></span>
-        <span class="brand__sub">МОНТАЖ И АВТОМАТИКА ОТОПЛЕНИЯ</span>
+        <span class="brand__sub">ИНЖЕНЕРНЫЕ СЕТИ</span>
       </span>
     </a>
     <a class="header__phone" href={SITE.phoneHref}><b>{SITE.phone}</b><span>{SITE.hours}</span></a>
@@ -35,23 +46,49 @@ const isActive = (href?: string) => href && path.startsWith(href);
   <div class="header__navrow"><div class="wrap">
     <nav class="nav" id="main-nav" aria-label="Основное меню">
       <ul class="nav__list">
-        {NAV.map((item, i) => item.children ? (
-          <li class="nav__item" data-sub>
-            <button class="nav__btn" type="button" aria-expanded="false" aria-controls={`sub-${i}`}>
+        {NAV.map((item, i) => item.groups ? (
+          <li class:list={['nav__item', { 'is-active': i === activeIdx }]} data-sub data-active={i === activeIdx ? '' : undefined}>
+            <button class="nav__btn" type="button" aria-expanded="false" aria-controls={`sub-${i}`} aria-current={i === activeIdx ? 'true' : undefined}>
+              {item.label}
+              <svg viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </button>
+            <div class="nav__sub nav__sub--cols" id={`sub-${i}`}>
+              <a class="nav__all" href={item.href} aria-current={path === item.href ? 'page' : undefined}><small>весь раздел</small>{item.label}: септики и станции под ключ</a>
+              <div class="nav__cols">
+                {item.groups.map((g) => (
+                  <div class="nav__col">
+                    <div class="nav__col-title">{g.title}</div>
+                    <ul>
+                      {g.links.map((c) => <li><a href={c.href} aria-current={path === c.href ? 'page' : undefined}>{c.label}</a></li>)}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+              {item.cta && <a class="btn btn--primary nav__cta" href={item.cta.href}>{item.cta.label}</a>}
+            </div>
+          </li>
+        ) : item.children ? (
+          <li class:list={['nav__item', { 'is-active': i === activeIdx }]} data-sub data-active={i === activeIdx ? '' : undefined}>
+            <button class="nav__btn" type="button" aria-expanded="false" aria-controls={`sub-${i}`} aria-current={i === activeIdx ? 'true' : undefined}>
               {item.label}
               <svg viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             </button>
             <ul class="nav__sub" id={`sub-${i}`}>
               {item.children.map((c) => (
-                <li><a href={c.href} aria-current={path === c.href ? 'page' : undefined}>{c.note && <small>{c.note}</small>}{c.label}</a></li>
+                <li><a href={c.href} aria-current={subCurrent(item.children!, c.href)}>{c.note && <small>{c.note}</small>}{c.label}</a></li>
               ))}
             </ul>
           </li>
         ) : (
-          <li class="nav__item"><a class="nav__link" href={item.href} aria-current={isActive(item.href) ? 'page' : undefined}>{item.label}</a></li>
+          <li class:list={['nav__item', { 'is-active': i === activeIdx }]}>
+            <a class="nav__link" href={item.href} aria-current={i === activeIdx ? (path === item.href ? 'page' : 'true') : undefined}>{item.label}</a>
+          </li>
         ))}
-        <li class="nav__item nav__item--m"><a class="nav__link" href="/otzyvy/">Отзывы</a></li>
-        <li class="nav__item nav__item--m"><a class="nav__link" href="/kontakty/">Контакты</a></li>
+        {TOP_LINKS.map((l, i) => (
+          <li class:list={['nav__item', 'nav__item--m', { 'nav__item--m-first': i === 0, 'is-active': !!cur(l.href) }]}>
+            <a class="nav__link" href={l.href} aria-current={cur(l.href)}>{l.label}</a>
+          </li>
+        ))}
       </ul>
     </nav>
   </div></div>
@@ -60,6 +97,12 @@ const isActive = (href?: string) => href && path.startsWith(href);
 <script>
   const header = document.querySelector<HTMLElement>('[data-header]')!;
   const burger = header.querySelector<HTMLButtonElement>('[data-burger]')!;
+  const desktop = matchMedia('(min-width: 1360px)');
+  const closeSubs = (except?: Element) => header.querySelectorAll('[data-sub].is-open').forEach((o) => {
+    if (o === except) return;
+    o.classList.remove('is-open');
+    o.querySelector('button')!.setAttribute('aria-expanded', 'false');
+  });
   const setMenu = (open: boolean) => {
     // Меню занимает весь экран ниже шапки, где бы шапка ни находилась (над ней плашка прототипа).
     header.style.setProperty('--menu-top', `${Math.max(0, header.getBoundingClientRect().bottom)}px`);
@@ -68,25 +111,32 @@ const isActive = (href?: string) => href && path.startsWith(href);
     burger.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
     document.documentElement.classList.toggle('menu-open', open);
     document.documentElement.style.overflow = open ? 'hidden' : '';
+    closeSubs();
+    // На телефоне раздел, в котором находится посетитель, сразу раскрыт: видно и вкладку, и текущую подуслугу.
+    const active = open ? header.querySelector<HTMLElement>('[data-sub][data-active]') : null;
+    if (active) {
+      active.classList.add('is-open');
+      active.querySelector('button')!.setAttribute('aria-expanded', 'true');
+    }
   };
   burger.addEventListener('click', () => setMenu(!header.classList.contains('is-menu')));
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (header.classList.contains('is-menu')) { setMenu(false); burger.focus(); }
-    header.querySelectorAll('[data-sub].is-open').forEach((o) => { o.classList.remove('is-open'); o.querySelector('button')!.setAttribute('aria-expanded', 'false'); });
+    closeSubs();
   });
-  matchMedia('(min-width: 1360px)').addEventListener('change', (e) => { if (e.matches) setMenu(false); });
+  desktop.addEventListener('change', (e) => { if (e.matches) setMenu(false); });
   header.querySelectorAll<HTMLElement>('[data-sub]').forEach((li) => {
     const btn = li.querySelector('button')!;
     btn.addEventListener('click', () => {
       const open = !li.classList.contains('is-open');
-      header.querySelectorAll('[data-sub].is-open').forEach((o) => { if (o !== li) { o.classList.remove('is-open'); o.querySelector('button')!.setAttribute('aria-expanded', 'false'); } });
+      closeSubs(li);
       li.classList.toggle('is-open', open);
       btn.setAttribute('aria-expanded', String(open));
     });
   });
   document.addEventListener('click', (e) => {
-    if (!header.contains(e.target as Node)) header.querySelectorAll('[data-sub].is-open').forEach((o) => o.classList.remove('is-open'));
+    if (!header.contains(e.target as Node)) closeSubs();
   });
   header.querySelectorAll('.nav a').forEach((a) => a.addEventListener('click', () => setMenu(false)));
 </script>

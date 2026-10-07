@@ -1,0 +1,56 @@
+---
+// Основной текст страницы: вводные абзацы и разделы (заголовок H2, абзацы, список, таблица).
+// Данные приходят из content/<ключ>.json или из дефолтов страницы. Текст экранируется (src/lib/content.ts → rich).
+// subs — разделы со ссылкой на дочернюю страницу: если автор написал раздел с тем же id, ссылка добавляется к нему.
+import { rich } from '../lib/content';
+import { pageBySlug, href, type PageSection } from '../data/pages';
+interface Sub { id: string; slug: string; title: string; text: string }
+interface Props { intro?: string[]; sections?: PageSection[]; subs?: Sub[]; updated?: string; draft?: boolean; id?: string; variant?: 'tint' | 'plain' }
+const { intro = [], sections = [], subs = [], updated, draft = false, id = 'podrobno', variant = 'plain' } = Astro.props;
+const r = rich;
+const subFor = (sid: string) => subs.find((s) => s.id === sid);
+const restSubs = subs.filter((s) => !sections.some((x) => x.id === s.id));
+const empty = !intro.length && !sections.length && !restSubs.length;
+---
+{!empty && (
+  <section id={id} class:list={['section', 'section--text', { 'section--tint': variant === 'tint' }]}>
+    <div class="wrap">
+      <div class="prose prose--page">
+        {draft && <p class="proto-note">Заготовка прототипа: временный текст. Его заменит текст автора из папки content.</p>}
+        {intro.map((p) => <p class="prose__intro" set:html={r(p)} />)}
+        {sections.map((s) => {
+          const sub = subFor(s.id);
+          const child = sub && pageBySlug(sub.slug);
+          return (
+            <Fragment>
+              <h2 id={s.id}>{s.h2}</h2>
+              {(s.paragraphs ?? []).map((p) => <p set:html={r(p)} />)}
+              {s.list && s.list.length > 0 && <ul>{s.list.map((li) => <li set:html={r(li)} />)}</ul>}
+              {s.table && (
+                <div class="table-wrap prose__table">
+                  <table class="compare">
+                    {s.table.head.length > 0 && <thead><tr>{s.table.head.map((h) => <th scope="col">{h}</th>)}</tr></thead>}
+                    <tbody>{s.table.rows.map((row) => <tr>{row.map((c) => <td set:html={r(c)} />)}</tr>)}</tbody>
+                  </table>
+                </div>
+              )}
+              {child && <p class="prose__more"><a class="btn btn--ghost" href={href(child.slug)}>{sub!.title}: цены и подробности</a> <span class="muted">{child.priceFrom}</span></p>}
+            </Fragment>
+          );
+        })}
+        {restSubs.map((s) => {
+          const child = pageBySlug(s.slug);
+          return (
+            <Fragment>
+              <h2 id={s.id}>{s.title}</h2>
+              <p>{s.text}</p>
+              {child && <p class="prose__more"><a class="btn btn--ghost" href={href(child.slug)}>{s.title}: цены и подробности</a> <span class="muted">{child.priceFrom}</span></p>}
+            </Fragment>
+          );
+        })}
+        {updated && <p class="prose__updated">Обновлено {updated}</p>}
+      </div>
+    </div>
+  </section>
+)}
+{empty && updated && <p class="wrap prose__updated" style="margin-top:12px">Обновлено {updated}</p>}

@@ -12,14 +12,15 @@ import Faq from '../components/Faq.astro';
 import LeadSection from '../components/LeadSection.astro';
 import Related from '../components/Related.astro';
 import SectionNav from '../components/SectionNav.astro';
+import Prose from '../components/Prose.astro';
 import { NAV } from '../data/site';
 import { type Page, crumbsFor, serviceLd } from '../data/pages';
 interface Props { page: Page }
 const { page: p } = Astro.props;
-const services = NAV.filter((n) => n.children).flatMap((n) => n.children!).filter((c) => c.href !== `/${p.slug}/`);
+const services = NAV.filter((n) => n.children).flatMap((n) => n.children!).filter((c) => !c.note && c.href !== `/${p.slug}/`);
 ---
 <Base title={p.title} description={p.description} crumbs={crumbsFor(p.slug)} jsonld={[serviceLd(p)]} quiz>
-  <Hero h1={p.h1} offer={p.offer} price={p.priceFrom} img={p.hero} eyebrow="География работ"
+  <Hero h1={p.h1} offer={p.offer} price={p.priceFrom} img={p.hero} eyebrow={p.eyebrow ?? 'География работ'}
     trust={[['1–2 дня', 'выезд замерщика по области'], ['60 км', 'от КАД — замер бесплатно'], ['3 года', 'гарантия на работы']]} />
   <DirectAnswer text={p.answer} />
   <SectionNav items={[{ id: 'osobennosti', label: 'Особенности района' }, { id: 'obekty', label: 'Объекты' }, { id: 'ceny', label: 'Цены' }, { id: 'raschet', label: 'Расчёт' }, { id: 'voprosy', label: 'Вопросы' }]} />
@@ -40,9 +41,11 @@ const services = NAV.filter((n) => n.children).flatMap((n) => n.children!).filte
     </div>
   </Section>
 
-  <ObjectsGrid tags={p.objTags} title="Объекты в Ленинградской области" gallery={p.gallery} />
+  <Prose intro={p.intro} sections={p.sections} updated={p.updated} variant="tint" />
 
-  <Section id="ceny" eyebrow="Цены" title="Пакеты и цены для области" lead="Цены одинаковые для СПб и области; доплата за выезд — только дальше 60 км от КАД.">
+  <ObjectsGrid tags={p.objTags} title="Объекты в Ленинградской области" gallery={p.gallery} variant="plain" />
+
+  <Section id="ceny" variant="tint" eyebrow="Цены" title="Пакеты и цены для области" lead="Цены одинаковые для СПб и области; доплата за выезд — только дальше 60 км от КАД.">
     {p.packages && <Packages items={p.packages} />}
     <div class="mt-40"><PriceTable rows={p.prices} /></div>
   </Section>
@@ -51,7 +54,7 @@ const services = NAV.filter((n) => n.children).flatMap((n) => n.children!).filte
 
   <Faq items={p.faq} />
 
-  <Related slugs={p.related} title="Соседние направления">
+  <Related slugs={p.related} links={p.relatedLinks} title="Соседние направления">
     <div class="minor-line"><span>Что ещё делаем в Ленобласти:</span>{services.map((s) => <a class="chip" href={s.href}>{s.label}</a>)}</div>
   </Related>
   <LeadSection title="Замер в вашем посёлке — за 1–2 дня" uid="lead-geo" />

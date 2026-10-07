@@ -98,6 +98,7 @@ ul { padding-left: 1.2em; }
 .topbar .wrap { display: flex; gap: 20px; align-items: center; min-height: 36px; justify-content: space-between; }
 .topbar a { color: #dfe7f1; text-decoration: none; }
 .topbar a:hover { color: #fff; }
+.topbar__links a[aria-current] { color: #fff; font-weight: 700; box-shadow: 0 2px 0 var(--amber); }
 .topbar__links { display: flex; gap: 18px; align-items: center; }
 .topbar__phone { font-weight: 700; color: #fff !important; font-size: 14px; }
 .header { position: sticky; top: 0; z-index: 50; background: rgba(255,255,255,.97); backdrop-filter: saturate(1.4) blur(8px); }
@@ -111,19 +112,21 @@ ul { padding-left: 1.2em; }
 .brand__sub { display: block; margin-top: 7px; font-size: 11px; font-weight: 600; letter-spacing: .16em; color: var(--gray); }
 .nav { margin: 0; }
 .header__navrow { border-top: 1px solid var(--line); }
-.header__navrow .nav__list { justify-content: space-between; min-height: 50px; }
+.header__navrow .nav__list { justify-content: flex-start; gap: 6px; min-height: 50px; margin-left: -14px; }
 .nav__list { display: flex; align-items: center; gap: 2px; list-style: none; margin: 0; padding: 0; }
 .nav__item { position: relative; }
 .nav__item--m { display: none; }
 .nav__link, .nav__btn {
   display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 8px 11px; border: 0; background: none; cursor: pointer;
-  font: 600 14.5px/1.2 var(--font); color: var(--ink); text-decoration: none; border-radius: 8px; white-space: nowrap;
+  font: 600 15px/1.2 var(--font); color: var(--ink); text-decoration: none; border-radius: 8px; white-space: nowrap;
+  position: relative; padding-inline: 14px;
 }
-@media (max-width: 1440px) { .nav__link, .nav__btn { padding: 8px 7px; font-size: 14px; } }
-.header .wrap { max-width: 1360px; }
-.nav__item:nth-last-child(-n+6) > .nav__sub { left: auto; right: 0; }
 .nav__link:hover, .nav__btn:hover, .nav__item:focus-within > .nav__btn { color: var(--orange-600); background: var(--tint); }
-.nav__link[aria-current='page'] { color: var(--orange-600); }
+.nav__link[aria-current], .nav__btn[aria-current] { color: var(--orange-600); }
+/* Активная вкладка раздела: цвет + нижняя линия-шкала (на странице раздела и на всех его подстраницах). */
+.nav__item.is-active > .nav__link::after, .nav__item.is-active > .nav__btn::after {
+  content: ''; position: absolute; left: 14px; right: 14px; bottom: -3px; height: 4px; border-radius: 3px 3px 0 0; background: var(--scale);
+}
 .nav__btn svg { width: 10px; transition: transform .15s; }
 .nav__sub {
   position: absolute; top: 100%; left: 0; min-width: 290px; list-style: none; margin: 0; padding: 10px;
@@ -135,6 +138,8 @@ ul { padding-left: 1.2em; }
 .nav__item:hover > .nav__btn svg, .nav__item.is-open > .nav__btn svg { transform: rotate(180deg); }
 .nav__sub a { display: block; padding: 9px 12px; border-radius: 8px; color: var(--ink); text-decoration: none; font-size: 14.5px; font-weight: 500; }
 .nav__sub a:hover { background: var(--bg); color: var(--orange-600); }
+/* Текущая подуслуга в выпадающем списке */
+.nav__sub a[aria-current] { background: var(--tint); color: var(--orange-600); font-weight: 700; box-shadow: inset 3px 0 0 var(--orange); }
 .nav__sub a small { display: block; font-size: 11px; color: var(--gray); letter-spacing: .06em; text-transform: uppercase; }
 .header__phone { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; text-decoration: none; line-height: 1.2; flex-shrink: 0; }
 .header__phone b { font-size: 17px; color: var(--navy-900); white-space: nowrap; }
@@ -168,14 +173,24 @@ ul { padding-left: 1.2em; }
   .header.is-menu .nav { display: block; }
   .nav__list { flex-direction: column; align-items: stretch; gap: 0; }
   .nav__item { border-bottom: 1px solid var(--line); }
+  .header__navrow .nav__list { margin-left: 0; gap: 0; }
   .nav__item--m { display: block; }
   .nav__link, .nav__btn { width: 100%; justify-content: space-between; font-size: 17px; min-height: 56px; padding: 12px 4px; }
+  /* В открытом меню линия-шкала идёт под всей строкой активного раздела */
+  .nav__item.is-active { border-bottom-color: transparent; }
+  .nav__item.is-active > .nav__link::after, .nav__item.is-active > .nav__btn::after { left: 0; right: 0; bottom: 0; height: 3px; border-radius: 2px; }
+  .nav__item.is-active.is-open > .nav__btn::after { bottom: 2px; }
+  /* «Цены / Объекты / Отзывы / Контакты» — внизу мобильного меню, вторым планом */
+  .nav__item--m-first { margin-top: 20px; border-top: 1px solid var(--line); }
+  .nav__item--m .nav__link { font-size: 15.5px; min-height: 50px; font-weight: 600; color: var(--muted); }
+  .nav__item--m .nav__link[aria-current] { color: var(--orange-600); }
   .nav__sub { position: static; opacity: 1; visibility: visible; transform: none; box-shadow: none; border: 0; padding: 0 0 12px; display: none; min-width: 0; }
   .nav__sub::before { display: none; }
   .nav__item.is-open > .nav__sub { display: block; }
   .nav__item:hover > .nav__sub { display: none; }
   .nav__item.is-open:hover > .nav__sub { display: block; }
   .nav__sub a { font-size: 16px; padding: 11px 12px; }
+  .nav__sub a small { margin-bottom: 2px; }
 }
 @media (max-width: 520px) {
   .topbar { display: none; }
@@ -467,7 +482,7 @@ td.num { white-space: nowrap; font-weight: 700; color: var(--navy-900); }
 .footer { background: var(--navy-900); color: #aebbd0; font-size: 14.5px; padding-top: 56px; margin-top: 0; }
 .footer a { color: #dfe7f1; text-decoration: none; }
 .footer a:hover { color: #fff; text-decoration: underline; }
-.footer__grid { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 32px; padding-bottom: 40px; }
+.footer__grid { display: grid; grid-template-columns: 1.25fr 1fr 1.15fr 1fr 1fr; gap: 28px; padding-bottom: 40px; }
 .footer h3 { color: #fff; font-size: 14px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 14px; }
 .footer ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
 .footer__brand svg { width: 64px; height: 64px; margin-bottom: 12px; }
@@ -475,7 +490,8 @@ td.num { white-space: nowrap; font-weight: 700; color: var(--navy-900); }
 .footer__bottom { border-top: 1px solid rgba(255,255,255,.1); padding-top: 20px; padding-bottom: 28px; font-size: 13px; display: flex; flex-wrap: wrap; gap: 10px 24px; justify-content: space-between; }
 .footer__proto { color: #f2d27a; }
 .link-btn { background: none; border: 0; padding: 0; font: inherit; color: #dfe7f1; cursor: pointer; text-decoration: underline; }
-@media (max-width: 960px) { .footer__grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 1180px) { .footer__grid { grid-template-columns: 1fr 1fr 1fr; } .footer__brand { grid-column: 1 / -1; } }
+@media (max-width: 760px) { .footer__grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 560px) { .footer__grid { grid-template-columns: 1fr; } }
 
 /* Нижняя панель на телефоне */
@@ -726,3 +742,169 @@ td.num { white-space: nowrap; font-weight: 700; color: var(--navy-900); }
 @media (max-width: 420px) { .mbar__long { display: none; } }
 
 @media (max-width: 400px) { .brand svg { width: 46px; height: 46px; } .brand__name { font-size: 18px; } .brand__sub { font-size: 8px; letter-spacing: .08em; } }
+
+/* ───── Версия 2: новая структура (PRAVKI-V2.md) ───── */
+
+/* Первый экран без фото: карточка «коротко» (страницы станций и обслуживания септиков) */
+.hero__grid--solo { grid-template-columns: minmax(0, 1fr); }
+.hero__facts { background: var(--navy-900); color: #dfe7f1; border-radius: 22px; padding: clamp(22px, 3vw, 34px); overflow: hidden; position: relative; }
+.hero__facts-title { font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--amber); margin-bottom: 14px; }
+.hero__facts dl { margin: 0; display: grid; gap: 0; }
+.hero__facts dl > div { padding: 14px 0; border-top: 1px solid rgba(255,255,255,.12); }
+.hero__facts dl > div:first-child { border-top: 0; padding-top: 0; }
+.hero__facts dt { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #8fa1ba; }
+.hero__facts dd { margin: 4px 0 0; font-size: clamp(17px, 1.7vw, 20px); font-weight: 700; color: #fff; line-height: 1.3; }
+.hero__facts .scale { position: absolute; left: 0; right: 0; bottom: 0; height: 5px; }
+@media (max-width: 880px) { .hero__facts { order: 1; align-self: stretch; margin-top: 22px; border-radius: 16px; } }
+
+/* Основной текст страницы (content/<ключ>.json) */
+.section--text { padding-block: clamp(32px, 4.4vw, 60px); }
+.prose--page { max-width: 860px; font-size: 16.5px; }
+.prose--page > :first-child { margin-top: 0; }
+.prose--page p { margin: 0 0 1em; }
+.prose--page .prose__intro { font-size: clamp(16.5px, 1.5vw, 18px); }
+.prose--page h2 { font-size: clamp(21px, 2.3vw, 26px); margin: 1.7em 0 .6em; scroll-margin-top: calc(var(--secnav-h) + 8px); }
+.prose--page ul { margin: 0 0 1.1em; padding-left: 0; list-style: none; }
+.prose--page ul li { position: relative; padding-left: 26px; margin-bottom: .5em; }
+.prose--page ul li::before { content: ''; position: absolute; left: 4px; top: .62em; width: 9px; height: 9px; border-radius: 50%; background: var(--orange); }
+.prose--page a { color: var(--orange-600); font-weight: 600; }
+.prose--page a.btn { color: var(--navy); }
+.prose--page a.btn:hover { color: #fff; }
+.prose__table { margin: 0 0 1.3em; }
+.prose__table table { font-size: 15px; min-width: 560px; }
+.prose__table th, .prose__table td { padding: 12px 14px; }
+.prose__more { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 1.2em !important; }
+.prose__updated { font-size: 13px; color: var(--gray); margin-top: 1.6em !important; }
+.proto-note { display: inline-block; padding: 8px 14px; border-radius: 10px; background: #FFF6D8; color: #6b5310; font-size: 13.5px; border: 1px dashed #e6cf80; }
+@media (max-width: 720px) {
+  .prose--page { font-size: 16px; }
+  .prose__table { margin-inline: calc(-1 * var(--gutter)); border-radius: 0; border-inline: 0; }
+  .prose__more .btn { width: 100%; text-align: center; }
+}
+
+/* «Также по теме»: SEO-страницы раздела вне меню */
+.also { margin-top: 28px; padding: 20px 22px; border-radius: var(--radius); background: var(--bg); }
+.section--tint .also { background: #fff; border: 1px solid var(--line); }
+.also h3 { font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+.also__list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.also__list a { display: flex; flex-direction: column; gap: 2px; height: 100%; padding: 12px 14px; border-radius: 12px; background: #fff; border: 1px solid var(--line); text-decoration: none; color: var(--navy-900); }
+.section--tint .also__list a { background: var(--bg); }
+.also__list a:hover { border-color: var(--orange); }
+.also__list b { font-weight: 700; font-size: 15px; line-height: 1.3; }
+.also__list span { font-size: 13px; color: var(--orange-600); font-weight: 600; }
+
+/* Страница «Канализация»: слева карточка внутренней канализации (28 %), справа плитка производителей (72 %) */
+.kanal { padding-block: clamp(28px, 4vw, 52px); }
+.kanal__grid { display: grid; grid-template-columns: minmax(0, 28fr) minmax(0, 72fr); gap: 20px; align-items: stretch; }
+.kanal__h { font-size: clamp(20px, 2.1vw, 25px); margin-bottom: 10px; }
+.kanal__inner { background: var(--tint); border-color: #f6d9c5; }
+.kanal__inner p { margin: 0; font-size: 15px; }
+.kanal__brands { border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; background: var(--bg); display: flex; flex-direction: column; }
+.kanal__head p { margin: 0 0 18px; font-size: 15px; max-width: 640px; }
+.kanal__tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; flex: 1; }
+.kanal__tile { padding: 20px; }
+.kanal__tile h3 { font-size: 20px; margin-bottom: 10px; }
+.kanal__tile dl { margin: 0; display: grid; gap: 10px; }
+.kanal__tile dt { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gray); }
+.kanal__tile dd { margin: 2px 0 0; font-size: 14.5px; line-height: 1.4; }
+@media (max-width: 1080px) { .kanal__tiles { grid-template-columns: 1fr; } }
+@media (max-width: 860px) {
+  .kanal__grid { grid-template-columns: 1fr; }
+  .kanal__brands { padding: 18px; }
+}
+
+/* О компании: заглушка истории (видна только в прототипе) */
+.history-stub { border: 2px dashed #e6cf80; background: #FFFBEA; border-radius: var(--radius); padding: clamp(20px, 3vw, 32px); max-width: 860px; }
+.history-stub b { display: block; font-size: 18px; color: #6b5310; margin-bottom: 6px; }
+.history-stub p { margin: 0; color: #6b5310; font-size: 15px; }
+.history-stub small { display: block; margin-top: 10px; font-size: 12.5px; color: #8a6200; letter-spacing: .04em; text-transform: uppercase; font-weight: 700; }
+
+/* Меню «Канализация ▾»: компактный блок в три короткие колонки + кнопка (PRAVKI-V2.md, п. 3а) */
+.nav__sub--cols { width: 600px; padding: 14px; }
+.nav__all { display: block; padding: 9px 12px; border-radius: 8px; color: var(--ink); text-decoration: none; font-size: 14.5px; font-weight: 600; }
+.nav__all small { display: block; font-size: 11px; color: var(--gray); letter-spacing: .06em; text-transform: uppercase; font-weight: 500; }
+.nav__all:hover { background: var(--bg); color: var(--orange-600); }
+.nav__all[aria-current] { background: var(--tint); color: var(--orange-600); box-shadow: inset 3px 0 0 var(--orange); }
+.nav__cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 8px 0 12px; padding-top: 10px; border-top: 1px solid var(--line); }
+.nav__col ul { list-style: none; margin: 0; padding: 0; }
+.nav__col-title { padding: 0 12px 4px; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--gray); }
+.nav__sub--cols .nav__col a { padding: 7px 12px; font-size: 14px; }
+.nav__sub a.nav__cta { display: flex; justify-content: center; text-align: center; width: 100%; min-height: 44px; padding: 10px 16px; font-size: 14.5px; border-radius: 999px; }
+.nav__sub a.nav__cta, .nav__sub a.nav__cta:hover { color: #fff; }
+.nav__sub a.nav__cta:hover { background: var(--orange-600); }
+@media (max-width: 1359px) {
+  .nav__sub--cols { width: auto; padding: 0 0 14px; }
+  .nav__all { font-size: 16px; padding: 11px 12px; }
+  .nav__cols { grid-template-columns: 1fr; gap: 10px; margin: 4px 0 14px; padding-top: 12px; }
+  .nav__col ul { display: flex; flex-wrap: wrap; gap: 8px; padding: 2px 12px 0; }
+  .nav__sub--cols .nav__col a { padding: 9px 14px; font-size: 15px; border: 1px solid var(--line); border-radius: 999px; background: #fff; }
+  .nav__sub--cols .nav__col a[aria-current] { box-shadow: none; border-color: var(--orange); }
+  .nav__col-title { padding-bottom: 6px; }
+  .nav__sub a.nav__cta { min-height: 50px; font-size: 16px; margin: 0 12px; width: auto; }
+}
+
+/* Подбор станции: три ряда чипов-фильтров и карточки моделей */
+.picker-sec { padding-block: clamp(32px, 4.4vw, 60px); }
+.picker__filters { display: grid; gap: 14px; padding: clamp(16px, 2.2vw, 24px); background: #fff; border: 1px solid var(--line); border-radius: var(--radius); }
+.picker__group { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 8px 20px; align-items: center; }
+.picker__q { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--navy-900); font-size: 15.5px; }
+.picker__n { flex: 0 0 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--navy); color: #fff; font-size: 13px; font-weight: 800; }
+.picker__chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.pchip {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 10px 20px; border-radius: 999px; white-space: nowrap;
+  border: 2px solid var(--line); background: #fff; color: var(--navy-900); font-weight: 700; font-size: 15px; text-decoration: none; cursor: pointer;
+  transition: border-color .12s, background .12s, color .12s; -webkit-tap-highlight-color: transparent; user-select: none;
+}
+.pchip:hover { border-color: var(--orange); color: var(--orange-600); }
+.pchip.is-on, .pchip.is-on:hover { background: var(--orange); border-color: var(--orange); color: #fff; }
+.pchip:focus-visible, .picker__reset:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; }
+/* Строка счётчика имеет постоянную высоту: при фильтрации блок под ней не прыгает */
+.picker__bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; margin: 6px 0 8px; }
+.picker__count { margin: 0; font-size: 15.5px; color: var(--muted); }
+.picker__count b { color: var(--navy-900); font-size: 20px; font-weight: 800; }
+.picker__reset { display: inline-flex; align-items: center; min-height: 44px; padding: 0 6px; font-weight: 600; font-size: 14.5px; color: var(--orange-600); }
+.picker__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+.pcard { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+.js .pcard.is-more { display: none; }
+.pcard__top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px; }
+.pcard__brand { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--gray); }
+.pcard__people { flex-shrink: 0; padding: 3px 10px; border-radius: 999px; background: var(--tint); color: var(--orange-600); font-size: 13px; font-weight: 700; }
+.pcard h3 { font-size: 21px; margin-bottom: 12px; }
+.pcard__specs { margin: 0 0 12px; display: grid; gap: 6px; }
+.pcard__specs > div { display: flex; justify-content: space-between; gap: 12px; font-size: 14.5px; border-bottom: 1px dashed var(--line); padding-bottom: 6px; }
+.pcard__specs dt { color: var(--muted); }
+.pcard__specs dd { margin: 0; font-weight: 600; color: var(--navy-900); text-align: right; }
+.pcard__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.pcard__tags span { padding: 3px 9px; border-radius: 6px; background: var(--bg); color: var(--muted); font-size: 12.5px; font-weight: 600; }
+.pcard__prices { margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--bg); }
+.pcard__prices span { display: block; font-size: 12px; color: var(--muted); }
+.pcard__prices b { display: block; font-size: 16px; color: var(--navy-900); white-space: nowrap; }
+.pcard__btn { margin-top: 14px; min-height: 48px; }
+.pcard__more { margin-top: 10px; text-align: center; font-size: 14px; font-weight: 600; }
+.picker__empty { padding: 28px; border: 2px dashed #c9d2de; border-radius: var(--radius); background: #fff; text-align: center; }
+.picker__empty b { display: block; font-size: 18px; color: var(--navy-900); margin-bottom: 6px; }
+.picker__empty p { margin: 0 auto 16px; max-width: 520px; color: var(--muted); }
+.picker__morewrap { margin: 16px 0 0; text-align: center; }
+html:not(.js) .picker__morewrap { display: none; }
+.septic-table { min-width: 720px; }
+@media (max-width: 1080px) {
+  .picker__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .picker__group { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  /* На телефоне фильтры — горизонтальные ряды чипов, карточки — в одну колонку */
+  .picker__filters { padding: 14px 0 14px 14px; gap: 16px; }
+  .picker__chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 2px 14px 2px 0; scroll-snap-type: x proximity; }
+  .picker__chips::-webkit-scrollbar { display: none; }
+  .pchip { flex: 0 0 auto; scroll-snap-align: start; padding-inline: 18px; }
+  .picker__grid { grid-template-columns: 1fr; gap: 12px; }
+  .picker__bar { min-height: 48px; }
+  .pcard { padding: 18px; }
+}
+
+/* Подвал: строка документов под колонками */
+.footer h3 a { color: #fff; }
+.footer__h-next { margin-top: 24px; }
+.footer__docs { display: flex; flex-wrap: wrap; gap: 10px 28px; justify-content: space-between; align-items: baseline; padding-top: 18px; padding-bottom: 18px; border-top: 1px solid rgba(255,255,255,.1); font-size: 13.5px; }
+.footer__docs ul { display: flex; flex-wrap: wrap; gap: 6px 20px; }
+.footer__geo { color: #8797ad; }

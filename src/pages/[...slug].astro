@@ -1,14 +1,15 @@
 ---
-// Все посадочные страницы запуска (Ш2, Ш3, Ш10) генерируются из src/data/pages.ts.
+// Все посадочные страницы (Ш2, Ш3, Ш10) генерируются из src/data/pages.ts + pages-v2.ts, тексты — из content/<ключ>.json.
 import ServicePage from '../templates/ServicePage.astro';
 import GeoPage from '../templates/GeoPage.astro';
 import QuickPage from '../templates/QuickPage.astro';
-import { PAGES, type Page } from '../data/pages';
+import { pageSlugs, pageBySlug } from '../data/pages';
 
 export function getStaticPaths() {
-  return PAGES.map((page) => ({ params: { slug: page.slug }, props: { page } }));
+  return pageSlugs().map((slug) => ({ params: { slug } }));
 }
-const { page } = Astro.props as { page: Page };
+// Данные берём по адресу при каждом рендере: в dev новые тексты из content/ видны без перезапуска.
+const page = pageBySlug(String(Astro.params.slug))!;
 ---
 {page.tpl === 'Ш2' && <ServicePage page={page} />}
 {page.tpl === 'Ш3' && <GeoPage page={page} />}

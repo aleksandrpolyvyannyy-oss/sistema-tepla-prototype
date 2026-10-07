@@ -1,7 +1,7 @@
 ---
-// Ш2 — страница услуги (хаб, дочерняя, второстепенная).
-// Структура облегчена до 10 разделов H2: близкие блоки слиты (цены + состав работ, этапы + сроки + подготовка,
-// гарантии + оплата + смета, объекты + фото), под первым экраном — липкое меню разделов.
+// Ш2 — страница услуги (хаб раздела, подуслуга, SEO-страница вне меню).
+// Под первым экраном — липкое меню разделов. Основной текст (вводные абзацы и разделы) берётся из content/<ключ>.json
+// или из дефолтов страницы. У «Канализации» под первым экраном особая раскладка (PRAVKI-V2.md, п. 3).
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
 import DirectAnswer from '../components/DirectAnswer.astro';
@@ -19,18 +19,33 @@ import Related from '../components/Related.astro';
 import Reviews from '../components/Reviews.astro';
 import LeadSection from '../components/LeadSection.astro';
 import Expand from '../components/Expand.astro';
+import Prose from '../components/Prose.astro';
+import AlsoLinks from '../components/AlsoLinks.astro';
+import KanalTiles from '../components/KanalTiles.astro';
+import SepticPicker from '../components/SepticPicker.astro';
+import SepticTable from '../components/SepticTable.astro';
 import { type Page, pageBySlug, href, crumbsFor, serviceLd } from '../data/pages';
 import { STEPS_MONTAGE } from '../data/common';
 interface Props { page: Page }
 const { page: p } = Astro.props;
+const isKanal = p.slug === 'kanalizaciya';
+// Посадочные канализации с подбором станции (PRAVKI-V2.md, п. 3а).
+const hasPicker = isKanal || !!p.picker;
+const inKanal = p.slug.startsWith('kanalizaciya');
 const children = (p.children ?? []).map((s) => pageBySlug(s)!).filter(Boolean);
-const eyebrow = p.kind === 'hub' ? 'Раздел' : p.kind === 'secondary' ? 'Услуга' : 'Услуга';
+const eyebrow = p.eyebrow ?? `${p.kind === 'hub' ? 'Раздел' : 'Услуга'} · СПб и Ленобласть`;
 // У хаба сравнение вариантов живёт в блоке «что выбрать», у дочерней — отдельным разделом после калькулятора.
-const hasChoice = children.length > 0;
+const hasChoice = children.length > 0 && !isKanal;
+const hasAlso = (p.also ?? []).length > 0;
 const compareInChoice = hasChoice && !!p.compare;
 const compareOwn = !hasChoice && !!p.compare;
+const hasText = (p.intro ?? []).length > 0 || (p.sections ?? []).length > 0;
 const nav = [
+  isKanal && { id: 'proizvoditeli', label: 'Производители' },
+  hasPicker && { id: 'podbor', label: 'Подбор станции' },
+  p.picker && { id: 'modeli', label: 'Модели' },
   hasChoice && { id: 'vybor', label: 'Что выбрать' },
+  hasText && { id: 'podrobno', label: 'Подробно' },
   p.anchors && { id: 'vidy', label: 'Виды работ' },
   { id: 'ceny', label: 'Цены' },
   { id: 'raschet', label: 'Расчёт' },
@@ -43,7 +58,7 @@ const nav = [
 ].filter(Boolean) as { id: string; label: string }[];
 ---
 <Base title={p.title} description={p.description} crumbs={crumbsFor(p.slug)} jsonld={[serviceLd(p)]} quiz>
-  <Hero h1={p.h1} offer={p.offer} price={p.priceFrom} img={p.hero} eyebrow={`${eyebrow} · СПб и Ленобласть`}>
+  <Hero h1={p.h1} offer={p.offer} price={p.priceFrom} img={p.hero} facts={p.facts} factsTitle={p.name} eyebrow={eyebrow}>
     {p.anchors && (
       <nav class="anchor-nav" aria-label="Виды работ" style="margin:0 0 20px">
         {p.anchors.map((a) => <a class="chip" href={`#${a.id}`}>{a.title}</a>)}
@@ -53,9 +68,13 @@ const nav = [
   <DirectAnswer text={p.answer} />
   <SectionNav items={nav} />
 
+  {isKanal && <KanalTiles brands={p.children ?? []} />}
+  {hasPicker && <SepticPicker preset={p.picker} title={isKanal ? 'Подбор станции' : `Подбор станции: ${p.name.toLowerCase()}`} />}
+  {p.picker && <SepticTable filter={p.picker} />}
+
   {hasChoice && (
     <Section id="vybor" eyebrow="Разделы" title={`${p.name}: что выбрать`}>
-      <div class="grid grid--3">
+      <div class:list={['grid', children.length === 4 ? 'grid--4' : 'grid--3']}>
         {children.map((c) => (
           <a class="card card--link" href={href(c.slug)}>
             <h3>{c.name}</h3>
@@ -64,6 +83,7 @@ const nav = [
           </a>
         ))}
       </div>
+      <AlsoLinks slugs={p.also} />
       {compareInChoice && (
         <div class="mt-40">
           <h3>{p.compare!.title}</h3>
@@ -72,6 +92,8 @@ const nav = [
       )}
     </Section>
   )}
+
+  <Prose intro={p.intro} sections={p.sections} subs={p.subs} updated={p.updated} draft={p.draft} variant={hasChoice || !!p.picker ? 'tint' : 'plain'} />
 
   {p.anchors && (
     <Section id="vidy" variant="tint" eyebrow="Виды работ" title={`${p.name}: виды работ и цены`}>
@@ -94,6 +116,7 @@ const nav = [
     <div class={p.packages ? 'mt-40' : ''}>
       <PriceTable rows={p.prices} includes={p.includes} brands={p.brands} />
     </div>
+    {!hasChoice && hasAlso && <AlsoLinks slugs={p.also} />}
   </Section>
 
   <Quiz preset={p.quiz} />
@@ -104,7 +127,7 @@ const nav = [
     </Section>
   )}
 
-  <ObjectsGrid tags={p.objTags} strict={p.kind === 'secondary'} variant={compareOwn ? 'tint' : 'plain'} gallery={p.gallery} />
+  <ObjectsGrid tags={p.objTags} strict={p.kind === 'secondary' || inKanal} variant={compareOwn ? 'tint' : 'plain'} gallery={p.gallery} />
 
   <Section id="etapy" variant={compareOwn ? 'plain' : 'tint'} eyebrow="Этапы и сроки" title="Как мы работаем: этапы и сроки" lead="Сроки каждого этапа — в графике к договору.">
     <Expand h={640} mobileOnly label="Показать все этапы">
@@ -122,6 +145,6 @@ const nav = [
 
   <Reviews />
   <Faq items={p.faq} variant="tint" />
-  <Related slugs={p.related} />
+  <Related slugs={p.related} links={p.relatedLinks} />
   <LeadSection />
 </Base>

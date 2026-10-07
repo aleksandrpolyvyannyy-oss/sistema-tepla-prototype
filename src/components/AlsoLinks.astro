@@ -1,0 +1,17 @@
+---
+// «Также по теме»: ссылки из хаба на SEO-страницы раздела, которых нет в меню (PRAVKI-V2.md, п. 2).
+import { pageBySlug, href, type Page } from '../data/pages';
+interface Props { slugs?: string[]; title?: string; id?: string }
+const { slugs = [], title = 'Также по теме', id = 'po-teme' } = Astro.props;
+const list = slugs.map((s) => pageBySlug(s)).filter((p): p is Page => !!p);
+---
+{list.length > 0 && (
+  <div class="also" id={id}>
+    <h3>{title}</h3>
+    <ul class="also__list">
+      {list.map((p) => (
+        <li><a href={href(p.slug)}><b>{p.name}</b><span>{p.priceFrom}</span></a></li>
+      ))}
+    </ul>
+  </div>
+)}

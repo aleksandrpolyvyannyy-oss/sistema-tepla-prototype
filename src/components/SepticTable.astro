@@ -1,0 +1,32 @@
+---
+// Таблица подходящих моделей станций для посадочной страницы (данные — src/data/septics.ts).
+import Section from './Section.astro';
+import { pick, rub, num, outletText, priceDate, fullName, type PickerFilter } from '../lib/septics';
+interface Props { filter?: PickerFilter; title?: string; id?: string }
+const { filter = {}, title = 'Подходящие модели: характеристики и цены', id = 'modeli' } = Astro.props;
+const list = pick(filter);
+const date = priceDate();
+---
+{list.length > 0 && (
+  <Section id={id} eyebrow="Модели" title={title} lead="Все модели, которые подходят под условия этой страницы, от дешёвой к дорогой.">
+    <p class="table-hint" aria-hidden="true">Таблица листается вбок →</p>
+    <div class="table-wrap">
+      <table class="compare septic-table">
+        <thead><tr><th scope="col">Станция</th><th scope="col">Человек</th><th scope="col">Производительность</th><th scope="col">Залповый сброс</th><th scope="col">Отвод воды</th><th scope="col">Цена станции</th></tr></thead>
+        <tbody>
+          {list.map((s) => (
+            <tr>
+              <td><a href={s.url}>{fullName(s)}</a></td>
+              <td>{s.people}</td>
+              <td>{num(s.capacity, 'м³/сут')}</td>
+              <td>{num(s.salvo, 'л')}</td>
+              <td>{outletText(s.outlet)}</td>
+              <td class="num">{rub(s.price)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="table-note">Цены станций — по данным производителей{date && ` на ${date}`}; «уточняем» — значение сверяем по паспорту модели. Монтаж считается отдельно.</p>
+  </Section>
+)}

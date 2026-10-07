@@ -1,0 +1,43 @@
+---
+// Раскладка страницы «Канализация» (PRAVKI-V2.md, п. 3): слева 25–30 % — карточка «Внутренняя канализация»,
+// справа 70 % — плитка производителей станций. На телефоне блоки идут друг под другом.
+// Логотипы производителей не используем, только названия текстом; статус дилера не заявляем.
+import { pageBySlug, href, type Page } from '../data/pages';
+interface Props { brands: string[] }
+const inner = pageBySlug('vodosnabzhenie/vnutrennee/vnutrennyaya-kanalizaciya');
+const brands = Astro.props.brands.map((s) => pageBySlug(s)).filter((p): p is Page => !!p);
+---
+<section class="section kanal" id="proizvoditeli">
+  <div class="wrap">
+    <div class="kanal__grid">
+      {inner && (
+        <a class="kanal__inner card card--link" href={href(inner.slug)}>
+          <div class="eyebrow">В доме</div>
+          <h2 class="kanal__h">Внутренняя канализация</h2>
+          <p class="muted">Стояки, лежаки и выводы под сантехнику с уклонами по норме и шумоизоляцией. Делаем вместе с разводкой воды.</p>
+          <div class="card__price">{inner.priceFrom}</div>
+          <div class="card__more">Подробнее →</div>
+        </a>
+      )}
+      <div class="kanal__brands">
+        <div class="kanal__head">
+          <div class="eyebrow">На участке</div>
+          <h2 class="kanal__h">Станции очистки: какую выбрать</h2>
+          <p class="muted">Монтируем станции трёх производителей. Модель подбираем под число жильцов, режим проживания и грунт.</p>
+        </div>
+        <div class="kanal__tiles">
+          {brands.map((b) => (
+            <a class="kanal__tile card card--link" href={href(b.slug)}>
+              <h3>{b.name}</h3>
+              <dl>
+                {(b.facts ?? []).filter(([k]) => !/цена/i.test(k)).map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}
+              </dl>
+              <div class="card__price">{b.priceFrom}</div>
+              <div class="card__more">Подробнее →</div>
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

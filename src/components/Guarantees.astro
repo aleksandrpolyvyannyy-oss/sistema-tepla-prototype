@@ -4,9 +4,10 @@ import Section from './Section.astro';
 import Payment from './Payment.astro';
 import SampleEstimate from './SampleEstimate.astro';
 import { GUARANTEES } from '../data/common';
+import type { QuizKind } from '../data/pages';
 interface Props {
   id?: string; eyebrow?: string; title?: string; lead?: string;
-  payment?: boolean; estimate?: 'otoplenie' | 'seti' | 'zapusk' | 'kompleks' | false;
+  payment?: boolean; estimate?: QuizKind | false;
 }
 const {
   id = 'garantii', eyebrow = 'Гарантии', title = 'Что мы фиксируем в договоре',

@@ -31,6 +31,8 @@ const exists = (path) => {
   return existsSync(p) && statSync(p).isFile();
 };
 
+// BASE_PATH задаётся только при проверке сборки для GitHub Pages: BASE_PATH=/sistema-tepla-prototype npm run check-links
+const BASE = (process.env.BASE_PATH || '').replace(/\/$/, '');
 let bad = 0, checked = 0;
 const report = [];
 for (const [page, html] of pages) {
@@ -39,6 +41,11 @@ for (const [page, html] of pages) {
     if (/^(https?:|mailto:|tel:|data:|#$)/.test(link) || link === '#') continue;
     checked++;
     let [path, hash] = link.split('#');
+    // Сборка под GitHub Pages (BASE_PATH=/подпапка): каждая корневая ссылка обязана начинаться с подпапки.
+    if (BASE && path.startsWith('/')) {
+      if (path !== BASE && !path.startsWith(BASE + '/')) { bad++; report.push(`[вне подпапки] ${page} → ${link}`); continue; }
+      path = path.slice(BASE.length) || '/';
+    }
     if (!path) path = page;
     path = path.split('?')[0];
     if (!exists(path)) { bad++; report.push(`[нет страницы] ${page} → ${link}`); continue; }

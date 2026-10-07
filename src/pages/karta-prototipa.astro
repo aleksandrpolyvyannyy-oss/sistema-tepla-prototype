@@ -1,24 +1,33 @@
 ---
-// Служебная страница: список всех страниц прототипа с шаблоном и статусом.
+// Служебная страница: список всех страниц прототипа с шаблоном, разделом меню и статусом текста.
 import Base from '../layouts/Base.astro';
-import { PAGES, href } from '../data/pages';
+import { allPages, href } from '../data/pages';
 import { OBJECTS } from '../data/objects';
 import { LEGAL_DOCS } from '../data/legal';
+import { NAV, navIndexFor } from '../data/site';
+import { contentFor, contentErrors, contentKeys, urlOfKey } from '../lib/content';
 
+const PAGES = allPages();
 type Row = { url: string; name: string; tpl: string; group: string; status: string; st: 'ok' | 'wip' | 'q2' };
+const sectionOf = (url: string) => NAV[navIndexFor(url)]?.label ?? '—';
+const statusOf = (p: (typeof PAGES)[number]): [string, Row['st']] =>
+  p.hasContent ? [`Текст автора${p.updated ? ` от ${p.updated}` : ''}`, 'ok'] : p.draft ? ['Заготовка, текст пишет автор', 'wip'] : ['Текст первой версии', 'q2'];
+const txt = (url: string, fallback: string): [string, Row['st']] => (contentFor(url) ? ['Текст автора', 'ok'] : [fallback, 'wip']);
+const stat = (v: [string, Row['st']]) => ({ status: v[0], st: v[1] });
+
 const rows: Row[] = [
-  { url: '/', name: 'Главная', tpl: 'Ш1', group: 'Общие', status: 'Готово', st: 'ok' },
+  { url: '/', name: 'Главная', tpl: 'Ш1', group: 'Общие', ...stat(txt('/', 'Готово, текст первой версии')) },
   ...PAGES.map((p) => ({
     url: href(p.slug), name: p.name, tpl: p.tpl,
-    group: p.priority === 'основная' ? 'Посадочная · основная' : 'Посадочная · второстепенная',
-    status: p.kind === 'secondary' ? 'Готово, объекты — после сдачи работ' : 'Готово', st: (p.kind === 'secondary' ? 'wip' : 'ok') as Row['st'],
+    group: `${sectionOf(href(p.slug))}${NAV.some((n) => n.href === href(p.slug) || n.children?.some((c) => c.href === href(p.slug)) || n.groups?.some((g) => g.links.some((c) => c.href === href(p.slug)))) ? ' · в меню' : ' · вне меню'}`,
+    ...stat(statusOf(p)),
   })),
-  { url: '/ceny/', name: 'Цены', tpl: 'Ш6', group: 'Общие', status: 'Готово, цены примерные', st: 'ok' },
-  { url: '/obekty/', name: 'Каталог объектов', tpl: 'Ш4', group: 'Общие', status: 'Готово, 4 из 10 объектов', st: 'wip' },
+  { url: '/ceny/', name: 'Цены', tpl: 'Ш6', group: 'Верхняя строка', status: 'Готово, цены примерные', st: 'ok' },
+  { url: '/obekty/', name: 'Каталог объектов', tpl: 'Ш4', group: 'Верхняя строка', status: 'Готово, 4 из 10 объектов', st: 'wip' },
   ...OBJECTS.map((o) => ({ url: `/obekty/${o.slug}/`, name: `Объект: ${o.place}, ${o.area} м²`, tpl: 'Ш5', group: 'Карточка объекта', status: 'Параметры — пример', st: 'wip' as const })),
-  { url: '/o-kompanii/', name: 'О компании', tpl: 'Ш7', group: 'Служебные', status: 'Нужны фото команды и документы', st: 'wip' },
-  { url: '/otzyvy/', name: 'Отзывы', tpl: 'Ш8', group: 'Служебные', status: 'Виджеты — после регистрации карточек', st: 'wip' },
-  { url: '/kontakty/', name: 'Контакты', tpl: 'Ш9', group: 'Служебные', status: 'Реквизиты — заглушки', st: 'wip' },
+  { url: '/o-kompanii/', name: 'О компании', tpl: 'Ш7', group: 'О компании · в меню', ...stat(txt('/o-kompanii/', 'История — текст от руководителя; документы — сканы')) },
+  { url: '/otzyvy/', name: 'Отзывы', tpl: 'Ш8', group: 'Верхняя строка', status: 'Виджеты — после регистрации карточек', st: 'wip' },
+  { url: '/kontakty/', name: 'Контакты', tpl: 'Ш9', group: 'Верхняя строка', status: 'Реквизиты — заглушки', st: 'wip' },
   ...LEGAL_DOCS.map((d) => ({ url: `/${d.slug}/`, name: d.title, tpl: 'Текст', group: 'Правовые', status: 'Структура, текст — от юриста', st: 'wip' as const })),
   { url: '/spasibo/', name: 'Спасибо за заявку', tpl: 'Служ.', group: 'Служебные', status: 'Готово', st: 'ok' },
   { url: '/404.html', name: 'Страница 404', tpl: 'Служ.', group: 'Служебные', status: 'Готово', st: 'ok' },
@@ -27,18 +36,29 @@ const rows: Row[] = [
   { url: '/blog/chem-otaplivat-dom-bez-gaza/', name: 'Статья «Чем отапливать дом без газа»', tpl: 'Ш11', group: 'Очередь 2 — образец', status: 'Образец шаблона', st: 'q2' },
 ];
 const tpls = [
-  ['Ш1', 'Главная'], ['Ш2', 'Страница услуги: хаб, дочерняя, второстепенная'], ['Ш3', 'Гео-страница'], ['Ш4', 'Каталог объектов'], ['Ш5', 'Карточка объекта'],
-  ['Ш6', 'Цены'], ['Ш7', 'О компании'], ['Ш8', 'Отзывы'], ['Ш9', 'Контакты'], ['Ш10', 'Быстрая посадочная (запуск отопления, сезон ноябрь–март)'], ['Ш11', 'Статья блога'],
+  ['Ш1', 'Главная'], ['Ш2', 'Страница услуги: хаб раздела, подуслуга, SEO-страница, посадочная с подбором станции'], ['Ш3', 'Гео-страница'], ['Ш4', 'Каталог объектов'], ['Ш5', 'Карточка объекта'],
+  ['Ш6', 'Цены'], ['Ш7', 'О компании'], ['Ш8', 'Отзывы'], ['Ш9', 'Контакты'], ['Ш10', 'Быстрая посадочная (запуск газовых котлов, опрессовка, балансировка)'], ['Ш11', 'Статья блога'],
 ];
 const count = (t: string) => rows.filter((r) => r.tpl === t).length;
 const landing = PAGES.length;
+const withText = PAGES.filter((p) => p.hasContent).length;
+// Файлы в content/, для которых нет страницы (опечатка в имени или удалённая страница).
+const known = new Set(rows.map((r) => r.url));
+const orphans = contentKeys().filter((k) => !known.has(urlOfKey(k)));
+const errors = contentErrors();
 ---
 <Base title="Карта прототипа — все страницы" description="Служебная страница прототипа сайта «Система тепла»: все страницы, шаблоны и статусы." crumbs={[{ href: '/karta-prototipa/', label: 'Карта прототипа' }]} noindex>
   <section class="section" style="padding-top:32px">
     <div class="wrap">
       <div class="eyebrow">Служебная страница</div>
       <h1 style="font-size:clamp(28px,4vw,40px)">Карта прототипа</h1>
-      <p class="hero__offer">Всего страниц: <b>{rows.length}</b>, из них посадочных запуска — <b>{landing}</b> (16 основных + 3 второстепенных по ЗАПУСК-ПРИОРИТЕТЫ.md, плюс главная, цены и объекты). Пройдите по списку, чтобы посмотреть каждую страницу.</p>
+      <p class="hero__offer" style="max-width:none">Всего страниц: <b>{rows.length}</b>, из них посадочных — <b>{landing}</b> (структура версии 2: Отопление, Водоснабжение, Канализация, Запуск газовых котлов, Сервис). Тексты авторов подключены на <b>{withText}</b> из {landing} посадочных; остальные собраны на дефолтных текстах.</p>
+      {(orphans.length > 0 || errors.length > 0) && (
+        <div class="stub-note">
+          {orphans.length > 0 && <div>Файлы в content без страницы (не используются): {orphans.map((k) => `${k}.json`).join(', ')}</div>}
+          {errors.length > 0 && <div>Файлы с ошибкой, пропущены: {errors.join('; ')}</div>}
+        </div>
+      )}
 
       <h2 class="mt-40">Шаблоны</h2>
       <div class="table-wrap">
@@ -51,7 +71,7 @@ const landing = PAGES.length;
       <h2 class="mt-40">Все страницы</h2>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>№</th><th>Страница</th><th>Адрес</th><th>Шаблон</th><th>Группа</th><th>Статус</th></tr></thead>
+          <thead><tr><th>№</th><th>Страница</th><th>Адрес</th><th>Шаблон</th><th>Раздел</th><th>Статус</th></tr></thead>
           <tbody>
             {rows.map((r, i) => (
               <tr>

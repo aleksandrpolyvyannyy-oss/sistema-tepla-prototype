@@ -1,59 +1,57 @@
 ---
+// Подвал: все разделы меню и SEO-страницы вне меню (PRAVKI-V2.md, п. 2) — ни одна посадочная не остаётся без ссылки.
 import Logo from './Logo.astro';
-import { SITE, LEGAL, GEO_AREAS } from '../data/site';
+import { SITE, LEGAL, GEO_AREAS, TOP_LINKS } from '../data/site';
+import { pageBySlug, href } from '../data/pages';
+const col = (slugs: string[]) => slugs.map((s) => pageBySlug(s)!).filter(Boolean).map((p) => ({ href: href(p.slug), label: p.name }));
+const heating = col(['otoplenie/kotelnaya', 'otoplenie/kotelnaya/ustanovka-gazovogo-kotla', 'otoplenie/teplyj-pol', 'otoplenie/radiatory', 'otoplenie/avtomatika', 'otoplenie/gazovoe', 'otoplenie/bez-gaza', 'otoplenie/leningradskaya-oblast', 'kompleks-pod-klyuch']);
+const water = col(['vodosnabzhenie/vnutrennee', 'vodosnabzhenie/vnutrennee/razvodka-vody', 'vodosnabzhenie/vnutrennee/vnutrennyaya-kanalizaciya', 'vodosnabzhenie/naruzhnoe', 'vodosnabzhenie/filtraciya']);
+const sewer = col(['kanalizaciya/yunilos-astra', 'kanalizaciya/topas', 'kanalizaciya/evrolos', 'kanalizaciya/na-3-cheloveka', 'kanalizaciya/na-4-5-chelovek', 'kanalizaciya/na-6-8-chelovek', 'kanalizaciya/na-10-chelovek', 'kanalizaciya/dlya-chastnogo-doma', 'kanalizaciya/dlya-dachi', 'kanalizaciya/vysokie-gruntovye-vody']);
+const launch = col(['zapusk-gazovyh-kotlov/opressovka', 'zapusk-gazovyh-kotlov/balansirovka']);
+const service = col(['servis/obsluzhivanie-kotelnyh', 'servis/obsluzhivanie-otopleniya', 'servis/obsluzhivanie-vodosnabzheniya', 'servis/obsluzhivanie-septikov']);
 ---
 <footer class="footer">
   <div class="wrap footer__grid">
     <div class="footer__brand">
       <Logo variant="onDark" deg />
-      <p><b style="color:#fff">СИСТЕМА ТЕПЛА</b><br />Монтаж и автоматика отопления в частных домах. {SITE.area}.</p>
+      <p><b style="color:#fff">СИСТЕМА ТЕПЛА</b><br />Инженерные сети частного дома: отопление, водоснабжение, канализация. {SITE.area}.</p>
       <p><a class="footer__phone" href={SITE.phoneHref}>{SITE.phone}</a><br />{SITE.hours}<br /><a href={`mailto:${SITE.email}`}>{SITE.email}</a></p>
       <p><a href={SITE.max}>MAX</a> · <a href={SITE.vk}>ВКонтакте</a></p>
     </div>
     <div>
-      <h3>Основные услуги</h3>
+      <h3><a href="/otoplenie/">Отопление</a></h3>
+      <ul>{heating.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul>
+    </div>
+    <div>
+      <h3><a href="/vodosnabzhenie/">Водоснабжение</a></h3>
+      <ul>{water.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul>
+      <h3 class="footer__h-next"><a href="/zapusk-gazovyh-kotlov/">Запуск газовых котлов</a></h3>
+      <ul>{launch.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul>
+    </div>
+    <div>
+      <h3><a href="/kanalizaciya/">Канализация</a></h3>
       <ul>
-        <li><a href="/otoplenie/">Монтаж отопления</a></li>
-        <li><a href="/otoplenie/kotelnaya/">Котельная под ключ</a></li>
-        <li><a href="/otoplenie/kotelnaya/ustanovka-gazovogo-kotla/">Установка газового котла</a></li>
-        <li><a href="/otoplenie/teplyj-pol/">Водяной тёплый пол</a></li>
-        <li><a href="/otoplenie/radiatory/">Монтаж радиаторов</a></li>
-        <li><a href="/otoplenie/gazovoe/">Газовое отопление</a></li>
-        <li><a href="/otoplenie/bez-gaza/">Отопление без газа</a></li>
-        <li><a href="/vnutrennie-seti/">Вода и канализация по дому</a></li>
-        <li><a href="/zapusk-otopleniya/">Запуск и наладка отопления</a></li>
-        <li><a href="/kompleks-pod-klyuch/">Отопление и вода под ключ</a></li>
+        {sewer.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+        <li><a href="/kanalizaciya/#podbor">Подобрать станцию</a></li>
       </ul>
     </div>
     <div>
-      <h3>Канализация, вода, дренаж</h3>
-      <ul>
-        <li><a href="/kanalizaciya/">Наружная канализация и септики</a></li>
-        <li><a href="/naruzhnoe-vodosnabzhenie/">Ввод воды, обвязка скважины</a></li>
-        <li><a href="/drenazh-i-vodootvod/">Дренаж, отмостка, ливнёвка</a></li>
-      </ul>
-      <h3 style="margin-top:24px">География</h3>
-      <ul>
-        <li><a href="/otoplenie/leningradskaya-oblast/">Отопление в Ленобласти</a></li>
-        <li class="muted" style="color:#8797ad">{GEO_AREAS.slice(0, 5).join(' · ')}</li>
-      </ul>
-    </div>
-    <div>
-      <h3>Компания</h3>
+      <h3><a href="/servis/">Сервис</a></h3>
+      <ul>{service.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul>
+      <h3 class="footer__h-next">Компания</h3>
       <ul>
         <li><a href="/o-kompanii/">О компании</a></li>
-        <li><a href="/obekty/">Объекты</a></li>
-        <li><a href="/ceny/">Цены</a></li>
-        <li><a href="/otzyvy/">Отзывы</a></li>
+        {TOP_LINKS.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
         <li><a href="/blog/">Статьи</a></li>
-        <li><a href="/kontakty/">Контакты</a></li>
-      </ul>
-      <h3 style="margin-top:24px">Документы</h3>
-      <ul>
-        {LEGAL.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
-        <li><button class="link-btn" type="button" data-cookie-open>Настройки cookie</button></li>
       </ul>
     </div>
+  </div>
+  <div class="wrap footer__docs">
+    <span class="footer__geo">Работаем: {GEO_AREAS.slice(0, 5).join(' · ')}</span>
+    <ul>
+      {LEGAL.map((l) => <li><a href={l.href}>{l.label}</a></li>)}
+      <li><button class="link-btn" type="button" data-cookie-open>Настройки cookie</button></li>
+    </ul>
   </div>
   <div class="wrap footer__bottom">
     <span>© 2026 {SITE.legalName} · ОГРН {SITE.ogrn} · ИНН {SITE.inn} · {SITE.address}</span>

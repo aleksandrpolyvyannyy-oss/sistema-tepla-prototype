@@ -5,7 +5,7 @@ import Section from '../../components/Section.astro';
 import Gallery from '../../components/Gallery.astro';
 import ObjCard from '../../components/ObjCard.astro';
 import { OBJECTS, type Obj } from '../../data/objects';
-import { PAGES, href } from '../../data/pages';
+import { pageBySlug, href } from '../../data/pages';
 
 export function getStaticPaths() {
   return OBJECTS.map((o) => ({ params: { slug: o.slug }, props: { o } }));
@@ -16,16 +16,16 @@ const similar = OBJECTS.filter((x) => x.slug !== o.slug)
   .sort((a, b) => b.s - a.s).slice(0, 3).map((v) => v.x);
 const tagToPage: Record<string, string> = {
   kotelnaya: 'otoplenie/kotelnaya', 'teplyj-pol': 'otoplenie/teplyj-pol', radiatory: 'otoplenie/radiatory', gaz: 'otoplenie/gazovoe',
-  'bez-gaza': 'otoplenie/bez-gaza', voda: 'vnutrennie-seti/razvodka-vody', kanalizaciya: 'vnutrennie-seti/vnutrennyaya-kanalizaciya',
-  zapusk: 'zapusk-otopleniya', balansirovka: 'zapusk-otopleniya/balansirovka', kompleks: 'kompleks-pod-klyuch',
+  'bez-gaza': 'otoplenie/bez-gaza', voda: 'vodosnabzhenie/vnutrennee/razvodka-vody', kanalizaciya: 'vodosnabzhenie/vnutrennee/vnutrennyaya-kanalizaciya',
+  zapusk: 'zapusk-gazovyh-kotlov', balansirovka: 'zapusk-gazovyh-kotlov/balansirovka', kompleks: 'kompleks-pod-klyuch',
 };
-const services = o.tags.map((t) => tagToPage[t]).filter(Boolean).map((s) => PAGES.find((p) => p.slug === s)!).filter(Boolean);
+const services = o.tags.map((t) => tagToPage[t]).filter(Boolean).map((s) => pageBySlug(s)!).filter(Boolean);
 const passport: [string, string][] = [
   ['Населённый пункт', `${o.place}, ${o.district}`], ['Площадь дома', `${o.area} м²`], ['Материал стен', o.walls],
   ['Система', o.system], ['Срок монтажа', o.term], ['Бюджет', o.budget],
 ];
 ---
-<Base title={`${o.title} — объект`} description={`${o.title}. ${o.system}. Срок ${o.term}, бюджет ${o.budget}. Фото, состав работ и оборудование.`} crumbs={[{ href: '/obekty/', label: 'Объекты' }, { href: `/obekty/${o.slug}/`, label: `${o.place}, ${o.area} м²` }]}>
+<Base title={o.title} description={`${o.system}: ${o.place}, дом ${o.area} м². Срок ${o.term}, бюджет ${o.budget}.`} crumbs={[{ href: '/obekty/', label: 'Объекты' }, { href: `/obekty/${o.slug}/`, label: `${o.place}, ${o.area} м²` }]}>
   <section class="hero" style="padding-bottom:24px">
     <div class="wrap">
       <div class="eyebrow">Объект · {o.district}</div>

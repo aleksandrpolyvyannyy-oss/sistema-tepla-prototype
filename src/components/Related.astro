@@ -1,14 +1,24 @@
 ---
 import Section from './Section.astro';
-import { pageBySlug, href, type Page } from '../data/pages';
-interface Props { slugs: string[]; title?: string; showMinor?: boolean }
-const { slugs, title = 'Смежные услуги', showMinor = true } = Astro.props;
-const list = slugs.map((s) => pageBySlug(s)).filter((p): p is Page => !!p);
-const minor = ['kanalizaciya', 'naruzhnoe-vodosnabzhenie', 'drenazh-i-vodootvod']
-  .filter((s) => !slugs.includes(s) && Astro.url.pathname !== href(s))
+import { pageBySlug, href, STATIC_LINKS, type Page } from '../data/pages';
+import { cleanPath } from '../data/site';
+// slugs — смежные услуги карточками; links — адреса страниц вне списка посадочных (цены, объекты) из поля related текста автора.
+interface Props { slugs: string[]; links?: string[]; title?: string; showMinor?: boolean }
+const { slugs, links = [], title = 'Смежные услуги', showMinor = true } = Astro.props;
+const here = cleanPath(Astro.url.pathname);
+const uniq = [...new Set(slugs)].filter((s) => href(s) !== here);
+const all = uniq.map((s) => pageBySlug(s)).filter((p): p is Page => !!p);
+// Первые три — карточками, остальные ссылки из related — строкой ниже, чтобы блок не разрастался.
+const list = all.slice(0, 3);
+const more = all.slice(3);
+// SEO-страницы вне меню — постоянная перелинковка со всех страниц услуг.
+const minor = ['kanalizaciya', 'vodosnabzhenie/naruzhnoe', 'otoplenie/leningradskaya-oblast']
+  .filter((s) => !uniq.includes(s) && here !== href(s))
   .map((s) => pageBySlug(s))
   .filter((p): p is Page => !!p);
-const showKompleks = !slugs.includes('kompleks-pod-klyuch') && Astro.url.pathname !== '/kompleks-pod-klyuch/';
+const showKompleks = !uniq.includes('kompleks-pod-klyuch') && here !== '/kompleks-pod-klyuch/';
+const hasLine = more.length > 0 || minor.length > 0 || showKompleks;
+const extra = links.filter((u) => u in STATIC_LINKS && u !== here);
 ---
 <Section eyebrow="Что ещё нужно в доме" title={title} lead="Инженерию дома выгоднее делать одним договором: общая котельная, один график и одна гарантия.">
   <div class="related rail">
@@ -20,11 +30,13 @@ const showKompleks = !slugs.includes('kompleks-pod-klyuch') && Astro.url.pathnam
       </a>
     ))}
   </div>
-  {showMinor && (minor.length > 0 || showKompleks) && (
+  {showMinor && (hasLine || extra.length > 0) && (
     <div class="minor-line">
       <span>Также делаем:</span>
+      {more.map((p) => <a class="chip" href={href(p.slug)}>{p.name}</a>)}
       {minor.map((p) => <a class="chip" href={href(p.slug)}>{p.name}</a>)}
       {showKompleks && <a class="chip" href="/kompleks-pod-klyuch/">Всё одним договором</a>}
+      {extra.map((u) => <a class="chip" href={u}>{STATIC_LINKS[u]}</a>)}
     </div>
   )}
   <slot />

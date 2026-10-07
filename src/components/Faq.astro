@@ -2,11 +2,12 @@
 import JsonLd from './JsonLd.astro';
 import Section from './Section.astro';
 import type { Faq } from '../data/common';
+import { rich, plain } from '../lib/content';
 interface Props { items: Faq[]; title?: string; variant?: 'tint' | 'plain' }
 const { items, title = 'Вопросы и ответы', variant = 'plain' } = Astro.props;
 const ld = {
   '@context': 'https://schema.org', '@type': 'FAQPage',
-  mainEntity: items.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+  mainEntity: items.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: plain(f.a) } })),
 };
 ---
 <Section id="voprosy" variant={variant} eyebrow="Вопросы и ответы" title={title}>
@@ -14,7 +15,7 @@ const ld = {
     {items.map((f, i) => (
       <details open={i === 0}>
         <summary>{f.q}</summary>
-        <div class="faq__a"><p>{f.a}</p></div>
+        <div class="faq__a"><p set:html={rich(f.a)} /></div>
       </details>
     ))}
   </div>

@@ -12,14 +12,18 @@ import DirectAnswer from '../components/DirectAnswer.astro';
 import SectionNav from '../components/SectionNav.astro';
 import Expand from '../components/Expand.astro';
 import { PKG_HEATING } from '../data/common';
-import { PAGES, href } from '../data/pages';
+import { allPages, href } from '../data/pages';
+import { contentFor } from '../lib/content';
+const PAGES = allPages();
+const c = contentFor('/ceny/');
 import { SITE } from '../data/site';
 
 const groups = [
-  { t: 'Отопление', slugs: ['otoplenie', 'otoplenie/kotelnaya', 'otoplenie/kotelnaya/ustanovka-gazovogo-kotla', 'otoplenie/teplyj-pol', 'otoplenie/radiatory', 'otoplenie/bez-gaza'] },
-  { t: 'Вода и канализация по дому', slugs: ['vnutrennie-seti', 'vnutrennie-seti/razvodka-vody', 'vnutrennie-seti/vnutrennyaya-kanalizaciya'] },
-  { t: 'Запуск и наладка отопления', slugs: ['zapusk-otopleniya', 'zapusk-otopleniya/pusk-gazovogo-kotla', 'zapusk-otopleniya/opressovka', 'zapusk-otopleniya/balansirovka'] },
-  { t: 'Канализация, водоснабжение, дренаж', slugs: ['kanalizaciya', 'naruzhnoe-vodosnabzhenie', 'drenazh-i-vodootvod'] },
+  { t: 'Отопление', slugs: ['otoplenie', 'otoplenie/kotelnaya', 'otoplenie/kotelnaya/ustanovka-gazovogo-kotla', 'otoplenie/teplyj-pol', 'otoplenie/radiatory', 'otoplenie/avtomatika', 'otoplenie/bez-gaza'] },
+  { t: 'Водоснабжение', slugs: ['vodosnabzhenie', 'vodosnabzhenie/vnutrennee', 'vodosnabzhenie/vnutrennee/razvodka-vody', 'vodosnabzhenie/vnutrennee/vnutrennyaya-kanalizaciya', 'vodosnabzhenie/naruzhnoe', 'vodosnabzhenie/filtraciya'] },
+  { t: 'Канализация', slugs: ['kanalizaciya', 'kanalizaciya/yunilos-astra', 'kanalizaciya/topas', 'kanalizaciya/evrolos'] },
+  { t: 'Запуск газовых котлов', slugs: ['zapusk-gazovyh-kotlov', 'zapusk-gazovyh-kotlov/opressovka', 'zapusk-gazovyh-kotlov/balansirovka'] },
+  { t: 'Сервис', slugs: ['servis', 'servis/obsluzhivanie-kotelnyh', 'servis/obsluzhivanie-otopleniya', 'servis/obsluzhivanie-vodosnabzheniya', 'servis/obsluzhivanie-septikov'] },
 ].map((g) => {
   const seen = new Set<string>();
   const rows: [string, string, string][] = [];
@@ -46,15 +50,15 @@ const factors = [
   ['Удалённость', 'Замер бесплатный до 60 км от КАД, дальше — 40 ₽ за км.'],
 ];
 ---
-<Base title="Цены на монтаж отопления и водоснабжения в СПб и ЛО — прайс 2026" description="Цены на монтаж отопления, котельных, тёплого пола, разводку воды и канализации, запуск отопления. Пакеты по площади дома, прайс работ, сметы-примеры." crumbs={[{ href: '/ceny/', label: 'Цены' }]} quiz>
+<Base title={c?.title ?? 'Цены на отопление и водоснабжение дома в СПб — прайс 2026'} description={c?.description ?? 'Цены на монтаж отопления, котельных, тёплого пола, водоснабжения и канализации, запуск газовых котлов и сервис. Пакеты по площади дома, прайс, сметы-примеры.'} crumbs={[{ href: '/ceny/', label: 'Цены' }]} quiz>
   <section class="hero" style="padding-bottom:24px">
     <div class="wrap">
       <div class="eyebrow">Цены обновлены {SITE.pricesUpdated}</div>
-      <h1>Цены на монтаж отопления и инженерных систем</h1>
+      <h1>{c?.h1 ?? 'Цены на монтаж отопления и инженерных систем'}</h1>
       <p class="hero__offer">Пакеты по площади дома, ставки за м² и прайс по каждому виду работ. Цены «от» — ориентир; итог фиксируем в договоре после замера.</p>
     </div>
   </section>
-  <DirectAnswer text="Отопление частного дома под ключ с газовым котлом стоит от 380 тыс ₽ за дом 100 м², от 520 тыс ₽ за 150 м² и от 690 тыс ₽ за 200 м² с оборудованием. Разводка воды и канализации — от 3 500 ₽ за точку, первый пуск газового котла — от 7 тыс ₽. Оплата в три этапа: 70% на материалы, 20% после монтажа, 10% после сдачи." />
+  <DirectAnswer text={c?.answer ?? "Отопление частного дома под ключ с газовым котлом стоит от 380 тыс ₽ за дом 100 м², от 520 тыс ₽ за 150 м² и от 690 тыс ₽ за 200 м² с оборудованием. Разводка воды и канализации — от 3 500 ₽ за точку, первый пуск газового котла — от 7 тыс ₽. Оплата в три этапа: 70% на материалы, 20% после монтажа, 10% после сдачи."} />
   <SectionNav items={[{ id: 'pakety', label: 'Пакеты' }, { id: 'stavki', label: 'Ставки за м²' }, ...groups.map((g, i) => ({ id: `prajs-${i}`, label: g.t })), { id: 'smeta', label: 'Смета и оплата' }]} cta={{ href: '#raschet', label: 'Калькулятор' }} />
 
   <Section id="pakety" eyebrow="Пакеты и ставки" title="Пакеты отопления по площади дома">

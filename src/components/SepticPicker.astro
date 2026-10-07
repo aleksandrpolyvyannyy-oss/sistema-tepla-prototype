@@ -1,0 +1,165 @@
+---
+// Блок «Подбор станции» (PRAVKI-V2.md, п. 3а): три фильтра крупными чипами → карточки моделей, счётчик, сброс.
+// Чипы — обычные ссылки на посадочные страницы (их видит поисковик); скрипт перехватывает клик и фильтрует на месте,
+// без перезагрузки. Без JS показаны все подходящие под страницу модели, чипы работают как переходы.
+// preset — фильтр, выставленный заранее (на посадочных «на 4–5 человек», «для дачи» и т. п.).
+import { SEPTICS, PEOPLE, MODE, GW, HUB, PICKER_ID, PICKER_LIMIT, MONTAGE_FROM, matches, peopleKey, rub, num, outletText, modelsWord, priceDate, type PickerFilter } from '../lib/septics';
+import { cleanPath } from '../data/site';
+interface Props { preset?: PickerFilter; title?: string; lead?: string; variant?: 'tint' | 'plain' }
+const { preset = {}, title = 'Подбор станции', lead = 'Три вопроса — и видно, какие модели подходят. Цены станций — от производителей, монтаж считаем отдельно.', variant = 'tint' } = Astro.props;
+const here = cleanPath(Astro.url.pathname);
+// Ссылка на текущую страницу в чипе не нужна — оставляем якорь на блок.
+const link = (href: string) => (href.split('#')[0] === here ? `#${PICKER_ID}` : href);
+const groups = [
+  { f: 'people', q: 'Сколько человек живёт', opts: PEOPLE.map((o) => ({ v: o.key, label: o.label, href: link(o.href) })), on: preset.people },
+  { f: 'mode', q: 'Как живёте', opts: MODE.map((o) => ({ v: o.key, label: o.label, href: link(o.href) })), on: preset.mode },
+  { f: 'gw', q: 'Грунтовые воды', opts: GW.map((o) => ({ v: o.key, label: o.label, href: link(o.href) })), on: preset.gw },
+];
+let shown = 0;
+const cards = SEPTICS.map((s) => {
+  const ok = matches(s, preset);
+  const more = ok && ++shown > PICKER_LIMIT;
+  return { s, ok, more };
+});
+const total = cards.filter((c) => c.ok).length;
+const date = priceDate();
+const resetHref = here === HUB ? `#${PICKER_ID}` : `${HUB}#${PICKER_ID}`;
+const hasPreset = !!(preset.people || preset.mode || preset.gw);
+---
+<section class:list={['section', 'picker-sec', { 'section--tint': variant === 'tint' }]} id={PICKER_ID}>
+  <div class="wrap">
+    <div class="section-head">
+      <div>
+        <div class="eyebrow">Подбор</div>
+        <h2>{title}</h2>
+      </div>
+      <p>{lead}</p>
+    </div>
+
+    <div class="picker" data-picker data-limit={PICKER_LIMIT} data-people={preset.people ?? ''} data-mode={preset.mode ?? ''} data-gw={preset.gw ?? ''}>
+      <div class="picker__filters">
+        {groups.map((g, i) => (
+          <div class="picker__group" role="group" aria-label={g.q}>
+            <div class="picker__q"><span class="picker__n">{i + 1}</span>{g.q}</div>
+            <div class="picker__chips">
+              {g.opts.map((o) => (
+                <a class:list={['pchip', { 'is-on': g.on === o.v }]} href={o.href} data-f={g.f} data-v={o.v} aria-current={g.on === o.v ? 'true' : undefined}>{o.label}</a>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div class="picker__bar">
+        <p class="picker__count" aria-live="polite"><span data-p-fit>Подходит</span> <b data-p-count>{total}</b> <span data-p-word>{modelsWord(total)}</span></p>
+        <a class="picker__reset" href={resetHref} data-p-reset hidden={!hasPreset}>Сбросить фильтры</a>
+      </div>
+
+      <div class="picker__grid" data-p-grid>
+        {cards.map(({ s, ok, more }) => (
+          <article class:list={['pcard', { 'is-more': more }]} hidden={!ok} data-people={peopleKey(s.people)} data-dacha={s.dacha ? '1' : '0'} data-gw={s.highGW ? '1' : '0'}>
+            <div class="pcard__top">
+              <span class="pcard__brand">{s.brand}</span>
+              <span class="pcard__people">{s.people} чел.</span>
+            </div>
+            <h3>{s.model}</h3>
+            <dl class="pcard__specs">
+              <div><dt>Залповый сброс</dt><dd>{num(s.salvo, 'л')}</dd></div>
+              <div><dt>Производительность</dt><dd>{num(s.capacity, 'м³/сут')}</dd></div>
+              <div><dt>Отвод воды</dt><dd>{outletText(s.outlet)}</dd></div>
+            </dl>
+            {(s.dacha || s.highGW) && (
+              <div class="pcard__tags">
+                {s.dacha && <span>для дачи</span>}
+                {s.highGW && <span>высокие грунтовые воды</span>}
+              </div>
+            )}
+            <div class="pcard__prices">
+              <div><span>Станция</span><b>{rub(s.price)}</b></div>
+              <div><span>Монтаж</span><b>{rub(MONTAGE_FROM)}</b></div>
+            </div>
+            <a class="btn btn--primary pcard__btn" href="#raschet">Рассчитать под ключ</a>
+            <a class="pcard__more" href={s.url === here ? `#${PICKER_ID}` : s.url}>О станциях {s.brand}</a>
+          </article>
+        ))}
+      </div>
+
+      <div class="picker__empty" data-p-empty hidden={total > 0}>
+        <b>Под такие условия в подборке нет готовой модели</b>
+        <p>Это не значит, что решения нет: подберём станцию по вашему участку и пришлём смету за 24 часа.</p>
+        <a class="btn btn--primary" href="#raschet">Подобрать под мой дом</a>
+      </div>
+
+      <p class="picker__morewrap"><button class="btn btn--ghost" type="button" data-p-more hidden={total <= PICKER_LIMIT}>Показать ещё <span data-p-rest>{Math.max(0, total - PICKER_LIMIT)}</span></button></p>
+      <p class="table-note">Цены станций — по данным производителей{date && ` на ${date}`}, монтаж — {rub(MONTAGE_FROM)}. «Уточняем» — значение сверяем по паспорту модели. Итог считаем сметой после выезда на участок.</p>
+    </div>
+  </div>
+</section>
+
+<script>
+  const word = (n: number) => {
+    const a = n % 10, b = n % 100;
+    if (a === 1 && b !== 11) return 'модель';
+    if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return 'модели';
+    return 'моделей';
+  };
+  document.querySelectorAll<HTMLElement>('[data-picker]').forEach((box) => {
+    const limit = Number(box.dataset.limit) || 6;
+    const state: Record<string, string> = { people: box.dataset.people || '', mode: box.dataset.mode || '', gw: box.dataset.gw || '' };
+    const chips = [...box.querySelectorAll<HTMLAnchorElement>('.pchip')];
+    const cards = [...box.querySelectorAll<HTMLElement>('.pcard')];
+    const count = box.querySelector<HTMLElement>('[data-p-count]')!;
+    const wordEl = box.querySelector<HTMLElement>('[data-p-word]')!;
+    const fit = box.querySelector<HTMLElement>('[data-p-fit]')!;
+    const reset = box.querySelector<HTMLElement>('[data-p-reset]')!;
+    const empty = box.querySelector<HTMLElement>('[data-p-empty]')!;
+    const more = box.querySelector<HTMLButtonElement>('[data-p-more]')!;
+    const rest = box.querySelector<HTMLElement>('[data-p-rest]')!;
+    let all = false;
+
+    const ok = (c: HTMLElement) =>
+      (!state.people || c.dataset.people === state.people) &&
+      (state.mode !== 'dacha' || c.dataset.dacha === '1') &&
+      (state.gw !== 'high' || c.dataset.gw === '1');
+
+    const render = () => {
+      let n = 0;
+      cards.forEach((c) => {
+        const m = ok(c);
+        c.hidden = !m;
+        if (m) n++;
+        c.classList.toggle('is-more', m && !all && n > limit);
+      });
+      count.textContent = String(n);
+      wordEl.textContent = word(n);
+      fit.textContent = n % 10 === 1 && n % 100 !== 11 ? 'Подходит' : 'Подходят';
+      empty.hidden = n > 0;
+      more.hidden = all || n <= limit;
+      rest.textContent = String(Math.max(0, n - limit));
+      reset.hidden = !(state.people || state.mode || state.gw);
+      chips.forEach((ch) => {
+        const on = state[ch.dataset.f!] === ch.dataset.v;
+        ch.classList.toggle('is-on', on);
+        if (on) ch.setAttribute('aria-current', 'true'); else ch.removeAttribute('aria-current');
+      });
+    };
+
+    chips.forEach((ch) => ch.addEventListener('click', (e) => {
+      // Ctrl/Cmd/средняя кнопка — обычный переход на посадочную страницу.
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+      e.preventDefault();
+      const f = ch.dataset.f!, v = ch.dataset.v!;
+      state[f] = state[f] === v ? '' : v;
+      all = false;
+      render();
+    }));
+    reset.addEventListener('click', (e) => {
+      e.preventDefault();
+      state.people = state.mode = state.gw = '';
+      all = false;
+      render();
+    });
+    more.addEventListener('click', () => { all = true; render(); });
+    render();
+  });
+</script>
