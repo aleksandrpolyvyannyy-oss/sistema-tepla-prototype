@@ -34,6 +34,7 @@ const empty = !intro.length && !sections.length && !restSubs.length;
                   </table>
                 </div>
               )}
+              {(s.after ?? []).map((p) => <p set:html={r(p)} />)}
               {child && <p class="prose__more"><a class="btn btn--ghost" href={href(child.slug)}>{sub!.title}: цены и подробности</a> <span class="muted">{child.priceFrom}</span></p>}
             </Fragment>
           );

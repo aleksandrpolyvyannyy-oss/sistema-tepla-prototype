@@ -9,7 +9,7 @@ interface Props {
   trust?: [string, string][]; badge?: string; season?: boolean;
 }
 const { h1, offer, price, img, facts, factsTitle = 'Коротко', eyebrow, primary = { href: '#raschet', label: 'Рассчитать стоимость' }, secondary = { href: '/obekty/', label: 'Посмотреть объекты' },
-  trust = [['24 ч', 'смета после замера'], ['3 года', 'гарантия на работы по договору'], ['70/20/10', 'оплата по этапам, аванс — материалы']], badge, season } = Astro.props;
+  trust = [['24 ч', 'смета после замера'], ['3 года', 'гарантия на работы по договору'], ['Поэтапная оплата', 'по этапам работ, без переплат вперёд']], badge, season } = Astro.props;
 ---
 <section class="hero">
   <div class:list={['wrap', 'hero__grid', { 'hero__grid--solo': !img && !facts?.length }]}>

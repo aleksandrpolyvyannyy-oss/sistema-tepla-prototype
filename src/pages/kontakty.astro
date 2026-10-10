@@ -28,7 +28,7 @@ import { SITE, GEO_AREAS } from '../data/site';
         <div><dt>Адрес офиса</dt><dd>{SITE.address}</dd></div>
         <div><dt>Режим работы</dt><dd>{SITE.hours}, воскресенье — выходной</dd></div>
         <div><dt>Реквизиты</dt><dd>{SITE.legalName}, ОГРН {SITE.ogrn}, ИНН {SITE.inn}</dd></div>
-        <div><dt>Зона выезда</dt><dd>{SITE.area}. Замер бесплатно в радиусе 60 км от КАД.</dd></div>
+        <div><dt>Зона выезда</dt><dd>{SITE.area}. Замер бесплатно до 100 км от КАД.</dd></div>
       </dl>
     </div>
     <div class="places mt-24">{GEO_AREAS.map((g) => <span>{g}</span>)}</div>

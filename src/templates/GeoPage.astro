@@ -21,7 +21,7 @@ const services = NAV.filter((n) => n.children).flatMap((n) => n.children!).filte
 ---
 <Base title={p.title} description={p.description} crumbs={crumbsFor(p.slug)} jsonld={[serviceLd(p)]} quiz>
   <Hero h1={p.h1} offer={p.offer} price={p.priceFrom} img={p.hero} eyebrow={p.eyebrow ?? 'География работ'}
-    trust={[['1–2 дня', 'выезд замерщика по области'], ['60 км', 'от КАД — замер бесплатно'], ['3 года', 'гарантия на работы']]} />
+    trust={[['1–2 дня', 'выезд замерщика по области'], ['до 100 км', 'от КАД - замер бесплатно'], ['3 года', 'гарантия на работы']]} />
   <DirectAnswer text={p.answer} />
   <SectionNav items={[{ id: 'osobennosti', label: 'Особенности района' }, { id: 'obekty', label: 'Объекты' }, { id: 'ceny', label: 'Цены' }, { id: 'raschet', label: 'Расчёт' }, { id: 'voprosy', label: 'Вопросы' }]} />
 
@@ -36,7 +36,7 @@ const services = NAV.filter((n) => n.children).flatMap((n) => n.children!).filte
       </div>
       <div>
         <h3>Карта выезда</h3>
-        <div class="map-stub"><div><b>Здесь будет карта Яндекса с зоной выезда</b>Подключается после согласия на cookie. Радиус бесплатного замера — 60 км от КАД.</div></div>
+        <div class="map-stub"><div><b>Здесь будет карта Яндекса с зоной выезда</b>Подключается после согласия на cookie. Бесплатный замер - до 100 км от КАД.</div></div>
       </div>
     </div>
   </Section>
@@ -45,7 +45,7 @@ const services = NAV.filter((n) => n.children).flatMap((n) => n.children!).filte
 
   <ObjectsGrid tags={p.objTags} title="Объекты в Ленинградской области" gallery={p.gallery} variant="plain" />
 
-  <Section id="ceny" variant="tint" eyebrow="Цены" title="Пакеты и цены для области" lead="Цены одинаковые для СПб и области; доплата за выезд — только дальше 60 км от КАД.">
+  <Section id="ceny" variant="tint" eyebrow="Цены" title="Пакеты и цены для области" lead="Цены одинаковые для СПб и области; доплата за выезд — только дальше 100 км от КАД.">
     {p.packages && <Packages items={p.packages} />}
     <div class="mt-40"><PriceTable rows={p.prices} /></div>
   </Section>

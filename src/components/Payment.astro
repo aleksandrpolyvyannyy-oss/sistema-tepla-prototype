@@ -1,7 +1,9 @@
 ---
-import { PAYMENT } from '../data/common';
+// Оплата по этапам: без процентов и сумм, суммы платежей фиксируются в договоре.
 ---
-<div class="pay__bar" aria-hidden="true"><i style="width:70%;background:var(--blue)"></i><i style="width:20%;background:var(--amber)"></i><i style="width:10%;background:var(--red)"></i></div>
-<div class="pay">
-  {PAYMENT.map((p) => <div class="pay__item"><div class="pay__pct">{p.pct}</div><h3 style="margin:10px 0 6px">{p.t}</h3><p class="muted" style="margin:0">{p.d}</p></div>)}
+<div class="pay pay--one">
+  <div class="pay__item">
+    <h3 style="margin:0 0 6px">Поэтапная оплата</h3>
+    <p class="muted" style="margin:0">Платите по этапам работ, без переплат вперёд. Порядок платежей фиксируем в договоре.</p>
+  </div>
 </div>

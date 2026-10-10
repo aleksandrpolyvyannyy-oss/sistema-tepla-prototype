@@ -340,6 +340,7 @@ td.num { white-space: nowrap; font-weight: 700; color: var(--navy-900); }
 
 /* Оплата */
 .pay { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.pay--one { grid-template-columns: minmax(0, 1fr); }
 .pay__item { padding: 22px; border-radius: var(--radius); background: #fff; border: 1px solid var(--line); }
 .pay__pct { font-size: 40px; font-weight: 800; line-height: 1; background: var(--scale); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .pay__bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; margin: 0 0 22px; }

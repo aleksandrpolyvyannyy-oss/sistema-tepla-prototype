@@ -6,7 +6,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 export type CTable = { head: string[]; rows: string[][] };
-export type CSection = { id: string; h2: string; paragraphs: string[]; list: string[]; table?: CTable };
+export type CSection = { id: string; h2: string; paragraphs: string[]; list: string[]; table?: CTable; after?: string[] };
 export type CStep = { t: string; d: string; days?: string };
 export type CFaq = { q: string; a: string };
 export type Content = {
@@ -57,14 +57,16 @@ function sections(v: unknown): CSection[] {
     const h2 = str(pick(s, 'h2', 'title', 'heading'));
     const paragraphs = strArr(pick(s, 'paragraphs', 'text', 'p'));
     const list = strArr(pick(s, 'list', 'items'));
+    // after — абзацы после списка/таблицы (если нужно закончить раздел текстом под списком)
+    const after = strArr(pick(s, 'after', 'paragraphsAfter'));
     const t = table(s.table);
-    if (!h2 || (!paragraphs.length && !list.length && !t)) return;
+    if (!h2 || (!paragraphs.length && !list.length && !t && !after.length)) return;
     let id = (str(s.id) ?? '').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
     if (!id || /^\d/.test(id)) id = `razdel-${i + 1}`;
     if (RESERVED.has(id)) id = `o-${id}`;
     while (used.has(id)) id += '-2';
     used.add(id);
-    out.push({ id, h2, paragraphs, list, table: t });
+    out.push({ id, h2, paragraphs, list, table: t, ...(after.length ? { after } : {}) });
   });
   return out;
 }
