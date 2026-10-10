@@ -1,0 +1,59 @@
+# Система тепла
+
+> Инженерные сети частного дома в Санкт-Петербурге и Ленинградской области: монтаж отопления, котельных, водяного тёплого пола и радиаторов, водоснабжение и фильтрация воды, канализация и станции очистки, первый пуск газовых котлов (разрешение есть), сервисное обслуживание систем. Смета за 24 часа после замера, цена и сроки фиксируются в договоре, гарантия на работы 3 года, оплата поэтапная.
+
+Подключение к газу и пуск газа выполняет газораспределительная организация; компания монтирует котельную по проекту газоснабжения, выполняет первый пуск котла и его техническое обслуживание.
+
+Ключевые цены «от» (примерные, обновлены 07.10.2026): отопление — от 380 000 ₽ за дом 100 м²; котельная — от 180 000 ₽ с оборудованием; тёплый пол — от 700 ₽/м² работа; водоснабжение — от 3 500 ₽ за точку, от 45 000 ₽ за ввод воды; канализация — от 145 000 ₽ за септик с установкой; запуск газового котла — от 7 000 ₽ за настенный котёл; сервис — от 3 500 ₽ за выезд инженера.
+
+## Отопление
+- [Монтаж отопления в частном доме в СПб и Ленобласти](https://sistema-tepla.ru/otoplenie/): от 380 000 ₽ за дом 100 м²
+- [Монтаж котельной в частном доме](https://sistema-tepla.ru/otoplenie/kotelnaya/): от 180 000 ₽ с оборудованием
+- [Водяной тёплый пол в частном доме: цена за м²](https://sistema-tepla.ru/otoplenie/teplyj-pol/): от 700 ₽/м² работа
+- [Монтаж радиаторов отопления в частном доме в СПб и Ленобласти](https://sistema-tepla.ru/otoplenie/radiatory/): от 4 500 ₽ за радиатор
+- [Автоматика отопления и удалённое управление котлом с телефона](https://sistema-tepla.ru/otoplenie/avtomatika/): от 9 000 ₽ за монтаж и настройку
+- [Установка газового котла в частном доме в СПб и Ленобласти](https://sistema-tepla.ru/otoplenie/kotelnaya/ustanovka-gazovogo-kotla/): от 25 000 ₽ за монтаж
+- [Газовое отопление частного дома: монтаж](https://sistema-tepla.ru/otoplenie/gazovoe/): от 450 000 ₽ за дом 150 м²
+- [Отопление частного дома без газа: чем отапливать и сколько это стоит](https://sistema-tepla.ru/otoplenie/bez-gaza/): от 320 000 ₽ с монтажом
+- [Монтаж отопления частного дома в Ленинградской области](https://sistema-tepla.ru/otoplenie/leningradskaya-oblast/): от 380 000 ₽ за дом 100 м²
+- [Отопление и водоснабжение одним договором](https://sistema-tepla.ru/otoplenie-i-vodosnabzhenie/): от 780 000 ₽ за дом 150 м2
+
+## Водоснабжение
+- [Водоснабжение частного дома: монтаж](https://sistema-tepla.ru/vodosnabzhenie/): от 3 500 ₽ за точку, от 45 000 ₽ за ввод воды
+- [Разводка воды и канализации в частном доме](https://sistema-tepla.ru/vodosnabzhenie/vnutrennee/): от 3 500 ₽ за точку
+- [Разводка воды в частном доме от скважины](https://sistema-tepla.ru/vodosnabzhenie/vnutrennee/razvodka-vody/): от 3 500 ₽ за точку
+- [Монтаж внутренней канализации в частном доме](https://sistema-tepla.ru/vodosnabzhenie/vnutrennee/vnutrennyaya-kanalizaciya/): от 2 500 ₽ за точку
+- [Наружное водоснабжение частного дома: ввод воды и обвязка скважины](https://sistema-tepla.ru/vodosnabzhenie/naruzhnoe/): от 45 000 ₽ за ввод воды
+- [Система фильтрации воды для частного дома](https://sistema-tepla.ru/vodosnabzhenie/filtraciya/): от 60 000 ₽ за станцию с монтажом
+
+## Канализация
+- [Септик и станция биологической очистки с установкой](https://sistema-tepla.ru/kanalizaciya/): от 145 000 ₽ за септик с установкой
+- [Установка Юнилос Астра: от котлована до пуска](https://sistema-tepla.ru/kanalizaciya/yunilos-astra/): станция от 140 500 ₽, монтаж от 38 000 ₽
+- [Установка Топас с запуском](https://sistema-tepla.ru/kanalizaciya/topas/): станция от 174 300 ₽, монтаж от 38 000 ₽
+- [Установка Евролос: БИО, ПРО, ГРУНТ](https://sistema-tepla.ru/kanalizaciya/evrolos/): станция от 144 100 ₽, монтаж от 38 000 ₽
+- [Септик на 3 человека: цена с установкой](https://sistema-tepla.ru/kanalizaciya/na-3-cheloveka/): от 178 500 ₽ станция с монтажом
+- [Септик на 4-5 человек: цена с установкой](https://sistema-tepla.ru/kanalizaciya/na-4-5-chelovek/): от 185 000 ₽ станция с монтажом
+- [Септик на 6-8 человек: цена с установкой](https://sistema-tepla.ru/kanalizaciya/na-6-8-chelovek/): от 218 000 ₽ станция с монтажом
+- [Септик на 10 человек и больше: цена с установкой](https://sistema-tepla.ru/kanalizaciya/na-10-chelovek/): от 301 400 ₽ станция с монтажом
+- [Септик для дачи непостоянного проживания](https://sistema-tepla.ru/kanalizaciya/dlya-dachi/): от 178 500 ₽ станция с монтажом
+- [Септик при высоких грунтовых водах](https://sistema-tepla.ru/kanalizaciya/vysokie-gruntovye-vody/): от 247 200 ₽ станция ГРУНТ с монтажом
+- [Автономная канализация для частного дома](https://sistema-tepla.ru/kanalizaciya/dlya-chastnogo-doma/): от 145 000 ₽ накопитель, от 178 500 ₽ станция
+
+## Запуск газовых котлов
+- [Запуск газовых котлов в частном доме: первый пуск и пусконаладка](https://sistema-tepla.ru/zapusk-gazovyh-kotlov/): от 7 000 ₽ за настенный котёл
+- [Опрессовка системы отопления в частном доме](https://sistema-tepla.ru/zapusk-gazovyh-kotlov/opressovka/): от 6 000 ₽
+- [Балансировка системы отопления и настройка тёплого пола](https://sistema-tepla.ru/zapusk-gazovyh-kotlov/balansirovka/): от 9 000 ₽
+
+## Сервис
+- [Сервис инженерных систем частного дома](https://sistema-tepla.ru/servis/): от 3 500 ₽ за выезд инженера
+- [Обслуживание котельных в частном доме](https://sistema-tepla.ru/servis/obsluzhivanie-kotelnyh/): от 4 000 ₽ за визит
+- [Обслуживание водоснабжения частного дома](https://sistema-tepla.ru/servis/obsluzhivanie-vodosnabzheniya/): от 3 500 ₽ за выезд инженера
+- [Обслуживание систем отопления частного дома](https://sistema-tepla.ru/servis/obsluzhivanie-otopleniya/): от 3 500 ₽ за выезд инженера
+- [Обслуживание септиков Астра, Топас, Евролос](https://sistema-tepla.ru/servis/obsluzhivanie-septikov/): от 6 000 ₽ за визит
+
+## Компания
+- [Цены и прайс работ](https://sistema-tepla.ru/ceny/)
+- [Объекты](https://sistema-tepla.ru/obekty/)
+- [Отзывы](https://sistema-tepla.ru/otzyvy/)
+- [О компании и реквизиты](https://sistema-tepla.ru/o-kompanii/)
+- [Контакты](https://sistema-tepla.ru/kontakty/)
