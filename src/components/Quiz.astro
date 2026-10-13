@@ -9,7 +9,7 @@ const { preset = 'otoplenie', title = 'Рассчитайте стоимость
 const services = [
   { v: 'otoplenie', t: 'Отопление', d: 'котельная, тёплый пол, радиаторы' },
   { v: 'voda', t: 'Водоснабжение', d: 'ввод воды, фильтрация, разводка по дому' },
-  { v: 'kanalizaciya', t: 'Канализация', d: 'станция очистки, септик, наружные сети' },
+  { v: 'kanalizaciya', t: 'Канализация', d: 'септик, станция биологической очистки, наружные сети' },
   { v: 'zapusk', t: 'Запуск газового котла', d: 'первый пуск, пусконаладка, опрессовка' },
   { v: 'servis', t: 'Сервис', d: 'обслуживание котельной, отопления, воды, септика' },
   { v: 'kompleks', t: 'Всё одним договором', d: 'отопление + вода + канализация' },
@@ -65,8 +65,8 @@ const services = [
         <legend class="quiz__q">Что ещё нужно в доме?</legend>
         <p class="quiz__hint">Добавим в расчёт — вместе выходит дешевле. Можно пропустить.</p>
         <div class="opts">
-          <label class="opt"><input type="checkbox" name="q-extra" value="septik" /><span><span>Станция очистки или септик<small>от 145 000 ₽</small></span></span></label>
-          <label class="opt"><input type="checkbox" name="q-extra" value="voda" /><span><span>Ввод воды и обвязка скважины<small>от 45 000 ₽</small></span></span></label>
+          <label class="opt"><input type="checkbox" name="q-extra" value="septik" /><span><span>Септик или станция биологической очистки<small>от 145 000 ₽</small></span></span></label>
+          <label class="opt"><input type="checkbox" name="q-extra" value="voda" /><span><span>Ввод воды от скважины, колодца или водопровода<small>от 45 000 ₽</small></span></span></label>
           <label class="opt"><input type="checkbox" name="q-extra" value="filtr" /><span><span>Система фильтрации воды<small>от 60 000 ₽</small></span></span></label>
         </div>
       </fieldset>

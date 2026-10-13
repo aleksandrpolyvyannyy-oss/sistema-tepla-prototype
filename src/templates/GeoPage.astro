@@ -45,7 +45,7 @@ const services = NAV.filter((n) => n.children).flatMap((n) => n.children!).filte
 
   <ObjectsGrid tags={p.objTags} title="Объекты в Ленинградской области" gallery={p.gallery} variant="plain" />
 
-  <Section id="ceny" variant="tint" eyebrow="Цены" title="Пакеты и цены для области" lead="Цены одинаковые для СПб и области; доплата за выезд — только дальше 100 км от КАД.">
+  <Section id="ceny" variant="tint" eyebrow="Цены" title="Пакеты и цены для области" lead="Цены одинаковые для СПб и области.">
     {p.packages && <Packages items={p.packages} />}
     <div class="mt-40"><PriceTable rows={p.prices} /></div>
   </Section>
