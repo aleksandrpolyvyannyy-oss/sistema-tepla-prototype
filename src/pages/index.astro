@@ -14,7 +14,9 @@ import SampleEstimate from '../components/SampleEstimate.astro';
 import Reviews from '../components/Reviews.astro';
 import Faq from '../components/Faq.astro';
 import LeadSection from '../components/LeadSection.astro';
-import { photo, PHOTO_ALT } from '../lib/photos';
+import PhotoNeeded from '../components/PhotoNeeded.astro';
+import { photo, PHOTO_ALT, photoStyle } from '../lib/photos';
+import { HOME_PHOTO } from '../data/photo-needs';
 import { PKG_HEATING, STEPS_MONTAGE } from '../data/common';
 import { GEO_AREAS } from '../data/site';
 import Prose from '../components/Prose.astro';
@@ -24,18 +26,19 @@ import { pageBySlug, href } from '../data/pages';
 // Тексты главной можно перекрыть файлом content/index.json (формат — PRAVKI-V2.md, п. 5).
 const c = contentFor('/');
 
-const main = [
-  { t: 'Отопление', href: '/otoplenie/', img: '14', price: 'от 380 000 ₽ за дом 100 м²', d: 'Котельная, тёплый пол, радиаторы — газ или без газа.',
+// Фото карточек — по ФОТО-КАРТА.md; где фото нет — заглушка «Нужно фото».
+const main: { t: string; href: string; img?: string; need?: string; price: string; d: string; links: string[][] }[] = [
+  { t: 'Отопление', href: '/otoplenie/', ...HOME_PHOTO.cards['/otoplenie/'], price: 'от 380 000 ₽ за дом 100 м²', d: 'Котельная, тёплый пол, радиаторы — газ или без газа.',
     links: [['/otoplenie/kotelnaya/', 'Котельная'], ['/otoplenie/teplyj-pol/', 'Тёплые полы'], ['/otoplenie/radiatory/', 'Радиаторы'], ['/otoplenie/avtomatika/', 'Автоматика']] },
-  { t: 'Водоснабжение', href: '/vodosnabzhenie/', img: '42', price: 'от 3 500 ₽ за точку', d: 'Ввод воды (от скважины, центрального водопровода, колодца), фильтрация и разводка по дому.',
+  { t: 'Водоснабжение', href: '/vodosnabzhenie/', ...HOME_PHOTO.cards['/vodosnabzhenie/'], price: 'от 3 500 ₽ за точку', d: 'Ввод воды (от скважины, центрального водопровода, колодца), фильтрация и разводка по дому.',
     links: [['/vodosnabzhenie/vnutrennee/', 'Внутреннее водоснабжение и водоотведение'], ['/vodosnabzhenie/naruzhnoe/', 'Наружное водоснабжение'], ['/vodosnabzhenie/filtraciya/', 'Система фильтрации']] },
-  { t: 'Канализация', href: '/kanalizaciya/', img: '09', price: 'от 145 000 ₽ за септик с монтажом', d: 'Станции очистки и септики с установкой, внутренняя канализация.',
+  { t: 'Канализация', href: '/kanalizaciya/', ...HOME_PHOTO.cards['/kanalizaciya/'], price: 'от 145 000 ₽ за септик с монтажом', d: 'Станции очистки и септики с установкой, внутренняя канализация.',
     links: [['/kanalizaciya/yunilos-astra/', 'Юнилос Астра'], ['/kanalizaciya/topas/', 'Топас'], ['/kanalizaciya/evrolos/', 'Евролос'], ['/kanalizaciya/#podbor', 'Подобрать станцию']] },
-  { t: 'Запуск газовых котлов', href: '/zapusk-gazovyh-kotlov/', img: '24', price: 'от 7 000 ₽', d: 'Первый пуск газового котла, пусконаладка, акт для гарантии.',
+  { t: 'Запуск газовых котлов', href: '/zapusk-gazovyh-kotlov/', ...HOME_PHOTO.cards['/zapusk-gazovyh-kotlov/'], price: 'от 7 000 ₽', d: 'Первый пуск газового котла, пусконаладка, акт для гарантии.',
     links: [['/zapusk-gazovyh-kotlov/', 'Первый пуск и пусконаладка'], ['/zapusk-gazovyh-kotlov/opressovka/', 'Опрессовка'], ['/zapusk-gazovyh-kotlov/balansirovka/', 'Балансировка']] },
-  { t: 'Сервис', href: '/servis/', img: '16', price: 'от 6 000 ₽ за выезд', d: 'Обслуживание котельных, отопления, водоснабжения и септиков по графику.',
+  { t: 'Сервис', href: '/servis/', ...HOME_PHOTO.cards['/servis/'], price: 'от 6 000 ₽ за выезд', d: 'Обслуживание котельных, отопления, водоснабжения и септиков по графику.',
     links: [['/servis/obsluzhivanie-kotelnyh/', 'Обслуживание котельных'], ['/servis/obsluzhivanie-otopleniya/', 'Обслуживание систем отопления'], ['/servis/obsluzhivanie-vodosnabzheniya/', 'Обслуживание водоснабжения'], ['/servis/obsluzhivanie-septikov/', 'Обслуживание септиков']] },
-  { t: 'Всё одним договором', href: '/otoplenie-i-vodosnabzhenie/', img: '40', price: 'от 780 000 ₽ за дом 150 м²', d: 'Отопление, вода и канализация одним договором и одной бригадой.',
+  { t: 'Всё одним договором', href: '/otoplenie-i-vodosnabzhenie/', ...HOME_PHOTO.cards['/otoplenie-i-vodosnabzhenie/'], price: 'от 780 000 ₽ за дом 150 м²', d: 'Отопление, вода и канализация одним договором и одной бригадой.',
     links: [['/otoplenie-i-vodosnabzhenie/', 'Отопление и водоснабжение одним договором'], ['/ceny/', 'Цены и сметы-примеры'], ['/obekty/', 'Объекты']] },
 ];
 // SEO-страницы вне меню — ссылки с главной.
@@ -54,7 +57,7 @@ const faq = [
 ];
 ---
 <Base title={c?.title ?? 'Монтаж отопления частного дома в СПб и ЛО — Система тепла'} description={c?.description ?? 'Отопление, котельные, тёплый пол, водоснабжение и канализация в частных домах Санкт-Петербурга и Ленобласти. Смета за 24 часа, цена в договоре, гарантия 3 года.'} quiz>
-  <Hero h1={c?.h1 ?? 'Монтаж отопления частного дома в СПб и Ленобласти'} offer={c?.offer ?? 'Котельная, тёплый пол, радиаторы и вода по дому — одним договором. Смета за 24 часа, цена фиксируется в договоре.'} img="44" eyebrow={c?.eyebrow ?? 'Инженерные сети частного дома'} price={c?.priceFrom ?? 'от 380 000 ₽ за дом 100 м²'} primary={{ href: '#raschet', label: 'Рассчитать стоимость' }} season
+  <Hero h1={c?.h1 ?? 'Монтаж отопления частного дома в СПб и Ленобласти'} offer={c?.offer ?? 'Котельная, тёплый пол, радиаторы и вода по дому — одним договором. Смета за 24 часа, цена фиксируется в договоре.'} img={HOME_PHOTO.hero} eyebrow={c?.eyebrow ?? 'Инженерные сети частного дома'} price={c?.priceFrom ?? 'от 380 000 ₽ за дом 100 м²'} primary={{ href: '#raschet', label: 'Рассчитать стоимость' }} season
     trust={[['24 ч', 'смета после замера'], ['3 года', 'гарантия на работы'], ['до 100 км', 'от КАД - замер бесплатно']]} />
   <DirectAnswer label="Коротко о нас" text={c?.answer ?? '«Система тепла» монтирует отопление, котельные, водоснабжение и канализацию в частных домах Санкт-Петербурга и Ленинградской области. Отопление дома 150 м² с газовым котлом, тёплым полом и радиаторами стоит от 520 тыс ₽ с оборудованием и занимает 15–25 рабочих дней; вместе с разводкой воды и канализации — от 780 тыс ₽. Первый пуск газового котла делаем за один выезд, смонтированные системы берём на сервис.'} />
 
@@ -62,7 +65,9 @@ const faq = [
     <div class="grid grid--3">
       {main.map((m) => (
         <article class="svc">
-          <a href={m.href} tabindex="-1" aria-hidden="true"><Image src={photo(m.img)} alt={PHOTO_ALT[m.img]} widths={[400, 640]} sizes="(max-width: 620px) 100vw, 380px" /></a>
+          {m.img
+            ? <a href={m.href} tabindex="-1" aria-hidden="true"><Image src={photo(m.img)} alt={PHOTO_ALT[m.img]} widths={[400, 640]} sizes="(max-width: 620px) 100vw, 380px" style={photoStyle(m.img)} /></a>
+            : <PhotoNeeded text={m.need ?? ''} variant="svc" />}
           <div class="svc__body">
             <h3><a href={m.href} style="text-decoration:none;color:inherit">{m.t}</a></h3>
             <p>{m.d}</p>

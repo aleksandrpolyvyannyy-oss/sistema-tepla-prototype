@@ -58,7 +58,7 @@ const nav = [
 ].filter(Boolean) as { id: string; label: string }[];
 ---
 <Base title={p.title} description={p.description} crumbs={crumbsFor(p.slug)} jsonld={[serviceLd(p)]} quiz>
-  <Hero h1={p.h1} offer={p.offer} price={p.priceFrom} img={p.hero} facts={p.facts} factsTitle={p.name} eyebrow={eyebrow}>
+  <Hero h1={p.h1} offer={p.offer} price={p.priceFrom} img={p.hero} need={p.hero ? undefined : p.photoNeed} facts={p.facts} factsTitle={p.name} eyebrow={eyebrow}>
     {p.anchors && (
       <nav class="anchor-nav" aria-label="Виды работ" style="margin:0 0 20px">
         {p.anchors.map((a) => <a class="chip" href={`#${a.id}`}>{a.title}</a>)}
@@ -127,7 +127,7 @@ const nav = [
     </Section>
   )}
 
-  <ObjectsGrid tags={p.objTags} strict={p.kind === 'secondary' || inKanal} variant={compareOwn ? 'tint' : 'plain'} gallery={p.gallery} />
+  <ObjectsGrid tags={p.objTags} strict={p.kind === 'secondary' || inKanal} variant={compareOwn ? 'tint' : 'plain'} gallery={p.gallery} galleryNeed={p.hero ? p.photoNeed : undefined} />
 
   <Section id="etapy" variant={compareOwn ? 'plain' : 'tint'} eyebrow="Этапы и сроки" title="Как мы работаем: этапы и сроки" lead="Сроки каждого этапа — в графике к договору.">
     <Expand h={640} mobileOnly label="Показать все этапы">

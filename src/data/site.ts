@@ -18,7 +18,8 @@ export const SITE = {
   kpp: '780000000', // заглушка
   area: 'Санкт-Петербург и Ленинградская область',
   pricesUpdated: '07.10.2026',
-  prototypeNote: 'Прототип. Фото объектов — до финальной обработки.',
+  // Для отдельной ссылки (например «№2 - корректировка фото») надпись задаётся при сборке: PUBLIC_PROTO_NOTE.
+  prototypeNote: import.meta.env.PUBLIC_PROTO_NOTE || 'Прототип. Цены и реквизиты - примерные. Серые блоки «Нужно фото» - места для фото, которых пока нет.',
 };
 
 export type NavLink = { href: string; label: string; note?: string };

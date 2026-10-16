@@ -1,0 +1,65 @@
+---
+// Заглушка на месте фото, которого пока нет: что именно нужно снять. Раскладка — ФОТО-КАРТА.md.
+// variant: hero — первый экран; tile — плитка в ленте галереи; card — обложка карточки объекта (4:3);
+// svc — обложка карточки раздела на главной (16:10); wide — широкий блок.
+interface Props { text: string; variant?: 'hero' | 'tile' | 'card' | 'svc' | 'wide'; class?: string }
+const { text, variant = 'tile', class: cls } = Astro.props;
+---
+<div class:list={['need', `need--${variant}`, cls]} role="img" aria-label={`Нужно фото: ${text}`}>
+  <div class="need__in">
+    <svg class="need__icon" viewBox="0 0 24 24" width="40" height="40" aria-hidden="true">
+      <path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.3l1.4-2h5.6l1.4 2h2.3A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" />
+      <circle cx="12" cy="12.8" r="3.4" fill="none" stroke="currentColor" stroke-width="1.6" />
+    </svg>
+    <div class="need__title">Нужно фото</div>
+    <p class="need__text">{text}</p>
+  </div>
+  <span class="need__mark">заглушка прототипа</span>
+</div>
+
+<style>
+  .need {
+    position: relative; display: flex; align-items: center; justify-content: center; width: 100%;
+    aspect-ratio: 1; padding: 18px 16px 30px; text-align: center; color: #5a6878;
+    background: repeating-linear-gradient(135deg, #f3f6f9 0 14px, #eef2f6 14px 28px);
+    border: 2px dashed #b7c2d0; border-radius: var(--radius-sm, 10px);
+  }
+  .need__in { max-width: 420px; }
+  .need__icon { display: block; margin: 0 auto 8px; color: #8a97a8; }
+  .need__title { font-weight: 800; color: var(--navy, #1E3A5F); font-size: 15px; letter-spacing: .02em; }
+  .need__text { margin: 6px 0 0; font-size: 13px; line-height: 1.4; overflow-wrap: anywhere; }
+  .need__mark {
+    position: absolute; right: 10px; bottom: 8px; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase;
+    color: #8a97a8; background: rgba(255,255,255,.7); padding: 1px 6px; border-radius: 4px;
+  }
+
+  .need--hero { aspect-ratio: 4 / 4.4; border-radius: 22px; padding: 28px 28px 40px; }
+  .need--hero .need__icon { width: 56px; height: 56px; }
+  .need--hero .need__title { font-size: 20px; }
+  .need--hero .need__text { font-size: 16px; }
+  .need--hero.need--short { aspect-ratio: 16 / 10; }
+
+  .need--card, .need--svc { aspect-ratio: 4 / 3; border-radius: 0; border-width: 0 0 2px; padding: 14px 14px 28px; }
+  .need--svc { aspect-ratio: 16 / 10; }
+  .need--card .need__icon, .need--svc .need__icon { width: 32px; height: 32px; margin-bottom: 4px; }
+  .need--card .need__title, .need--svc .need__title { font-size: 14px; }
+  .need--card .need__text, .need--svc .need__text { font-size: 12.5px; }
+
+  .need--tile .need__icon { width: 30px; height: 30px; margin-bottom: 4px; }
+  .need--tile .need__title { font-size: 14px; }
+  .need--tile .need__text { font-size: 12.5px; }
+
+  .need--wide { aspect-ratio: 16 / 7; border-radius: var(--radius, 14px); padding: 28px 24px 40px; }
+  .need--wide .need__title { font-size: 18px; }
+  .need--wide .need__text { font-size: 15px; }
+
+  @media (max-width: 880px) {
+    .need--hero { aspect-ratio: 16 / 10; border-radius: 16px; padding: 18px 16px 32px; }
+    .need--hero .need__icon { width: 40px; height: 40px; }
+    .need--hero .need__title { font-size: 17px; }
+    .need--hero .need__text { font-size: 14px; }
+  }
+  @media (max-width: 560px) {
+    .need--wide { aspect-ratio: 4 / 3; }
+  }
+</style>

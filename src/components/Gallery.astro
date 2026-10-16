@@ -1,17 +1,22 @@
 ---
 import { Image } from 'astro:assets';
-import { photo, PHOTO_ALT } from '../lib/photos';
+import PhotoNeeded from './PhotoNeeded.astro';
+import { photo, PHOTO_ALT, photoStyle } from '../lib/photos';
 // strip — компактная лента в одну строку (на телефоне — карусель), без большого первого кадра.
-interface Props { ids: string[]; strip?: boolean }
-const { ids, strip = false } = Astro.props;
+// need — плитка-заглушка «Нужно фото» в конце ленты: что ещё нужно снять для этой страницы.
+interface Props { ids: string[]; strip?: boolean; need?: string }
+const { ids, strip = false, need } = Astro.props;
+const count = ids.length + (need ? 1 : 0);
+// Колонок в ленте не меньше пяти, чтобы одно-два фото не растягивались на всю ширину.
 ---
-<div class:list={['gallery', { 'gallery--strip rail': strip }]} style={strip ? `--n:${ids.length}` : undefined}>
+<div class:list={['gallery', { 'gallery--strip rail': strip }]} style={strip ? `--n:${Math.max(count, 5)}` : undefined}>
   {ids.map((id, i) => (
     <figure>
       {strip
-        ? <Image src={photo(id)} alt={PHOTO_ALT[id] ?? ''} widths={[240, 400]} sizes="(max-width: 720px) 62vw, 200px" />
-        : <Image src={photo(id)} alt={PHOTO_ALT[id] ?? ''} widths={i === 0 ? [480, 800] : [320, 480]} sizes={i === 0 ? '(max-width: 720px) 100vw, 600px' : '(max-width: 720px) 50vw, 300px'} />}
+        ? <Image src={photo(id)} alt={PHOTO_ALT[id] ?? ''} widths={[240, 400]} sizes="(max-width: 720px) 62vw, 220px" style={photoStyle(id)} />
+        : <Image src={photo(id)} alt={PHOTO_ALT[id] ?? ''} widths={i === 0 ? [480, 800] : [320, 480]} sizes={i === 0 ? '(max-width: 720px) 100vw, 600px' : '(max-width: 720px) 50vw, 300px'} style={photoStyle(id)} />}
       <figcaption>{PHOTO_ALT[id]}</figcaption>
     </figure>
   ))}
+  {need && <PhotoNeeded text={need} variant="tile" />}
 </div>

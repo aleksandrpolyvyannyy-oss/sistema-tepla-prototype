@@ -1,0 +1,268 @@
+---
+// Кусок схемы отопления для эскиза C «зигзаг»: в каждом разделе страницы своя часть системы.
+// Все куски шириной 400 в координатах схемы. Две трубы входят сверху и выходят снизу в одних и тех же точках:
+// A (по ходу воды: подача, после смешения тёплая, после петель остывшая) x=180, B (обратка в котёл, вверх) x=220.
+// Через эти точки трубы страницы (слой на всю высоту, рисует скрипт страницы) переходят из куска в кусок.
+// Разметка для скрипта: path.p[data-l][data-a][data-b] - труба, прорисовывается, когда вода прошла долю a..b куска;
+// data-l: A - вода сверху вниз по странице, B - обратка, M - мини-схема всего контура (раздел 06).
+// .ar[data-l][data-at] - стрелка потока, загорается на доле at. Без JS всё нарисовано целиком в цвете.
+import { roundPath, type Pt } from '../../lib/eskiz-pipes';
+interface Props { k: 'kotel' | 'strelka' | 'smes' | 'kollektor' | 'petli' | 'podmes' | 'obratka'; label: string }
+const { k, label } = Astro.props;
+
+const H = { kotel: 400, strelka: 460, smes: 440, kollektor: 460, petli: 460, podmes: 420, obratka: 520 }[k];
+const rp = (pts: Pt[], r = 16) => roundPath(pts, r).d;
+// Стрелка потока: треугольник с центром в (x, y).
+const arr = (x: number, y: number, dir: 'r' | 'l' | 'u' | 'd', s = 8) => {
+  const p = { r: [[-s, -s], [s, 0], [-s, s]], l: [[s, -s], [-s, 0], [s, s]], u: [[-s, s], [0, -s], [s, s]], d: [[-s, -s], [0, s], [s, -s]] }[dir];
+  return p.map(([dx, dy]) => `${x + dx},${y + dy}`).join(' ');
+};
+// Обратка в котёл справа от оборудования: снизу вверх с обходом по правому краю.
+const bypass = (yLow: number, yHigh: number) => rp([[220, H], [220, yLow], [372, yLow], [372, yHigh], [220, yHigh], [220, 0]], 16);
+---
+<figure class="kus" data-kus data-k={k}>
+  <svg viewBox={`0 0 400 ${H}`} aria-hidden="true" focusable="false">
+    {k === 'kotel' && (
+      <>
+        <path class="p r" data-l="A" data-a="0" data-b="1" d="M180 266 V400" />
+        <path class="p b" data-l="B" data-a="0" data-b="1" d="M220 400 V266" />
+        <polygon class="ar r" data-l="A" data-at=".5" points={arr(180, 336, 'd')} />
+        <polygon class="ar b" data-l="B" data-at=".5" points={arr(220, 336, 'u')} />
+        <rect class="eq" x="80" y="16" width="240" height="250" />
+        <g class="n"><circle cx="112" cy="50" r="16" /><text x="112" y="50" dy=".35em">1</text></g>
+        <text class="t" x="136" y="57">Котёл</text>
+        <text class="tm" x="200" y="90" text-anchor="middle">газовый, настенный</text>
+        <rect class="eq eq--in" x="140" y="106" width="120" height="98" />
+        <g class="fl">
+          <path class="fl__o" d="M200 120 C210 138 230 150 228 170 C226 186 214 192 200 192 C186 192 172 186 172 170 C172 156 182 150 186 136 C192 148 196 152 200 158 C204 146 206 134 200 120 Z" />
+          <path class="fl__i" d="M200 150 C208 162 216 168 214 178 C212 187 206 190 200 190 C193 190 186 186 186 178 C186 170 194 166 200 150 Z" />
+        </g>
+        <rect class="brn" x="156" y="193" width="88" height="6" />
+        <text class="t" x="200" y="242" text-anchor="middle">нагрев 60-75 °C</text>
+        <text class="tm" x="168" y="330" text-anchor="end">подача</text>
+        <text class="tm" x="232" y="330">обратка</text>
+      </>
+    )}
+
+    {k === 'strelka' && (
+      <>
+        <path class="p r" data-l="A" data-a="0" data-b=".2" d="M180 0 V70" />
+        <path class="p r" data-l="A" data-a=".45" data-b="1" d="M180 320 V460" />
+        <path class="p r" data-l="A" data-a=".6" data-b=".9" d="M180 390 H0" />
+        <path class="p b" data-l="B" data-a="0" data-b=".4" d="M220 460 V320" />
+        <path class="p b" data-l="B" data-a="0" data-b=".5" d="M0 270 H160" />
+        <path class="p b" data-l="B" data-a=".6" data-b="1" d="M220 70 V0" />
+        <polygon class="ar r" data-l="A" data-at=".1" points={arr(180, 36, 'd')} />
+        <polygon class="ar r" data-l="A" data-at=".95" points={arr(180, 432, 'd')} />
+        <polygon class="ar r" data-l="A" data-at=".8" points={arr(70, 390, 'l')} />
+        <polygon class="ar b" data-l="B" data-at=".3" points={arr(90, 270, 'r')} />
+        <polygon class="ar b" data-l="B" data-at=".25" points={arr(220, 400, 'u')} />
+        <polygon class="ar b" data-l="B" data-at=".9" points={arr(220, 36, 'u')} />
+        <rect class="eq" x="160" y="70" width="80" height="250" />
+        <text class="t" x="200" y="195" dy=".35em" text-anchor="middle" transform="rotate(-90 200 195)">Гидрострелка</text>
+        <g class="n"><circle cx="276" cy="90" r="16" /><text x="276" y="90" dy=".35em">2</text></g>
+        <text class="tm" x="256" y="150">делит поток:</text>
+        <text class="tm" x="256" y="174">тёплый пол</text>
+        <text class="tm" x="256" y="198">и радиаторы</text>
+        <text class="tb" x="8" y="40">Радиаторы,</text>
+        <text class="tm" x="8" y="64">этапы 3-5,</text>
+        <text class="tm" x="8" y="88">работают</text>
+        <text class="tm" x="8" y="112">параллельно</text>
+        <text class="tm" x="8" y="136">с тёплым</text><text class="tm" x="8" y="160">полом</text>
+        <text class="tm" x="8" y="254">от радиаторов</text>
+        <text class="tm" x="8" y="374">к радиаторам</text>
+      </>
+    )}
+
+    {k === 'smes' && (
+      <>
+        <path class="p r" data-l="A" data-a="0" data-b=".3" d="M180 0 V100" />
+        <path class="p a" data-l="A" data-a=".45" data-b="1" d="M180 190 V440" />
+        <path class="p d" data-l="A" data-a=".25" data-b=".45" d="M360 128 H316" />
+        <path class="p b" data-l="B" data-a="0" data-b="1" d={bypass(300, 40)} />
+        <polygon class="ar r" data-l="A" data-at=".15" points={arr(180, 50, 'd')} />
+        <polygon class="ar a" data-l="A" data-at=".8" points={arr(180, 330, 'd')} />
+        <polygon class="ar b" data-l="A" data-at=".45" points={arr(336, 128, 'l', 6)} />
+        <polygon class="ar b" data-l="B" data-at=".1" points={arr(220, 380, 'u')} />
+        <polygon class="ar b" data-l="B" data-at=".45" points={arr(360, 236, 'u')} />
+        <polygon class="ar b" data-l="B" data-at=".8" points={arr(290, 40, 'l')} />
+        <rect class="eq" x="24" y="100" width="292" height="90" />
+        <g class="n"><circle cx="52" cy="132" r="16" /><text x="52" y="132" dy=".35em">6</text></g>
+        <text class="t" x="76" y="139">Узел смешения</text>
+        <text class="tm" x="76" y="170">и насос</text>
+        <g class="pump"><circle cx="290" cy="162" r="15" /><path d="M284 154 L299 162 L284 170 Z" /></g>
+        <text class="tm" x="164" y="40" text-anchor="end">от котла</text>
+        <text class="tm" x="164" y="64" text-anchor="end">60-75 °C</text>
+        <text class="tb" x="164" y="262" text-anchor="end">в пол</text>
+        <text class="tb" x="164" y="288" text-anchor="end">35-45 °C</text>
+        <text class="tm" x="236" y="226">подмес</text>
+        <text class="tm" x="236" y="250">из обратки</text>
+        <text class="tm" x="236" y="274">пола</text>
+      </>
+    )}
+
+    {k === 'kollektor' && (
+      <>
+        <path class="p a" data-l="A" data-a="0" data-b=".15" d="M180 0 V90" />
+        <rect class="eq" x="60" y="90" width="280" height="26" />
+        <path class="p a" data-l="A" data-a=".15" data-b=".35" d="M180 103 H74" />
+        <path class="p a" data-l="A" data-a=".15" data-b=".35" d="M180 103 H326" />
+        <path class="p a" data-l="A" data-a=".35" data-b=".5" d="M102 116 V146 M142 116 V146 M252 116 V146 M292 116 V146" />
+        <path class="p a" data-l="A" data-a=".4" data-b="1" d={rp([[60, 103], [28, 103], [28, 400], [180, 400], [180, 460]])} />
+        {[102, 142, 252, 292].map((x) => (
+          <g class="fm-m"><rect class="eq" x={x - 8} y="60" width="16" height="30" /><rect class="flt" x={x - 4} y="68" width="8" height="10" /></g>
+        ))}
+        <path class="p b" data-l="B" data-a="0" data-b=".2" d="M102 216 V246 M142 216 V246 M252 216 V246 M292 216 V246" />
+        <path class="p b" data-l="B" data-a="0" data-b=".25" d="M220 460 V272" />
+        <rect class="eq" x="60" y="246" width="280" height="26" />
+        <path class="p b" data-l="B" data-a=".2" data-b=".45" d="M74 259 H340" />
+        <path class="p b" data-l="B" data-a=".45" data-b="1" d={rp([[340, 259], [372, 259], [372, 30], [220, 30], [220, 0]])} />
+        <polygon class="ar a" data-l="A" data-at=".08" points={arr(180, 46, 'd')} />
+        <polygon class="ar a" data-l="A" data-at=".7" points={arr(28, 250, 'd')} />
+        <polygon class="ar a" data-l="A" data-at=".95" points={arr(180, 432, 'd')} />
+        <polygon class="ar b" data-l="B" data-at=".1" points={arr(220, 410, 'u')} />
+        <polygon class="ar b" data-l="B" data-at=".7" points={arr(372, 150, 'u')} />
+        <polygon class="ar b" data-l="B" data-at=".9" points={arr(300, 30, 'l')} />
+        <g class="n"><circle cx="82" cy="170" r="16" /><text x="82" y="170" dy=".35em">7</text></g>
+        <text class="t" x="106" y="177">Коллектор</text><text class="t" x="106" y="203">тёплого пола</text>
+        <text class="tm" x="164" y="44" text-anchor="end">расходомеры</text>
+        <text class="tm" x="44" y="386">в петли</text>
+        <text class="tm" x="236" y="302">обратка</text>
+      </>
+    )}
+
+    {k === 'petli' && (
+      <>
+        <rect class="slab" x="20" y="50" width="330" height="290" />
+        <path class="p a" data-l="A" data-a="0" data-b=".62" d={rp([[180, 0], [180, 70], [50, 70], [50, 110], [320, 110], [320, 150], [50, 150], [50, 190], [320, 190], [320, 230], [50, 230], [50, 250]], 20)} />
+        <path class="p b" data-l="A" data-a=".62" data-b="1" d={rp([[50, 250], [50, 270], [320, 270], [320, 310], [180, 310], [180, 460]], 20)} />
+        <path class="p b" data-l="B" data-a="0" data-b="1" d={bypass(380, 30)} />
+        <polygon class="ar a" data-l="A" data-at=".06" points={arr(120, 70, 'l')} />
+        <polygon class="ar a" data-l="A" data-at=".2" points={arr(190, 110, 'r')} />
+        <polygon class="ar a" data-l="A" data-at=".35" points={arr(180, 150, 'l')} />
+        <polygon class="ar a" data-l="A" data-at=".48" points={arr(190, 190, 'r')} />
+        <polygon class="ar b" data-l="A" data-at=".75" points={arr(190, 270, 'r')} />
+        <polygon class="ar b" data-l="A" data-at=".97" points={arr(180, 420, 'd')} />
+        <polygon class="ar b" data-l="B" data-at=".1" points={arr(220, 430, 'u')} />
+        <polygon class="ar b" data-l="B" data-at=".5" points={arr(372, 200, 'u')} />
+        <polygon class="ar b" data-l="B" data-at=".9" points={arr(300, 30, 'l')} />
+        <text class="tm" x="164" y="40" text-anchor="end">35-45 °C</text>
+        <g class="n"><circle cx="24" cy="384" r="16" /><text x="24" y="384" dy=".35em">8</text></g>
+        <text class="t" x="48" y="391">Петли</text>
+        <text class="t" x="8" y="420">тёплого пола</text>
+        <text class="tm" x="8" y="446">в стяжке</text>
+        <text class="tm" x="236" y="416">остывшая вода</text>
+        <text class="tm" x="236" y="440">в обратку</text>
+      </>
+    )}
+
+    {k === 'podmes' && (
+      <>
+        <path class="p b" data-l="A" data-a="0" data-b=".3" d="M180 0 V104" />
+        <path class="p d" data-l="A" data-a=".3" data-b=".55" d={rp([[50, 145], [26, 145], [26, 0]], 12)} />
+        <path class="p b" data-l="A" data-a=".45" data-b="1" d="M180 186 V420" />
+        <path class="p b" data-l="B" data-a="0" data-b="1" d={bypass(330, 40)} />
+        <polygon class="ar b" data-l="A" data-at=".15" points={arr(180, 56, 'd')} />
+        <polygon class="ar b" data-l="A" data-at=".55" points={arr(26, 40, 'u', 7)} />
+        <polygon class="ar b" data-l="A" data-at=".85" points={arr(180, 350, 'd')} />
+        <polygon class="ar b" data-l="B" data-at=".1" points={arr(220, 384, 'u')} />
+        <polygon class="ar b" data-l="B" data-at=".5" points={arr(372, 190, 'u')} />
+        <polygon class="ar b" data-l="B" data-at=".85" points={arr(300, 40, 'l')} />
+        <rect class="eq" x="50" y="104" width="280" height="82" />
+        <text class="t" x="70" y="138">Обратный</text><text class="t" x="70" y="166">коллектор</text>
+        <text class="tm" x="44" y="40">часть воды</text>
+        <text class="tm" x="44" y="64">на подмес</text>
+        <text class="tb" x="44" y="88">в узел 6</text>
+        <text class="tm" x="164" y="250" text-anchor="end">остальное -</text>
+        <text class="tm" x="164" y="274" text-anchor="end">в общую</text>
+        <text class="tm" x="164" y="298" text-anchor="end">обратку</text>
+        <text class="tm" x="236" y="372">общая обратка</text>
+        <text class="tm" x="236" y="396">в котёл</text>
+      </>
+    )}
+
+    {k === 'obratka' && (
+      <>
+        <path class="p b" data-l="A" data-a="0" data-b="1" d="M180 0 V70" />
+        <path class="p b" data-l="B" data-a="0" data-b="1" d="M220 70 V0" />
+        <polygon class="ar b" data-l="A" data-at=".5" points={arr(180, 34, 'd')} />
+        <polygon class="ar b" data-l="B" data-at=".5" points={arr(220, 34, 'u')} />
+        <text class="tm" x="164" y="40" text-anchor="end">от петель</text>
+        <text class="tb" x="236" y="40">в котёл</text>
+        <rect class="eq" x="40" y="70" width="320" height="72" />
+        <g class="n"><circle cx="66" cy="106" r="16" /><text x="66" y="106" dy=".35em">9</text></g>
+        <text class="t" x="90" y="113">Общая обратка</text>
+        <rect class="mini-f" x="16" y="172" width="368" height="332" />
+        <text class="tm" x="36" y="204">Весь контур</text>
+        <path class="p r" data-l="M" data-a="0" data-b=".25" d="M70 252 H240" />
+        <path class="p a" data-l="M" data-a=".25" data-b=".62" d={rp([[240, 252], [330, 252], [330, 340], [200, 340], [200, 372], [330, 372], [330, 398]], 12)} />
+        <path class="p b" data-l="M" data-a=".62" data-b="1" d={rp([[330, 398], [330, 448], [70, 448], [70, 252]], 14)} />
+        <polygon class="ar r" data-l="M" data-at=".12" points={arr(110, 252, 'r', 6)} />
+        <polygon class="ar a" data-l="M" data-at=".35" points={arr(330, 276, 'd', 6)} />
+        <polygon class="ar b" data-l="M" data-at=".8" points={arr(200, 448, 'l', 6)} />
+        <polygon class="ar b" data-l="M" data-at=".95" points={arr(70, 330, 'u', 6)} />
+        {[[70, 252, '1'], [150, 252, '2'], [240, 252, '6'], [330, 306, '7'], [200, 356, '8'], [70, 400, '9']].map(([x, y, n]) => (
+          <g class="n n--s"><circle cx={x} cy={y} r="13" /><text x={x} y={y} dy=".35em">{n}</text></g>
+        ))}
+        <text class="tm" x="70" y="232" text-anchor="middle">Котёл</text>
+        <text class="tm" x="150" y="288" text-anchor="middle">Гидрострелка</text>
+        <text class="tm" x="240" y="232" text-anchor="middle">Узел смешения</text>
+        <text class="tm" x="314" y="312" text-anchor="end">Коллектор</text>
+        <text class="tm" x="180" y="362" text-anchor="end">Петли</text>
+        <text class="tm" x="90" y="406">Обратка</text>
+      </>
+    )}
+  </svg>
+  <figcaption class:list={[k === 'obratka' ? 'kus__cap' : 'vh']}>
+    {k === 'obratka' ? <><b>Цикл замкнут</b> - так работает система, которую мы монтируем.</> : label}
+  </figcaption>
+</figure>
+
+<style>
+  .kus { margin: 0; background: #fff; color: #0F2340; }
+  .kus svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .kus text { font-family: inherit; }
+  /* толщина в единицах схемы: 7.5 - около 8 px на компьютере и 6-7 px на телефоне; трубы страницы берут ту же толщину */
+  .p { fill: none; stroke-width: 7.5; stroke-linejoin: round; stroke-linecap: butt; }
+  .p.r { stroke: #E2452B; } .p.a { stroke: #F2A23A; } .p.b { stroke: #2B6CD9; }
+  .p.d { stroke: #2B6CD9; stroke-width: 4.5; stroke-dasharray: 9 7; }
+  .ar { stroke: none; transition: opacity .25s; }
+  .ar.r { fill: #E2452B; } .ar.a { fill: #F2A23A; } .ar.b { fill: #2B6CD9; }
+  .eq { fill: #fff; stroke: #1E3A5F; stroke-width: 2.5; }
+  .eq--in { fill: #FFF6EC; stroke-width: 2; }
+  .slab { fill: #F3F0E8; stroke: #1E3A5F; stroke-width: 2; }
+  .mini-f { fill: none; stroke: #B9C6D8; stroke-width: 2; }
+  .flt { fill: #F2A23A; }
+  .brn { fill: #1E3A5F; }
+  .fl__o { fill: #E2452B; } .fl__i { fill: #F2A23A; }
+  .fl { transform-box: view-box; transform-origin: 200px 192px; }
+  .pump circle { fill: #fff; stroke: #1E3A5F; stroke-width: 2.5; }
+  .pump path { fill: none; stroke: #1E3A5F; stroke-width: 2; stroke-linejoin: miter; }
+  .t { font-size: 21px; font-weight: 800; fill: #0F2340; }
+  .tb { font-size: 19px; font-weight: 800; fill: #0F2340; }
+  .tm { font-size: 18px; font-weight: 600; fill: #2C4466; }
+  .n circle { fill: #1E3A5F; }
+  .n text { fill: #fff; font-size: 18px; font-weight: 800; text-anchor: middle; }
+  .n--s text { font-size: 17.5px; }
+  .kus__cap { margin-top: 18px; padding-top: 14px; border-top: 3px solid #2B6CD9; font-size: 18px; line-height: 1.45; font-weight: 600; }
+  .kus__cap b { font-weight: 800; }
+
+  /* Состояния, которые ставит скрипт страницы (.zz.an - анимация включена) */
+  /* бледные контуры и метки потока созданы скриптом, поэтому :global */
+  .kus :global(.pg) { fill: none; stroke: #DCE3EC; stroke-width: 7.5; stroke-linejoin: round; }
+  .kus :global(.pg--d) { stroke-width: 4.5; stroke-dasharray: 9 7; }
+  .kus :global(.fm) { display: none; fill: none; stroke: #fff; stroke-width: 2.2; stroke-dasharray: 5 21; pointer-events: none; }
+  :global(.zz.an) .kus :is(.eq, .t, .tb, .tm, .n, .fl, .brn, .slab, .pump, .flt, .mini-f) { transition: opacity .5s ease; }
+  :global(.zz.an) .kus:not(.on) :is(.eq, .t, .tb, .tm, .n, .fl, .brn, .slab, .pump, .flt) { opacity: .32; }
+  :global(.zz.an) .kus.on .eq { stroke-width: 3; }
+  :global(.zz.an) .kus.vis.fa :global(.fm[data-l='A']),
+  :global(.zz.an) .kus.vis.fb :global(.fm[data-l='B']),
+  :global(.zz.an.live) .kus.vis :global(.fm) { display: inline; animation: kus-flow 1s linear infinite; }
+  :global(.zz.an.live) .kus.vis .p.d, :global(.zz.an) .kus.vis.fa .p.d { animation: kus-mix 1s linear infinite; }
+  :global(.zz.an) .kus.on.vis .fl { animation: kus-fire 1.6s ease-in-out infinite; }
+  @keyframes kus-flow { from { stroke-dashoffset: 26; } to { stroke-dashoffset: 0; } }
+  @keyframes kus-mix { from { stroke-dashoffset: 16; } to { stroke-dashoffset: 0; } }
+  @keyframes kus-fire { 0%, 100% { transform: scale(1, 1); } 30% { transform: scale(.94, 1.07); } 60% { transform: scale(1.04, .95); } }
+  @media (max-width: 760px) { .kus__cap { font-size: 17px; } }
+</style>

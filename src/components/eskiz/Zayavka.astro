@@ -1,0 +1,165 @@
+---
+// Эскизы: примерная цена (2 поля) + короткая заявка. Прототип: данные никуда не отправляются.
+// Внешний вид задаётся переменными --zv-* на странице варианта.
+import { RATE_WORK, RATE_FULL } from '../../lib/eskiz';
+interface Props { uid: string; cur?: string }
+// cur - знак валюты в сумме (в эскизе C «₽», в A и B по-прежнему «руб.»)
+const { uid, cur = 'руб.' } = Astro.props;
+const id = (s: string) => `${uid}-${s}`;
+const fmt = (n: number) => n.toLocaleString('ru-RU').replace(/\s/g, ' ');
+const AREA = 100;
+---
+<div class="zv" data-zv data-work={RATE_WORK} data-full={RATE_FULL} data-cur={cur}>
+  <div class="zv__calc" role="group" aria-labelledby={id('calc-h')}>
+    <h3 class="zv__h" id={id('calc-h')}>Примерная цена</h3>
+    <div class="zv__fields">
+      <label class="zv__field" for={id('area')}>
+        <span class="zv__label">Площадь пола, м²</span>
+        <input class="zv__input" id={id('area')} name="area" type="number" inputmode="numeric" min="1" max="2000" step="1" value={AREA} data-area />
+      </label>
+      <fieldset class="zv__field zv__set">
+        <legend class="zv__label">Основание</legend>
+        <div class="zv__seg">
+          <label class="zv__opt"><input type="radio" name={id('base')} value="beton" checked data-base /> <span>Плита или грунт</span></label>
+          <label class="zv__opt"><input type="radio" name={id('base')} value="derevo" data-base /> <span>Деревянное перекрытие</span></label>
+        </div>
+      </fieldset>
+    </div>
+    <dl class="zv__out" aria-live="polite">
+      <div><dt>Только работа</dt><dd data-out-work>от {fmt(AREA * RATE_WORK)} {cur}</dd></div>
+      <div><dt>С материалами</dt><dd data-out-full>от {fmt(AREA * RATE_FULL)} {cur}</dd></div>
+    </dl>
+    <p class="zv__note" data-note>Стяжка в цену не входит. Точную сумму считаем после замера.</p>
+  </div>
+
+  <form class="zv__form" novalidate data-lead aria-labelledby={id('form-h')}>
+    <h3 class="zv__h" id={id('form-h')}>Оставьте контакт</h3>
+    <p class="zv__lead">Пришлём расчёт по вашему дому. Хватит телефона или почты.</p>
+    <div class="zv__grid">
+      <label class="zv__field" for={id('name')}>
+        <span class="zv__label">Имя</span>
+        <input class="zv__input" id={id('name')} name="name" type="text" autocomplete="given-name" />
+      </label>
+      <label class="zv__field" for={id('tel')}>
+        <span class="zv__label">Телефон</span>
+        <input class="zv__input" id={id('tel')} name="tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="+7" aria-describedby={id('err')} />
+      </label>
+      <label class="zv__field" for={id('email')}>
+        <span class="zv__label">Почта</span>
+        <input class="zv__input" id={id('email')} name="email" type="email" inputmode="email" autocomplete="email" aria-describedby={id('err')} />
+      </label>
+    </div>
+    <fieldset class="zv__field zv__set">
+      <legend class="zv__label">Как удобно связаться</legend>
+      <div class="zv__chips">
+        {['MAX', 'Telegram', 'WhatsApp', 'Звонок'].map((c) => (
+          <label class="zv__chip"><input type="checkbox" name="kanal" value={c} /> <span>{c}</span></label>
+        ))}
+      </div>
+    </fieldset>
+    <input type="hidden" name="raschet" value="" data-hidden />
+    <label class="zv__consent">
+      <input type="checkbox" name="soglasie" data-consent />
+      <span>Согласен на обработку персональных данных по <a href="/soglasie-pdn/">условиям согласия</a></span>
+    </label>
+    <p class="zv__err" id={id('err')} role="alert" data-err></p>
+    <button class="zv__btn" type="submit">Отправить заявку</button>
+  </form>
+  <div class="zv__done" data-done hidden tabindex="-1">
+    <p class="zv__h">Спасибо, свяжемся</p>
+    <p class="zv__note">Это прототип: заявка никуда не отправлена.</p>
+  </div>
+</div>
+
+<script>
+  const fmt = (n: number) => Math.round(n).toLocaleString('ru-RU').replace(/\s/g, ' ');
+  document.querySelectorAll<HTMLElement>('[data-zv]').forEach((root) => {
+    const work = Number(root.dataset.work), full = Number(root.dataset.full), cur = root.dataset.cur || 'руб.';
+    const area = root.querySelector<HTMLInputElement>('[data-area]')!;
+    const outW = root.querySelector('[data-out-work]')!, outF = root.querySelector('[data-out-full]')!;
+    const note = root.querySelector('[data-note]')!;
+    const hidden = root.querySelector<HTMLInputElement>('[data-hidden]')!;
+    const calc = () => {
+      const a = Math.max(0, Math.min(2000, Number(area.value) || 0));
+      const wood = root.querySelector<HTMLInputElement>('[data-base]:checked')?.value === 'derevo';
+      const show = (rate: number) => {
+        if (!a) return '-';
+        return wood ? `от ${fmt(a * rate * 1.2)} до ${fmt(a * rate * 1.3)} ${cur}` : `от ${fmt(a * rate)} ${cur}`;
+      };
+      outW.textContent = show(work);
+      outF.textContent = show(full);
+      note.textContent = wood
+        ? 'На деревянном перекрытии система дороже на 20-30%, считаем её отдельно. Стяжка в цену не входит.'
+        : 'Стяжка в цену не входит. Точную сумму считаем после замера.';
+      hidden.value = a ? `${a} м², ${wood ? 'дерево' : 'плита или грунт'}` : '';
+    };
+    root.addEventListener('input', calc);
+    root.addEventListener('change', calc);
+    calc();
+
+    const form = root.querySelector<HTMLFormElement>('[data-lead]')!;
+    const err = root.querySelector<HTMLElement>('[data-err]')!;
+    const done = root.querySelector<HTMLElement>('[data-done]')!;
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const tel = (form.elements.namedItem('tel') as HTMLInputElement);
+      const mail = (form.elements.namedItem('email') as HTMLInputElement);
+      const consent = root.querySelector<HTMLInputElement>('[data-consent]')!;
+      const digits = tel.value.replace(/\D/g, '');
+      const telOk = digits.length >= 10 && digits.length <= 12;
+      const mailOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail.value.trim());
+      [tel, mail].forEach((i) => i.removeAttribute('aria-invalid'));
+      let msg = '';
+      if (!tel.value.trim() && !mail.value.trim()) { msg = 'Укажите телефон или почту, хватит одного.'; tel.setAttribute('aria-invalid', 'true'); tel.focus(); }
+      else if (tel.value.trim() && !telOk && !mailOk) { msg = 'Проверьте телефон: нужно 10 цифр, можно с +7 или 8.'; tel.setAttribute('aria-invalid', 'true'); tel.focus(); }
+      else if (mail.value.trim() && !mailOk && !telOk) { msg = 'Проверьте почту: нужен адрес вида name@mail.ru.'; mail.setAttribute('aria-invalid', 'true'); mail.focus(); }
+      else if (!consent.checked) { msg = 'Отметьте согласие на обработку данных, без него заявку не принять.'; consent.focus(); }
+      err.textContent = msg;
+      if (msg) return;
+      form.hidden = true;
+      done.hidden = false;
+      done.focus();
+    });
+  });
+</script>
+
+<style>
+  .zv { display: grid; gap: clamp(28px, 4vw, 40px); color: var(--zv-ink); }
+  .zv__calc, .zv__form, .zv__done { background: var(--zv-panel); border: var(--zv-border); padding: clamp(20px, 3.5vw, 36px); border-radius: var(--zv-radius, 0); }
+  .zv__h { font-size: clamp(22px, 2.4vw, 28px); font-weight: 800; line-height: 1.2; letter-spacing: -.01em; margin-bottom: 18px; }
+  .zv__lead { margin: -8px 0 20px; }
+  .zv__fields { display: grid; grid-template-columns: minmax(0, 200px) minmax(0, 1fr); gap: 16px 24px; align-items: start; }
+  .zv__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .zv__field { display: grid; gap: 8px; min-width: 0; }
+  .zv__set { border: 0; padding: 0; margin: 0; }
+  .zv__label { font-size: 16px; font-weight: 700; padding: 0; }
+  .zv__input { width: 100%; min-height: 52px; padding: 12px 14px; font-size: 18px; font-weight: 600; background: var(--zv-field); color: var(--zv-field-ink); border: 2px solid var(--zv-field-line); border-radius: var(--zv-radius, 0); }
+  .zv__input:focus { outline: 3px solid var(--zv-focus); outline-offset: 0; border-color: var(--zv-field-ink); }
+  .zv__input[aria-invalid='true'] { border-color: var(--zv-error); }
+  .zv__seg, .zv__chips { display: flex; flex-wrap: wrap; gap: 10px; }
+  .zv__opt, .zv__chip { display: inline-flex; align-items: center; gap: 10px; min-height: 52px; padding: 10px 16px; border: 2px solid var(--zv-field-line); background: var(--zv-field); color: var(--zv-field-ink); font-size: 17px; font-weight: 600; cursor: pointer; border-radius: var(--zv-radius, 0); }
+  .zv__opt:has(input:checked), .zv__chip:has(input:checked) { border-color: var(--zv-check); box-shadow: inset 0 0 0 1px var(--zv-check); }
+  .zv__opt input, .zv__chip input, .zv__consent input { width: 22px; height: 22px; margin: 0; flex: none; accent-color: var(--zv-check); }
+  .zv__out { display: grid; grid-template-columns: 1fr 1fr; gap: 0; margin: 24px 0 14px; border-top: var(--zv-rule); }
+  .zv__out div { padding: 16px 16px 0 0; }
+  .zv__out div + div { padding-left: 16px; border-left: var(--zv-rule); }
+  .zv__out dt { font-size: 16px; font-weight: 600; }
+  .zv__out dd { font-size: clamp(24px, 3vw, 32px); font-weight: 800; line-height: 1.15; color: var(--zv-price); letter-spacing: -.01em; }
+  .zv__note { font-size: 16px; }
+  .zv__chips { margin-bottom: 20px; }
+  .zv__consent { display: flex; gap: 12px; align-items: flex-start; font-size: 16px; line-height: 1.45; min-height: 44px; padding-top: 4px; cursor: pointer; }
+  .zv__consent input { margin-top: 1px; }
+  .zv__consent a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  .zv__err { min-height: 1.5em; margin: 10px 0 6px; font-weight: 700; font-size: 16px; color: var(--zv-error); }
+  .zv__btn { display: inline-flex; align-items: center; justify-content: center; min-height: 56px; padding: 14px 32px; border: 0; cursor: pointer; background: var(--zv-accent); color: var(--zv-accent-ink); font-size: 18px; font-weight: 800; border-radius: var(--zv-btn-radius, 0); }
+  .zv__btn:hover { background: var(--zv-accent-hover); }
+  .zv__done:focus { outline: none; }
+  @media (max-width: 720px) {
+    .zv__fields, .zv__grid { grid-template-columns: 1fr; }
+    .zv__out { grid-template-columns: 1fr; }
+    .zv__out div + div { padding-left: 0; border-left: 0; }
+    .zv__btn { width: 100%; }
+    .zv__opt, .zv__chip { flex: 1 1 calc(50% - 10px); }
+  }
+  @media (max-width: 440px) { .zv__opt, .zv__chip { flex-basis: 100%; min-height: 48px; } }
+</style>

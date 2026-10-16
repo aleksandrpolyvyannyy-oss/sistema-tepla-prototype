@@ -4,8 +4,8 @@ import ObjCard from './ObjCard.astro';
 import Section from './Section.astro';
 import Gallery from './Gallery.astro';
 import { objectsBy } from '../data/objects';
-interface Props { tags?: string[]; title?: string; limit?: number; strict?: boolean; variant?: 'tint' | 'plain'; gallery?: string[]; galleryTitle?: string }
-const { tags = [], title = 'Наши объекты по этой услуге', limit = 4, strict = false, variant = 'tint', gallery, galleryTitle = 'Как выглядит готовый монтаж' } = Astro.props;
+interface Props { tags?: string[]; title?: string; limit?: number; strict?: boolean; variant?: 'tint' | 'plain'; gallery?: string[]; galleryNeed?: string; galleryTitle?: string }
+const { tags = [], title = 'Наши объекты по этой услуге', limit = 4, strict = false, variant = 'tint', gallery, galleryNeed, galleryTitle = 'Как выглядит готовый монтаж' } = Astro.props;
 let list = objectsBy(tags, limit);
 if (strict) list = list.filter((o) => o.tags.some((t) => tags.includes(t)));
 ---
@@ -15,10 +15,10 @@ if (strict) list = list.filter((o) => o.tags.some((t) => tags.includes(t)));
   ) : (
     <div class="widget-stub">Объекты по этому направлению появятся после сдачи первых работ: по правилу из ТЗ страница второстепенной услуги выходит с двумя своими объектами.</div>
   )}
-  {gallery && gallery.length > 0 && (
+  {((gallery && gallery.length > 0) || galleryNeed) && (
     <div class="mt-40">
       <h3>{galleryTitle}</h3>
-      <Gallery ids={gallery} strip />
+      <Gallery ids={gallery ?? []} need={galleryNeed} strip />
     </div>
   )}
   <p class="mt-24"><a class="btn btn--ghost" href="/obekty/">Все объекты</a></p>

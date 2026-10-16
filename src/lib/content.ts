@@ -38,7 +38,10 @@ const pick = (o: any, ...names: string[]) => { for (const n of names) if (o && o
 
 function table(v: any): CTable | undefined {
   if (!v || typeof v !== 'object') return undefined;
-  const head = strArr(pick(v, 'head', 'header', 'headers'));
+  // Пустая ячейка заголовка (над колонкой подписей строк) сохраняется, иначе заголовки съезжают влево.
+  const rawHead = pick(v, 'head', 'header', 'headers');
+  const headCells = Array.isArray(rawHead) ? rawHead.map((c: unknown) => str(c) ?? '') : strArr(rawHead);
+  const head = headCells.some(Boolean) ? headCells : [];
   const rows = (Array.isArray(v.rows) ? v.rows : []).map((r: unknown) => (Array.isArray(r) ? r.map((c) => str(c) ?? '') : [])).filter((r: string[]) => r.length);
   if (!rows.length) return undefined;
   const cols = Math.max(head.length, ...rows.map((r: string[]) => r.length));

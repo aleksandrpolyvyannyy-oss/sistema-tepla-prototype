@@ -1,0 +1,41 @@
+---
+// Оболочка эскизов стиля: без global.css основного сайта, свой минимальный сброс.
+// Все страницы /eskiz/ закрыты от индексации и исключены из sitemap (astro.config.mjs).
+import '@fontsource/montserrat/400.css';
+import '@fontsource/montserrat/500.css';
+import '@fontsource/montserrat/600.css';
+import '@fontsource/montserrat/700.css';
+import '@fontsource/montserrat/800.css';
+
+interface Props { title: string; description: string; theme?: string }
+const { title, description, theme = '#1E3A5F' } = Astro.props;
+---
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content={theme} />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>
+
+<style is:global>
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  html, body { overflow-x: clip; }
+  body { margin: 0; font-family: 'Montserrat', system-ui, 'Segoe UI', Arial, sans-serif; font-size: 18px; font-weight: 500; line-height: 1.6; font-feature-settings: 'lnum' 1, 'tnum' 1; -webkit-font-smoothing: antialiased; }
+  img, svg { display: block; max-width: 100%; height: auto; }
+  h1, h2, h3, p, ul, ol, dl, dd, figure { margin: 0; }
+  ul, ol { padding: 0; list-style: none; }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 3px solid #2B6CD9; outline-offset: 3px; }
+  @media (max-width: 480px) { body { font-size: 17px; } }
+</style>

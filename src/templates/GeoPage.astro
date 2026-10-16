@@ -20,7 +20,7 @@ const { page: p } = Astro.props;
 const services = NAV.filter((n) => n.children).flatMap((n) => n.children!).filter((c) => !c.note && c.href !== `/${p.slug}/`);
 ---
 <Base title={p.title} description={p.description} crumbs={crumbsFor(p.slug)} jsonld={[serviceLd(p)]} quiz>
-  <Hero h1={p.h1} offer={p.offer} price={p.priceFrom} img={p.hero} eyebrow={p.eyebrow ?? 'География работ'}
+  <Hero h1={p.h1} offer={p.offer} price={p.priceFrom} img={p.hero} need={p.hero ? undefined : p.photoNeed} eyebrow={p.eyebrow ?? 'География работ'}
     trust={[['1–2 дня', 'выезд замерщика по области'], ['до 100 км', 'от КАД - замер бесплатно'], ['3 года', 'гарантия на работы']]} />
   <DirectAnswer text={p.answer} />
   <SectionNav items={[{ id: 'osobennosti', label: 'Особенности района' }, { id: 'obekty', label: 'Объекты' }, { id: 'ceny', label: 'Цены' }, { id: 'raschet', label: 'Расчёт' }, { id: 'voprosy', label: 'Вопросы' }]} />
@@ -43,7 +43,7 @@ const services = NAV.filter((n) => n.children).flatMap((n) => n.children!).filte
 
   <Prose intro={p.intro} sections={p.sections} updated={p.updated} variant="tint" />
 
-  <ObjectsGrid tags={p.objTags} title="Объекты в Ленинградской области" gallery={p.gallery} variant="plain" />
+  <ObjectsGrid tags={p.objTags} title="Объекты в Ленинградской области" gallery={p.gallery} galleryNeed={p.hero ? p.photoNeed : undefined} variant="plain" />
 
   <Section id="ceny" variant="tint" eyebrow="Цены" title="Пакеты и цены для области" lead="Цены одинаковые для СПб и области.">
     {p.packages && <Packages items={p.packages} />}

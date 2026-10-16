@@ -1,0 +1,87 @@
+---
+// Шапка эскизов: знак-термостат + надпись «Система тепла», номера разделов страницы, телефон.
+// Сверху тонкая строка прототипа со ссылками между вариантами.
+import Logo from '../Logo.astro';
+import { SITE } from '../../data/site';
+import { SECTIONS } from '../../lib/eskiz';
+// name - подпись для копии варианта (например, прежний C): тогда в строке прототипа ссылки на все три варианта.
+interface Props { variant: 'a' | 'b' | 'c'; name?: string }
+const { variant, name: nameOver } = Astro.props;
+const ALL = [
+  { v: 'a', href: '/eskiz/a/', label: 'Вариант A', tag: '«Чертёж»', name: 'Эскиз A «Чертёж»' },
+  { v: 'b', href: '/eskiz/b/', label: 'Вариант B', tag: '«Контраст»', name: 'Эскиз B «Контраст»' },
+  { v: 'c', href: '/eskiz/c/', label: 'Вариант C', tag: '«Схема»', name: 'Эскиз C «Схема»' },
+];
+const others = ALL.filter((x) => nameOver || x.v !== variant);
+const name = nameOver ?? ALL.find((x) => x.v === variant)!.name;
+---
+<div class:list={['eh-proto', `eh--${variant}`]}>
+  <div class="eh-wrap eh-proto__row">
+    <span>{name}. Прототип, цены примерные.</span>
+    <span class="eh-proto__links">{others.map((o) => <a href={o.href}>{o.label}<span class="eh-proto__tag">&nbsp;{o.tag}</span></a>)}<a href="/eskiz/">Все эскизы</a></span>
+  </div>
+</div>
+<header class:list={['eh', `eh--${variant}`]}>
+  <div class="eh-wrap eh__row">
+    <a class="eh__brand" href="/" aria-label="Система тепла, на главную">
+      <Logo variant="full" />
+      <span class="eh__word">
+        <span class="eh__name"><b>СИСТЕМА</b> <i>ТЕПЛА</i></span>
+        <span class="eh__sub">ИНЖЕНЕРНЫЕ СЕТИ</span>
+      </span>
+    </a>
+    <nav class="eh__nav" aria-label="Разделы страницы">
+      {SECTIONS.map((s) => <a href={`#${s.id}`}><span class="eh__n">{s.n}</span>{s.t}</a>)}
+    </nav>
+    <a class="eh__phone" href={SITE.phoneHref}>
+      <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z"/></svg>
+      <span>{SITE.phone}</span>
+    </a>
+  </div>
+</header>
+
+<style>
+  .eh-wrap { max-width: 1320px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 40px); }
+  .eh-proto { font-size: 15px; line-height: 1.4; }
+  .eh-proto__row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 20px; padding-top: 8px; padding-bottom: 8px; }
+  .eh-proto__links { display: flex; flex-wrap: wrap; gap: 0 20px; }
+  .eh-proto a { color: inherit; font-weight: 700; text-underline-offset: 3px; display: inline-flex; align-items: center; min-height: 44px; margin: -10px 0; }
+  .eh-proto.eh--a { background: #0F2340; color: #fff; }
+  .eh-proto.eh--b { background: #E8662A; color: #0F2340; }
+  .eh-proto.eh--c { background: #1E3A5F; color: #fff; }
+
+  .eh { position: sticky; top: 0; z-index: 20; background: #fff; }
+  .eh--a { border-bottom: 1px solid #0F2340; }
+  .eh--b { box-shadow: 0 1px 0 #133264; }
+  .eh.eh--c { border-bottom: 4px solid; border-image: linear-gradient(90deg, #E2452B 0 34%, #F2A23A 34% 67%, #2B6CD9 67%) 1; }
+  .eh--c .eh__phone { margin-left: 8px; }
+  .eh__row { display: flex; align-items: center; gap: 24px; min-height: 76px; }
+  .eh__brand { display: flex; align-items: center; gap: 12px; min-height: 48px; text-decoration: none; flex: none; }
+  .eh__brand :global(svg) { width: 52px; height: 52px; }
+  .eh__name { display: block; font-size: 21px; font-weight: 800; line-height: 1; letter-spacing: .02em; white-space: nowrap; }
+  .eh__name b { color: #1E3A5F; }
+  .eh__name i { color: #E8662A; font-style: normal; }
+  .eh__sub { display: block; margin-top: 6px; font-size: 11px; font-weight: 700; letter-spacing: .14em; color: #1E3A5F; }
+  .eh__nav { display: flex; gap: 4px; margin-left: auto; }
+  .eh__nav a { display: inline-flex; align-items: baseline; gap: 6px; padding: 10px 10px; min-height: 44px; align-items: center; color: #0F2340; text-decoration: none; font-size: 15px; font-weight: 700; white-space: nowrap; }
+  .eh__nav a:hover { text-decoration: underline; text-underline-offset: 4px; }
+  .eh__n { font-size: 12px; font-weight: 800; color: #C0480F; }
+  .eh__phone { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: #0F2340; font-weight: 800; font-size: 17px; text-decoration: none; white-space: nowrap; }
+  .eh--a .eh__phone { margin-left: 8px; }
+  .eh--b .eh__phone { margin-left: 8px; padding: 0 16px; background: #133264; color: #fff; border-radius: 6px; }
+  @media (max-width: 1200px) {
+    .eh__nav { display: none; }
+    .eh__phone { margin-left: auto !important; }
+  }
+  @media (max-width: 640px) {
+    .eh__row { min-height: 64px; gap: 12px; }
+    .eh__brand :global(svg) { width: 42px; height: 42px; }
+    .eh__name { font-size: 17px; }
+    .eh__sub { font-size: 9px; letter-spacing: .1em; margin-top: 5px; }
+    .eh__phone { width: 48px; height: 48px; justify-content: center; padding: 0 !important; border: 2px solid #0F2340; border-radius: 0; }
+    .eh--b .eh__phone { border-radius: 6px; border-color: #133264; }
+    .eh__phone span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .eh-proto { font-size: 14px; }
+    .eh-proto__tag { display: none; }
+  }
+</style>

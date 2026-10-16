@@ -1,0 +1,202 @@
+---
+// Кусок системы для эскиза C «зигзаг» на рендере: кадр из Blender (16:9, прямые углы) и поверх тонкий слой SVG.
+// Слой в координатах 400 × 225 (кадр 1920 × 1080 в масштабе 400/1920). В нём:
+//  - концы труб у краёв кадра: через них общие трубы страницы входят в кадр и выходят из него
+//    (A - по ходу воды, x = pa; B - обратка в котёл, x = pb = pa + 28). Разметка та же, что у HeatPiece:
+//    path.p[data-l][data-a][data-b] прорисовывается скриптом страницы, .ar[data-l][data-at] - стрелки;
+//  - метки потока .fx по трубам на самом кадре (бегут, когда кадр проявлен);
+//  - подпись этапа (номер в кружке и короткий текст) в углу, где нет главного оборудования.
+// Слои кадра для перехода: .fr__cam (цветной кадр, наезд), .fr__mute (приглушённый кадр, уезжает вниз как шторка),
+// .fr__front (кромка воды), .fr__dim (затемнение при уходе). Двигает их скрипт страницы только через transform и opacity.
+// Без JS и при «уменьшить движение» видны только цветной кадр, концы труб и стрелки.
+import type { ImageMetadata } from 'astro';
+import { Picture } from 'astro:assets';
+import { roundPath, type Pt } from '../../lib/eskiz-pipes';
+
+type Lane = 'r' | 'a' | 'b';
+interface Strip { img: ImageMetadata; n: string; alt: string }
+interface Props {
+  k: 'kotel' | 'strelka' | 'smes' | 'kollektor' | 'petli' | 'final';
+  img: ImageMetadata; alt: string; n: string; tag: string; pos: 'tl' | 'tr' | 'bl' | 'br';
+  label: string; eager?: boolean; strip?: Strip[]; stripCap?: string;
+}
+const { k, img, alt, n, tag, pos, label, eager = false, strip, stripCap } = Astro.props;
+
+// Положение трубы A на кадре (в единицах 400), B на 28 правее; подобрано по трубам на рендере.
+const PA = { kotel: 183, strelka: 170, smes: 221, kollektor: 318, petli: 52, final: 186 }[k];
+const PB = PA + 28;
+const K = 400 / 1920;
+const sc = (pts: Pt[]): Pt[] => pts.map(([x, y]) => [x * K, y * K]);
+const rp = (pts: Pt[], r = 18) => roundPath(sc(pts), r * K).d;
+// Стрелка на доле t ломаной (в координатах кадра 1920 × 1080).
+const arrAt = (pts: Pt[], t: number, s = 6.5) => {
+  const q = sc(pts);
+  const seg = q.slice(1).map((p, i) => Math.hypot(p[0] - q[i][0], p[1] - q[i][1]));
+  let L = seg.reduce((a, b) => a + b, 0) * t, i = 0;
+  while (i < seg.length - 1 && L > seg[i]) { L -= seg[i]; i++; }
+  const [x0, y0] = q[i], [x1, y1] = q[i + 1];
+  const dx = (x1 - x0) / seg[i], dy = (y1 - y0) / seg[i];
+  const x = x0 + dx * L, y = y0 + dy * L;
+  const nx = -dy, ny = dx, f = (a: number, b: number) => `${a.toFixed(1)},${b.toFixed(1)}`;
+  return [f(x + dx * s, y + dy * s), f(x - dx * s + nx * s * .9, y - dy * s + ny * s * .9), f(x - dx * s - nx * s * .9, y - dy * s - ny * s * .9)].join(' ');
+};
+
+// Метки потока по трубам на кадре: [цвет, ломаная, доли для стрелок]
+const FLOW: Record<Props['k'], [Lane, Pt[], number[]][]> = {
+  kotel: [
+    ['r', [[700, 873], [1085, 873], [1085, 647], [1690, 647]], [.12, .78]],
+    ['r', [[1355, 647], [1355, 230]], [.5]],
+    ['b', [[1620, 715], [1068, 715], [1068, 960]], [.3]],
+  ],
+  strelka: [
+    ['r', [[1068, 0], [1068, 400], [925, 400]], [.4]],
+    ['r', [[400, 437], [735, 437]], [.55]],
+    ['r', [[780, 350], [780, 185], [1370, 185]], [.6]],
+    ['b', [[1300, 238], [757, 238], [757, 500]], [.35]],
+    ['b', [[1150, 0], [1150, 1080]], [.62]],
+  ],
+  smes: [
+    ['r', [[1062, 0], [1062, 500]], [.4]],
+    ['a', [[1062, 500], [1062, 800], [905, 800], [440, 758]], [.25, .75]],
+    ['b', [[880, 1000], [962, 1000], [962, 415], [1030, 415]], [.45]],
+  ],
+  kollektor: [
+    ['a', [[1530, 0], [1530, 385], [600, 385]], [.2, .7]],
+    ['a', [[650, 440], [650, 1080]], [.5]], ['a', [[890, 440], [890, 1080]], [.5]], ['a', [[1135, 440], [1135, 1080]], [.5]],
+    ['b', [[690, 1080], [690, 650]], [.5]], ['b', [[940, 1080], [940, 650]], [.5]], ['b', [[1190, 1080], [1190, 650]], [.5]],
+    ['b', [[600, 607], [1460, 607], [1490, 580], [1490, 180]], [.4, .9]],
+  ],
+  petli: [
+    ['a', [[452, 442], [888, 1012], [930, 1030], [1590, 688], [1620, 640], [1575, 612], [925, 868], [895, 835], [925, 800], [1440, 575], [1462, 540], [1430, 518], [820, 728], [795, 700], [820, 670], [1295, 478], [1315, 452], [1290, 435], [725, 628], [700, 605]], [.08, .3, .55]],
+    ['b', [[700, 605], [725, 580], [1185, 405], [1205, 382], [1180, 365], [640, 530], [620, 505], [645, 488], [1095, 350], [1110, 328], [1085, 315], [545, 440]], [.5, .95]],
+  ],
+  final: [
+    ['r', [[645, 450], [645, 355], [1060, 355]], [.6]],
+    ['r', [[1110, 378], [1110, 712], [1640, 712]], [.3, .8]],
+    ['b', [[1640, 724], [1098, 724], [1098, 390]], [.4]],
+  ],
+};
+const flows = FLOW[k];
+const D = 22; // глубина входа трубы в кадр
+const sizes = '(max-width: 760px) calc(100vw - 32px), (max-width: 1100px) 46vw, 640px';
+const pic = { src: img, widths: [640, 960, 1440, 1920], sizes, formats: ['avif', 'webp'] as const, fallbackFormat: 'jpg' as const, quality: 72 };
+---
+<figure class:list={['kus', 'fr', `fr--${k}`, strip && 'fr--strip']} data-kus data-frame data-k={k} data-pa={PA} data-pb={PB}
+  style={`--fa:${PA / 400};--fb:${PB / 400}`}>
+  <div class="fr__view">
+    <div class="fr__cam" data-cam>
+      <Picture {...pic} alt={alt} loading={eager ? 'eager' : 'lazy'} fetchpriority={eager ? 'high' : 'auto'} decoding="async" />
+    </div>
+    <div class="fr__mute" data-mute aria-hidden="true">
+      <div class="fr__mute-in" data-mute-in>
+        <Picture {...pic} alt="" loading={eager ? 'eager' : 'lazy'} decoding="async" />
+      </div>
+    </div>
+    <span class="fr__front" data-front aria-hidden="true"></span>
+    <span class="fr__dim" data-dim aria-hidden="true"></span>
+    <svg class="fr__svg" viewBox="0 0 400 225" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      {flows.map(([c, pts]) => (
+        <g class={`fx fx--${c}`}><path class="fx__h" d={rp(pts)} /><path class="fx__c" d={rp(pts)} /></g>
+      ))}
+      {flows.map(([c, pts, at]) => at.map((t) => <polygon class={`ar ar--${c}`} data-l="A" data-at=".97" points={arrAt(pts, t)} />))}
+
+      {k === 'kotel' && (
+        <>
+          <path class="p r" data-l="A" data-a=".82" data-b="1" d={`M${PA} ${225 - D} V225`} />
+          <path class="p b" data-l="B" data-a="0" data-b="1" d={`M${PB} 225 V${225 - D}`} />
+          <rect class="cl" x={PA - 6} y={225 - D - 3} width="12" height="5" /><rect class="cl" x={PB - 6} y={225 - D - 3} width="12" height="5" />
+        </>
+      )}
+      {k === 'final' && (
+        <>
+          <path class="p b" data-l="A" data-a="0" data-b=".3" d={roundPath([[PA, 0], [PA, 30], [PA + 14, 30]], 10).d} />
+          <path class="p b" data-l="B" data-a="0" data-b="1" d={roundPath([[PA + 14, 30], [PB, 30], [PB, 0]], 10).d} />
+        </>
+      )}
+      {k !== 'kotel' && k !== 'final' && (
+        <>
+          <path class:list={['p', k === 'smes' || k === 'strelka' ? 'r' : 'a']} data-l="A" data-a="0" data-b=".1" d={`M${PA} 0 V${D}`} />
+          <path class:list={['p', k === 'smes' || k === 'kollektor' ? 'a' : k === 'petli' ? 'b' : 'r']} data-l="A" data-a=".9" data-b="1" d={`M${PA} ${225 - D} V225`} />
+          <path class="p b" data-l="B" data-a="0" data-b=".12" d={`M${PB} 225 V${225 - D}`} />
+          <path class="p b" data-l="B" data-a=".88" data-b="1" d={`M${PB} ${D} V0`} />
+          {[PA, PB].map((x) => <><rect class="cl" x={x - 6} y={D - 2} width="12" height="5" /><rect class="cl" x={x - 6} y={225 - D - 3} width="12" height="5" /></>)}
+        </>
+      )}
+    </svg>
+    <p class:list={['fr__tag', `fr__tag--${pos}`]} aria-hidden="true"><span class="fr__n">{n}</span><span>{tag}</span></p>
+  </div>
+  {strip && (
+    <div class="fr__strip">
+      <ul class="fr__thumbs">
+        {strip.map((s) => (
+          <li><Picture src={s.img} alt={s.alt} widths={[320, 480, 640]} sizes="(max-width: 760px) 30vw, 150px" formats={['avif', 'webp']} fallbackFormat="jpg" quality={72} loading="lazy" decoding="async" /><span class="fr__sn">{s.n}</span></li>
+        ))}
+      </ul>
+      {stripCap && <p class="fr__scap">{stripCap}</p>}
+    </div>
+  )}
+  <figcaption class="vh">{label}</figcaption>
+</figure>
+
+<style>
+  .fr { margin: 0; color: #0F2340; }
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .fr__view { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #E3E8EF; isolation: isolate; }
+  .fr__cam, .fr__mute, .fr__mute-in { position: absolute; inset: 0; }
+  .fr__view :global(picture) { display: block; width: 100%; height: 100%; }
+  .fr__view :global(img) { display: block; width: 100%; height: 100%; max-width: none; object-fit: cover; }
+  .fr__mute, .fr__front, .fr__dim { display: none; }
+  .fr__mute { overflow: hidden; }
+  .fr__mute :global(img) { filter: grayscale(.62) brightness(.8) contrast(.9); }
+  .fr__front { position: absolute; left: 0; right: 0; top: -2px; height: 4px; background: var(--ci, #E2452B); box-shadow: 0 0 14px 3px var(--ci, #E2452B); opacity: 0; pointer-events: none; }
+  .fr__dim { position: absolute; inset: 0; background: #0F2340; opacity: 0; pointer-events: none; }
+  .fr__svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+
+  /* Концы труб у краёв кадра: та же толщина, что у труб страницы (6 единиц) */
+  .p { fill: none; stroke-width: 6; stroke-linecap: butt; stroke-linejoin: round; }
+  .p.r { stroke: #E2452B; } .p.a { stroke: #F2A23A; } .p.b { stroke: #2B6CD9; }
+  .cl { fill: #EEF2F6; stroke: #1E3A5F; stroke-width: 1.4; }
+  .fr :global(.pg) { fill: none; stroke: #DCE3EC; stroke-width: 6; }
+  .fr :global(.fm) { display: none; }
+  /* Стрелки потока */
+  .ar { stroke: #fff; stroke-width: 1.3; stroke-linejoin: round; transition: opacity .3s; }
+  .ar--r { fill: #E2452B; } .ar--a { fill: #F2A23A; } .ar--b { fill: #2B6CD9; }
+  /* Метки потока: цветной штрих с белой окантовкой, бегут по ходу воды */
+  .fx { display: none; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .fx path { stroke-dasharray: 5 13; }
+  .fx__h { stroke: #fff; stroke-width: 5; opacity: .9; }
+  .fx__c { stroke-width: 2.6; }
+  .fx--r .fx__c { stroke: #E2452B; } .fx--a .fx__c { stroke: #F2A23A; } .fx--b .fx__c { stroke: #2B6CD9; }
+  :global(.zz.an) .fr.vis.fa .fx { display: inline; }
+  :global(.zz.an) .fr.vis.fa .fx path { animation: fr-flow .9s linear infinite; }
+  @keyframes fr-flow { from { stroke-dashoffset: 18; } to { stroke-dashoffset: 0; } }
+
+  /* Подпись этапа */
+  .fr__tag { position: absolute; z-index: 3; display: flex; align-items: center; gap: 10px; margin: 0; padding: 5px 14px 5px 5px; background: rgba(15, 35, 64, .88); color: #fff; font-size: 16px; line-height: 1.2; font-weight: 700; white-space: nowrap; }
+  .fr__tag--tl { left: 12px; top: 12px; } .fr__tag--tr { right: 12px; top: 12px; }
+  .fr__tag--bl { left: 12px; bottom: 12px; } .fr__tag--br { right: 12px; bottom: 12px; }
+  .fr__n { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border-radius: 50%; background: #fff; color: #0F2340; font-size: 16px; font-weight: 800; }
+
+  /* Полоса радиаторов (этапы 3-5): с той стороны кадра, где нет трубы страницы */
+  .fr__strip { display: grid; grid-template-columns: calc(var(--fa) * 100% - 26px) minmax(0, 1fr); column-gap: calc((var(--fb) - var(--fa)) * 100% + 52px); align-items: start; margin-top: 16px; }
+  .fr__thumbs { grid-column: 2; grid-row: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .fr__scap { grid-column: 1; grid-row: 1; margin: 0; font-size: 16px; line-height: 1.45; font-weight: 600; color: #2C4466; }
+  .fr__thumbs li { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #E3E8EF; }
+  .fr__thumbs :global(picture), .fr__thumbs :global(img) { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .fr__sn { position: absolute; left: 4px; top: 4px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #1E3A5F; color: #fff; font-size: 16px; font-weight: 800; line-height: 1; }
+
+  /* Анимация включена (скрипт страницы поставил .zz.an): слои перехода */
+  :global(.zz.an) .fr .fr__mute, :global(.zz.an) .fr .fr__front, :global(.zz.an) .fr .fr__dim { display: block; }
+  :global(.zz.an) .fr.vis :is(.fr__cam, .fr__mute, .fr__mute-in, .fr__front) { will-change: transform; }
+  :global(.zz.an) .fr .fr__cam { transform: scale(1.08); }
+
+  @media (max-width: 760px) {
+    .fr__tag { padding: 3px 10px 3px 3px; gap: 6px; }
+    .fr__tag--tl { left: 8px; top: 8px; } .fr__tag--tr { right: 8px; top: 8px; }
+    .fr__tag--bl { left: 8px; bottom: 8px; } .fr__tag--br { right: 8px; bottom: 8px; }
+    .fr__n { width: 26px; height: 26px; }
+    /* на телефоне трубы страницы сразу уходят от кадра влево к колее, полоса ниже на всю ширину */
+    .fr__strip { display: block; margin-top: 52px; padding-left: 30px; }
+    .fr__scap { margin-top: 10px; }
+  }
+</style>

@@ -1,0 +1,38 @@
+---
+// Упрощённый подвал эскизов: знак, контакты, правовые ссылки.
+import Logo from '../Logo.astro';
+import { SITE } from '../../data/site';
+interface Props { variant: 'a' | 'b' | 'c' }
+const { variant } = Astro.props;
+---
+<footer class:list={['ef', `ef--${variant}`]}>
+  <div class="ef__wrap">
+    <div class="ef__brand">
+      <Logo variant={variant === 'b' ? 'onDark' : 'full'} deg />
+      <p><b>СИСТЕМА ТЕПЛА</b><br />Инженерные сети частного дома. {SITE.area}.</p>
+    </div>
+    <p class="ef__contacts"><a class="ef__phone" href={SITE.phoneHref}>{SITE.phone}</a><br />{SITE.hours.replace(/[–—]/g, '-')}<br /><a href={`mailto:${SITE.email}`}>{SITE.email}</a></p>
+    <ul class="ef__links">
+      <li><a href="/otoplenie/">Отопление частного дома</a></li>
+      <li><a href="/ceny/">Цены</a></li>
+      <li><a href="/obekty/">Объекты</a></li>
+      <li><a href="/politika-pdn/">Политика обработки данных</a></li>
+      <li><a href="/soglasie-pdn/">Согласие на обработку данных</a></li>
+    </ul>
+  </div>
+</footer>
+
+<style>
+  .ef { font-size: 16px; line-height: 1.55; }
+  .ef--a { background: #fff; color: #0F2340; border-top: 2px solid #0F2340; }
+  .ef--b { background: #0B1F45; color: #fff; }
+  .ef--c { background: #fff; color: #0F2340; border-top: 4px solid #2B6CD9; }
+  .ef__wrap { max-width: 1320px; margin: 0 auto; padding: 48px clamp(16px, 4vw, 40px) 56px; display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 32px; }
+  .ef__brand { display: flex; gap: 16px; align-items: flex-start; }
+  .ef__brand :global(svg) { width: 64px; height: 64px; flex: none; }
+  .ef a { color: inherit; text-underline-offset: 3px; }
+  .ef__phone { font-weight: 800; font-size: 20px; text-decoration: none; }
+  .ef__links { display: grid; gap: 0; }
+  .ef__links a { display: inline-flex; align-items: center; min-height: 44px; }
+  @media (max-width: 860px) { .ef__wrap { grid-template-columns: 1fr; gap: 24px; } }
+</style>

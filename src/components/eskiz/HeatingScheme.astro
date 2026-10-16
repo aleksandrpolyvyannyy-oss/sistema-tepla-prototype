@@ -1,0 +1,736 @@
+---
+// Схема отопления дома для эскиза C. Логика и связи - по _эскизы/схема-отопления-эталон.svg:
+// котёл → гидрострелка → две ПАРАЛЛЕЛЬНЫЕ ветки: (3 насосная группа → 4 коллектор радиаторов → 5 радиаторы)
+// и (6 узел смешения → 7 коллектор тёплого пола → 8 петли) → 9 общая обратка через гидрострелку в котёл.
+// Подмес идёт только из обратки пола в узел смешения; обратка радиаторов в узел смешения не заходит.
+// Две раскладки: широкая (от 960 px) и вертикальная для телефона.
+// Без JS и при «уменьшить движение»: схема целиком в цвете, 9 этапов списком, номера подсвечивают этап.
+// С JS - прокрутка ведёт по схеме (класс .sc): схема закреплена, под ней прокручиваются карточки этапов,
+// трубы прорисовываются по ходу воды (stroke-dashoffset от прогресса прокрутки), после 9 этапа - «живой» режим.
+import { clean } from '../../lib/eskiz';
+interface Props { hid?: string }
+const { hid = 'h-shema' } = Astro.props;
+
+const RED = '#E2452B', AMBER = '#F2A23A', BLUE = '#2B6CD9';
+// s - короткий текст карточки при прокрутке, d - подробный текст списка без анимации.
+const STAGES_RAW = [
+  { n: 1, c: RED, t: 'Котёл', s: 'Котёл нагревает теплоноситель до 60-75 °C', d: 'Нагревает воду до 60-75 °C и отдаёт её в систему.', link: { href: '/otoplenie/kotelnaya/', t: 'Котельная частного дома' } },
+  { n: 2, c: RED, t: 'Гидрострелка', s: 'Гидрострелка делит поток на два контура', d: 'Разделяет котёл и контуры дома и делит горячий поток на две параллельные ветки: радиаторы и тёплый пол.', link: { href: '/otoplenie/', t: 'Отопление дома целиком' } },
+  { n: 3, c: RED, t: 'Насосная группа прямого контура', s: 'Насосная группа гонит горячую воду к радиаторам', d: 'Насос гонит горячую воду к радиаторам без смешения, с той же температурой, что от котла.' },
+  { n: 4, c: RED, t: 'Коллектор радиаторов', s: 'К каждому радиатору своя пара труб, без расходомеров', d: 'Раздаёт воду по радиаторам. Расходомеры здесь не нужны.', link: { href: '/otoplenie/radiatory/', t: 'Радиаторы отопления' } },
+  { n: 5, c: BLUE, t: 'Радиаторы, 70/55 °C', s: 'Радиаторы отдают тепло, остывшая вода уходит в обратку', d: 'Вода приходит горячей, отдаёт тепло комнате и остывшей уходит в общую обратку.' },
+  { n: 6, c: AMBER, t: 'Узел смешения', s: 'Горячая подача + часть обратки пола = 35-45 °C', d: 'К горячей подаче подмешивает остывшую воду из обратки пола, насос подаёт смесь дальше. В пол не попадает вода горячее 45 °C.', link: { href: '#chto-delaem', t: 'Что делаем на этом узле' } },
+  { n: 7, c: AMBER, t: 'Коллектор тёплого пола', s: 'Коллектор тёплого пола с расходомерами на каждой петле', d: 'Раздаёт воду по петлям. На каждой петле расходомер, чтобы комнаты грелись одинаково.', link: { href: '#ceny', t: 'Цены на монтаж' } },
+  { n: 8, c: AMBER, t: 'Петли тёплого пола, 35-45 °C', s: 'Петли змейкой греют пол, часть воды возвращается на подмес', d: 'Труба уложена змейкой. Часть остывшей воды возвращается в узел смешения на подмес, остальная уходит в общую обратку.', link: { href: '#kak-rabotaem', t: 'Как укладываем петли' } },
+  { n: 9, c: BLUE, t: 'Общая обратка', s: 'Общая обратка через гидрострелку в котёл, цикл повторяется', d: 'Остывшая вода от радиаторов и тёплого пола через гидрострелку возвращается в котёл.', link: { href: '#zayavka', t: 'Рассчитать стоимость' } },
+];
+
+const STAGES = STAGES_RAW.map((s) => ({ ...s, t: clean(s.t), s: clean(s.s), d: clean(s.d) }));
+
+// Стрелка направления потока: треугольник с центром в (x, y).
+const arr = (x: number, y: number, dir: 'r' | 'l' | 'u' | 'd', s = 7) => {
+  const p = { r: [[-s, -s], [s, 0], [-s, s]], l: [[s, -s], [-s, 0], [s, s]], u: [[-s, s], [0, -s], [s, s]], d: [[-s, -s], [0, s], [s, -s]] }[dir];
+  return p.map(([dx, dy]) => `${x + dx},${y + dy}`).join(' ');
+};
+// Рёбра радиатора
+const fins = (x: number, y: number, w: number, h: number, step = 8) =>
+  Array.from({ length: Math.floor((w - 4) / step) }, (_, i) => `M${x + 6 + i * step} ${y + 6} V${y + h - 6}`).join(' ');
+---
+<figure class="hs" data-hs aria-labelledby={hid}>
+  <div class="hs__top">
+    <h2 class="hs__h" id={hid}>Как работает отопление дома</h2>
+    <p class="hs__badge">Схема-пример. Здесь будет видео</p>
+  </div>
+
+  <ul class="hs__legend" aria-label="Обозначения">
+    <li><svg viewBox="0 0 40 10" aria-hidden="true"><path d="M0 5 H40" stroke={RED} stroke-width="5" /></svg>Подача от котла</li>
+    <li><svg viewBox="0 0 40 10" aria-hidden="true"><path d="M0 5 H40" stroke={AMBER} stroke-width="5" /></svg>Подача тёплого пола после смешения</li>
+    <li><svg viewBox="0 0 40 10" aria-hidden="true"><path d="M0 5 H40" stroke={BLUE} stroke-width="5" /></svg>Обратка</li>
+    <li><svg viewBox="0 0 40 10" aria-hidden="true"><path d="M0 5 H40" stroke={BLUE} stroke-width="3.5" stroke-dasharray="8 6" /></svg>Подмес из обратки пола</li>
+  </ul>
+
+  <div class="hs__ctrl" data-ctrl hidden>
+    <div class="hs__nums" role="group" aria-label="Этапы схемы">
+      {STAGES.map((s) => <button type="button" class="hs__num" data-go={s.n} aria-pressed="false" aria-label={`Этап ${s.n}: ${s.t}`}>{s.n}</button>)}
+      <button type="button" class="hs__play" data-play aria-pressed="false"><span class="hs__play-i" aria-hidden="true"></span><span data-play-t>Показать весь цикл</span></button>
+    </div>
+    <p class="hs__hint" data-hint>Нажмите номер на схеме или здесь, чтобы увидеть этап. «Показать весь цикл» проведёт по всем девяти по очереди.</p>
+  </div>
+
+  <div class="hs__scrolly" data-scrolly>
+  <div class="hs__pin" data-pin>
+  <div class="hs__bar" data-bar aria-hidden="true">
+    <span class="hs__bar-n" data-bar-n>1</span>
+    <span class="hs__bar-t" data-bar-t>{STAGES[0].t}</span>
+    <span class="hs__bar-of" data-bar-of>этап 1 из 9</span>
+    <span class="hs__segs">{STAGES.map((s) => <span class="hs__seg" style={`--sc:${s.c}`}><i></i></span>)}</span>
+  </div>
+  <div class="hs__stage">
+  <div class="hs__pan" data-pan>
+    <!-- Широкая раскладка -->
+    <svg class="hs__svg hs__svg--wide" viewBox="0 0 1000 520" role="img" aria-label="Схема отопления дома: котёл, гидрострелка, ветка радиаторов и ветка тёплого пола, общая обратка">
+      <g data-stage="1">
+        <path class="p r" d="M180 80 H230" />
+        <polygon class="ar r" points={arr(206, 80, 'r')} />
+        <rect class="eq" x="30" y="50" width="150" height="140" />
+        <path class="fl" d="M58 176 l10 -18 l10 18 l10 -18 l10 18 l10 -18 l10 18 l10 -18 l10 18" />
+        <text class="t" x="76" y="82">Котёл</text>
+        <text class="tm" x="52" y="122">60-75 °C</text>
+        <g class="n" data-go="1"><circle cx="54" cy="76" r="14" /><text x="54" y="76" dy=".35em">1</text></g>
+      </g>
+      <g data-stage="2">
+        <path class="p r" d="M270 80 H700 V120 M430 80 V120" />
+        <polygon class="ar r" points={arr(350, 80, 'r')} />
+        <polygon class="ar r" points={arr(580, 80, 'r')} />
+      </g>
+      <g data-stage="2 9">
+        <rect class="eq" x="230" y="50" width="40" height="430" />
+        <text class="t" x="250" y="300" dy=".35em" text-anchor="middle" transform="rotate(-90 250 300)">Гидрострелка</text>
+        <g class="n" data-go="2"><circle cx="250" cy="130" r="14" /><text x="250" y="130" dy=".35em">2</text></g>
+      </g>
+      <g data-stage="3">
+        <path class="p r" d="M430 172 V210" />
+        <polygon class="ar r" points={arr(430, 191, 'd')} />
+        <rect class="eq" x="310" y="120" width="260" height="52" />
+        <text class="t" x="354" y="152">Насосная группа</text>
+        <g class="pump"><circle cx="540" cy="146" r="13" /><path d="M534 138 L548 146 L534 154 Z" /></g>
+        <g class="n" data-go="3"><circle cx="332" cy="146" r="14" /><text x="332" y="146" dy=".35em">3</text></g>
+      </g>
+      <g data-stage="4">
+        <path class="p r" d="M340 262 V300 H523 M373 300 V318 M448 300 V318 M523 300 V318" />
+        <polygon class="ar r" points={arr(412, 300, 'r')} />
+        <rect class="eq" x="310" y="210" width="260" height="52" />
+        <text class="t" x="354" y="242">Коллектор радиаторов</text>
+        <g class="n" data-go="4"><circle cx="332" cy="236" r="14" /><text x="332" y="236" dy=".35em">4</text></g>
+      </g>
+      <g data-stage="5">
+        <path class="p b" d="M373 362 V380 M448 362 V380 M523 362 V380 M373 380 H590 V246 H570 M310 236 H290 V460" />
+        <polygon class="ar b" points={arr(560, 380, 'r')} />
+        <polygon class="ar b" points={arr(590, 320, 'u')} />
+        <polygon class="ar b" points={arr(290, 360, 'd')} />
+        <rect class="eq" x="345" y="318" width="56" height="44" /><path class="fin" d={fins(345, 318, 56, 44)} />
+        <rect class="eq" x="420" y="318" width="56" height="44" /><path class="fin" d={fins(420, 318, 56, 44)} />
+        <rect class="eq" x="495" y="318" width="56" height="44" /><path class="fin" d={fins(495, 318, 56, 44)} />
+        <text class="t" x="352" y="418">Радиаторы<tspan class="tm" dx="12">70/55 °C</tspan></text>
+        <g class="n" data-go="5"><circle cx="330" cy="412" r="14" /><text x="330" y="412" dy=".35em">5</text></g>
+      </g>
+      <g data-stage="6">
+        <path class="p a" d="M785 172 V210" />
+        <polygon class="ar a" points={arr(785, 191, 'd')} />
+        <rect class="eq" x="650" y="120" width="270" height="52" />
+        <text class="t" x="694" y="152">Узел смешения</text>
+        <g class="pump"><circle cx="890" cy="146" r="13" /><path d="M884 138 L898 146 L884 154 Z" /></g>
+        <g class="n" data-go="6"><circle cx="672" cy="146" r="14" /><text x="672" y="146" dy=".35em">6</text></g>
+      </g>
+      <g data-stage="7">
+        <path class="p a" d="M680 262 V300" />
+        <rect class="eq" x="650" y="210" width="270" height="52" />
+        <text class="t" x="694" y="242">Коллектор тёплого пола</text>
+        <g class="n" data-go="7"><circle cx="672" cy="236" r="14" /><text x="672" y="236" dy=".35em">7</text></g>
+      </g>
+      <g data-stage="8">
+        <path class="p a" d="M680 300 H895 V320 H665 V340 H895 V360 H665 V380" />
+        <path class="p b" d="M665 380 H940 V250 H920 M650 236 H620 V460" />
+
+        <polygon class="ar a" points={arr(790, 300, 'r')} />
+        <polygon class="ar b" points={arr(940, 320, 'u')} />
+        <polygon class="ar b" points={arr(620, 360, 'd')} />
+
+        <text class="t" x="702" y="418">Петли тёплого пола<tspan class="tm" dx="12">35-45 °C</tspan></text>
+        <g class="n" data-go="8"><circle cx="680" cy="412" r="14" /><text x="680" y="412" dy=".35em">8</text></g>
+      </g>
+      <g data-stage="6 8">
+        <path class="p d" d="M920 222 H960 V146 H920" />
+        <polygon class="ar b" points={arr(960, 184, 'u', 6)} />
+        <text class="tm" x="982" y="184" dy=".35em" text-anchor="middle" transform="rotate(-90 982 184)">подмес</text>
+      </g>
+      <g data-stage="9">
+        <path class="p b" d="M620 460 H270 M230 460 H105 V190" />
+        <polygon class="ar b" points={arr(470, 460, 'l')} />
+        <polygon class="ar b" points={arr(165, 460, 'l')} />
+        <polygon class="ar b" points={arr(105, 330, 'u')} />
+        <text class="t" x="420" y="498">Общая обратка в котёл</text>
+        <g class="n" data-go="9"><circle cx="398" cy="492" r="14" /><text x="398" y="492" dy=".35em">9</text></g>
+      </g>
+    </svg>
+
+    <!-- Вертикальная раскладка для телефона -->
+    <svg class="hs__svg hs__svg--tall" viewBox="0 0 360 776" role="img" aria-label="Схема отопления дома: котёл, гидрострелка, ветка радиаторов и ветка тёплого пола, общая обратка">
+      <g data-stage="1">
+        <path class="p r" d="M50 100 V136" />
+        <polygon class="ar r" points={arr(50, 119, 'd', 6)} />
+        <rect class="eq" x="16" y="16" width="130" height="84" />
+        <text class="t" x="58" y="46">Котёл</text>
+        <text class="tm" x="30" y="82">60-75 °C</text>
+        <g class="n" data-go="1"><circle cx="38" cy="40" r="13" /><text x="38" y="40" dy=".35em">1</text></g>
+      </g>
+      <g data-stage="2">
+        <path class="p r" d="M40 170 V496 H64 M40 222 H64" />
+        <polygon class="ar r" points={arr(40, 400, 'd', 6)} />
+      </g>
+      <g data-stage="2 9">
+        <rect class="eq" x="16" y="136" width="334" height="34" />
+        <text class="t" x="100" y="159">Гидрострелка</text>
+        <g class="n" data-go="2"><circle cx="80" cy="153" r="13" /><text x="80" y="153" dy=".35em">2</text></g>
+      </g>
+      <g data-stage="3">
+        <path class="p r" d="M182 248 V274" />
+        <rect class="eq" x="64" y="196" width="236" height="52" />
+        <text class="t" x="106" y="228">Насосная группа</text>
+        <g class="n" data-go="3"><circle cx="86" cy="222" r="13" /><text x="86" y="222" dy=".35em">3</text></g>
+      </g>
+      <g data-stage="4">
+        <path class="p r" d="M96 326 V344 H253 M113 344 V358 M183 344 V358 M253 344 V358" />
+        <rect class="eq" x="64" y="274" width="236" height="52" />
+        <text class="t" x="106" y="296">Коллектор</text>
+        <text class="t" x="106" y="315">радиаторов</text>
+        <g class="n" data-go="4"><circle cx="86" cy="300" r="13" /><text x="86" y="300" dy=".35em">4</text></g>
+      </g>
+      <g data-stage="5">
+        <path class="p b" d="M113 396 V412 M183 396 V412 M253 396 V412 M113 412 H318 V312 H300 M300 286 H340" />
+        <polygon class="ar b" points={arr(318, 362, 'u', 6)} />
+        <rect class="eq" x="88" y="358" width="50" height="38" /><path class="fin" d={fins(88, 358, 50, 38)} />
+        <rect class="eq" x="158" y="358" width="50" height="38" /><path class="fin" d={fins(158, 358, 50, 38)} />
+        <rect class="eq" x="228" y="358" width="50" height="38" /><path class="fin" d={fins(228, 358, 50, 38)} />
+        <text class="t" x="106" y="446">Радиаторы<tspan class="tm" dx="10">70/55 °C</tspan></text>
+        <g class="n" data-go="5"><circle cx="86" cy="440" r="13" /><text x="86" y="440" dy=".35em">5</text></g>
+      </g>
+      <g data-stage="6">
+        <path class="p a" d="M182 522 V548" />
+        <rect class="eq" x="64" y="470" width="236" height="52" />
+        <text class="t" x="106" y="502">Узел смешения</text>
+        <g class="pump"><circle cx="276" cy="496" r="11" /><path d="M271 489 L283 496 L271 503 Z" /></g>
+        <g class="n" data-go="6"><circle cx="86" cy="496" r="13" /><text x="86" y="496" dy=".35em">6</text></g>
+      </g>
+      <g data-stage="7">
+        <path class="p a" d="M96 600 V622" />
+        <rect class="eq" x="64" y="548" width="236" height="52" />
+        <text class="t" x="106" y="570">Коллектор</text>
+        <text class="t" x="106" y="589">тёплого пола</text>
+        <g class="n" data-go="7"><circle cx="86" cy="574" r="13" /><text x="86" y="574" dy=".35em">7</text></g>
+      </g>
+      <g data-stage="8">
+        <path class="p a" d="M96 622 H290 V642 H80 V662 H290 V682 H80 V702" />
+        <path class="p b" d="M80 702 H326 V590 H300 M300 574 H340" />
+        <polygon class="ar a" points={arr(200, 622, 'r', 6)} />
+        <polygon class="ar b" points={arr(326, 646, 'u', 6)} />
+        <text class="t" x="106" y="734">Петли тёплого пола</text>
+        <text class="tm" x="106" y="756">35-45 °C</text>
+        <g class="n" data-go="8"><circle cx="86" cy="728" r="13" /><text x="86" y="728" dy=".35em">8</text></g>
+      </g>
+      <g data-stage="6 8">
+        <path class="p d" d="M300 558 H313 V508 H300" />
+      </g>
+      <g data-stage="9">
+        <path class="p b" d="M340 574 V170 M336 136 V58 H146" />
+        <polygon class="ar b" points={arr(340, 440, 'u', 6)} />
+        <polygon class="ar b" points={arr(250, 58, 'l', 6)} />
+        <text class="t" x="190" y="104">Общая обратка</text>
+        <g class="n" data-go="9"><circle cx="170" cy="98" r="13" /><text x="170" y="98" dy=".35em">9</text></g>
+      </g>
+    </svg>
+  </div>
+  </div>
+  </div>
+
+  <div class="hs__cap">
+    <ol class="hs__list" aria-label="Этапы работы отопления">
+      {STAGES.map((s) => (
+        <li data-cap={s.n} style={`--sc:${s.c}`}>
+          <div class="hs__card">
+            <span class="hs__ln" aria-hidden="true">{s.n}</span>
+            <div>
+              <p class="hs__lt"><span class="vh">{s.n}. </span>{s.t}</p>
+              <p class="hs__ls">{s.s}</p>
+              <p class="hs__ld">{s.d}</p>
+              {s.link && <a class="hs__lk" href={s.link.href}>{s.link.t}</a>}
+            </div>
+          </div>
+        </li>
+      ))}
+    </ol>
+  </div>
+  <div class="hs__end" data-end aria-hidden="true"></div>
+  </div>
+</figure>
+
+<script>
+  const NS = 'http://www.w3.org/2000/svg';
+  // Подпути, которые стартуют не из точки на другой трубе, а когда вода дойдёт до конца указанной:
+  // этап 5 - выход обратки с коллектора радиаторов, этап 8 - выход обратки с коллектора пола и подмес,
+  // этап 9 - участок от гидрострелки в котёл. Номера - порядок подпутей этапа в разметке.
+  const AFTER: Record<number, Record<number, number>> = { 5: { 4: 3 }, 8: { 2: 1, 3: 1 }, 9: { 1: 0 } };
+  const clamp = (v: number, a = 0, b = 1) => (v < a ? a : v > b ? b : v);
+  // Доля прокрутки этапа, за которую прорисовываются его трубы.
+  const T0 = 0.05, TD = 0.8;
+  const stageT = (p: number, k: number) => clamp((p - (k - 1) - T0) / TD);
+  let uid = 0;
+
+  type Pt = [number, number];
+  type Sub = { el: SVGPathElement; mk: SVGPathElement | null; L: number; pts: Pt[]; cum: number[]; t0: number; a: number; b: number; u: number };
+  type Arr = { el: SVGPolygonElement; st: number; tau: number; on: boolean | null };
+  type Grp = { el: SVGGElement; st: number[]; min: number };
+  type Lay = { svg: SVGSVGElement; subs: Sub[][]; arrs: Arr[]; grps: Grp[]; camP: number[]; camV: number[]; vbH: number };
+
+  // Трубы схемы - ломаные из команд M/H/V в абсолютных координатах.
+  const parse = (d: string): Pt[][] => {
+    const out: Pt[][] = [];
+    let cur: Pt[] = [], x = 0, y = 0, m: RegExpExecArray | null;
+    const re = /([MHV])\s*(-?[\d.]+)(?:[\s,]+(-?[\d.]+))?/g;
+    while ((m = re.exec(d))) {
+      if (m[1] === 'M') { x = +m[2]; y = +m[3]; cur = [[x, y]]; out.push(cur); }
+      else if (m[1] === 'H') { x = +m[2]; cur.push([x, y]); }
+      else { y = +m[2]; cur.push([x, y]); }
+    }
+    return out;
+  };
+  // Расстояние вдоль ломаной до точки на ней, -1 если точка не на трубе.
+  const along = (s: { pts: Pt[]; cum: number[] }, [px, py]: Pt, tol = 1.5) => {
+    for (let i = 1; i < s.pts.length; i++) {
+      const [x1, y1] = s.pts[i - 1], [x2, y2] = s.pts[i];
+      if (y1 === y2 && Math.abs(py - y1) <= tol && px >= Math.min(x1, x2) - 4 && px <= Math.max(x1, x2) + 4)
+        return s.cum[i - 1] + clamp(Math.abs(px - x1), 0, Math.abs(x2 - x1));
+      if (x1 === x2 && Math.abs(px - x1) <= tol && py >= Math.min(y1, y2) - 4 && py <= Math.max(y1, y2) + 4)
+        return s.cum[i - 1] + clamp(Math.abs(py - y1), 0, Math.abs(y2 - y1));
+    }
+    return -1;
+  };
+  const mk = <K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string, string | number>) => {
+    const el = document.createElementNS(NS, tag);
+    for (const k in attrs) el.setAttribute(k, String(attrs[k]));
+    return el;
+  };
+
+  // Готовит раскладку к прорисовке: делит трубы на подпути, добавляет серые контуры, маски и метки потока.
+  const build = (svg: SVGSVGElement): Lay => {
+    const vb = svg.viewBox.baseVal;
+    const defs = mk('defs', {});
+    const ghost = mk('g', { class: 'gh', 'aria-hidden': 'true' });
+    svg.prepend(defs, ghost);
+    const subs: Sub[][] = Array.from({ length: 10 }, () => []);
+    const arrs: Arr[] = [];
+    const grps: Grp[] = [...svg.querySelectorAll<SVGGElement>('g[data-stage]')].map((el) => {
+      const st = (el.dataset.stage ?? '').split(' ').map(Number);
+      const k = Math.max(...st);
+      el.querySelectorAll<SVGPathElement>(':scope > path.p').forEach((path) => {
+        const dashed = path.classList.contains('d');
+        parse(path.getAttribute('d') ?? '').forEach((pts) => {
+          const d = 'M' + pts.map((p) => p.join(' ')).join(' L');
+          const cum = [0];
+          for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.abs(pts[i][0] - pts[i - 1][0]) + Math.abs(pts[i][1] - pts[i - 1][1]));
+          const el2 = path.cloneNode() as SVGPathElement;
+          el2.setAttribute('d', d);
+          path.before(el2);
+          ghost.append(mk('path', { class: dashed ? 'gp gp--d' : 'gp', d }));
+          let L = 0;
+          try { L = el2.getTotalLength(); } catch { L = 0; }
+          if (!(L > 0)) L = cum[cum.length - 1];
+          let m: SVGPathElement | null = null;
+          if (dashed) {
+            // Пунктир прорисовываем маской, чтобы не сбить его собственный рисунок штрихов.
+            const id = `hsm${++uid}`;
+            const mask = mk('mask', { id, maskUnits: 'userSpaceOnUse', x: -20, y: -20, width: vb.width + 40, height: vb.height + 40 });
+            m = mk('path', { d, fill: 'none', stroke: '#fff', 'stroke-width': 14, 'stroke-dasharray': `${L} ${L + 40}` });
+            mask.append(m);
+            defs.append(mask);
+            el2.setAttribute('mask', `url(#${id})`);
+          } else {
+            el2.style.strokeDasharray = `${L} ${L + 40}`;
+            const fm = mk('path', { class: 'fm', d });
+            el2.after(fm);
+          }
+          subs[k].push({ el: el2, mk: m, L, pts, cum, t0: 0, a: 0, b: 1, u: -1 });
+        });
+        path.remove();
+      });
+      el.querySelectorAll<SVGPolygonElement>(':scope > polygon.ar').forEach((a) => arrs.push({ el: a, st: k, tau: 0.5, on: null }));
+      return { el, st, min: Math.min(...st) };
+    });
+    // Время прихода воды в начало каждого подпути при постоянной скорости внутри этапа.
+    subs.forEach((S, k) => {
+      if (!S.length) return;
+      const end: number[] = [];
+      S.forEach((s, j) => {
+        let t0 = 0;
+        const af = AFTER[k]?.[j];
+        if (af !== undefined && S[af]) t0 = end[af];
+        else for (let i = 0; i < j; i++) { const d = along(S[i], s.pts[0]); if (d >= 0) { t0 = S[i].t0 + d; break; } }
+        s.t0 = t0; end[j] = t0 + s.L;
+      });
+      const T = Math.max(...end);
+      S.forEach((s, j) => { s.a = s.t0 / T; s.b = end[j] / T; });
+      (S as Sub[] & { T?: number }).T = T;
+    });
+    // Стрелка загорается, когда вода проходит её место.
+    arrs.forEach((a) => {
+      const P = (a.el.getAttribute('points') ?? '').trim().split(/\s+/).map((q) => q.split(',').map(Number));
+      const c: Pt = [P.reduce((v, q) => v + q[0], 0) / P.length, P.reduce((v, q) => v + q[1], 0) / P.length];
+      const S = subs[a.st] as Sub[] & { T?: number };
+      for (const s of S) { const d = along(s, c, 3); if (d >= 0) { a.tau = (s.t0 + d) / (S.T ?? 1); break; } }
+    });
+    // Камера для узкого экрана: за номером этапа, на 9 этапе вслед за обраткой снизу вверх.
+    const cy = (n: number) => Number(svg.querySelector(`.n[data-go="${n}"] circle`)?.getAttribute('cy') ?? 0);
+    const camP = [0, 1, 2, 3, 4, 5, 6, 7, 8, 8.85];
+    const camV = [1, 2, 3, 4, 5, 6, 7, 8, 7, 1].map(cy);
+    return { svg, subs, arrs, grps, camP, camV, vbH: vb.height };
+  };
+
+  const cam = (lay: Lay, p: number) => {
+    const P = lay.camP, V = lay.camV;
+    if (p <= P[0]) return V[0];
+    for (let i = 1; i < P.length; i++) if (p <= P[i]) return V[i - 1] + (V[i] - V[i - 1]) * (p - P[i - 1]) / (P[i] - P[i - 1]);
+    return V[V.length - 1];
+  };
+
+  document.querySelectorAll<HTMLElement>('[data-hs]').forEach((root) => {
+    const ctrl = root.querySelector<HTMLElement>('[data-ctrl]')!;
+    const hint = root.querySelector<HTMLElement>('[data-hint]')!;
+    const play = root.querySelector<HTMLButtonElement>('[data-play]')!;
+    const playT = root.querySelector<HTMLElement>('[data-play-t]')!;
+    const nums = [...root.querySelectorAll<HTMLButtonElement>('.hs__num')];
+    const lis = [...root.querySelectorAll<HTMLElement>('[data-cap]')];
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    root.classList.add('js');
+    ctrl.hidden = false;
+    const press = (n: number | null) => nums.forEach((b) => b.setAttribute('aria-pressed', String(Number(b.dataset.go) === n)));
+
+    if (reduce) {
+      // Без анимации: схема целиком, номер подсвечивает этап и прокручивает к его описанию.
+      let timer = 0;
+      const set = (n: number | null) => {
+        if (n) root.dataset.active = String(n); else delete root.dataset.active;
+        root.querySelectorAll<SVGElement>('[data-stage]').forEach((g) => g.classList.toggle('on', !!n && (g.dataset.stage ?? '').split(' ').includes(String(n))));
+        lis.forEach((li) => li.classList.toggle('on', Number(li.dataset.cap) === n));
+        press(n);
+      };
+      const stop = () => {
+        if (timer) window.clearInterval(timer);
+        timer = 0;
+        play.setAttribute('aria-pressed', 'false');
+        playT.textContent = 'Показать весь цикл';
+      };
+      play.addEventListener('click', () => {
+        if (timer) { stop(); set(null); return; }
+        let n = 1;
+        set(n);
+        play.setAttribute('aria-pressed', 'true');
+        playT.textContent = 'Остановить';
+        timer = window.setInterval(() => { n += 1; if (n > 9) { stop(); set(null); return; } set(n); }, 4000);
+      });
+      root.addEventListener('click', (e) => {
+        const t = (e.target as Element).closest<HTMLElement | SVGElement>('[data-go]');
+        if (!t || !root.contains(t)) return;
+        stop();
+        const n = Number(t.dataset.go);
+        const off = root.dataset.active === String(n);
+        set(off ? null : n);
+        if (!off) lis[n - 1]?.scrollIntoView({ block: 'nearest' });
+      });
+      document.querySelectorAll<HTMLElement>('[data-go-stage]').forEach((a) =>
+        a.addEventListener('click', () => { stop(); set(Number(a.dataset.goStage)); }));
+      return;
+    }
+
+    // ---------- Прокрутка ведёт по схеме ----------
+    root.classList.add('sc');
+    hint.textContent = 'Прокручивайте страницу: вода пройдёт по схеме от котла по обеим веткам и вернётся в котёл. Номер переносит к этапу, «Показать весь цикл» прокрутит сам.';
+    const scrolly = root.querySelector<HTMLElement>('[data-scrolly]')!;
+    const pin = root.querySelector<HTMLElement>('[data-pin]')!;
+    const bar = root.querySelector<HTMLElement>('[data-bar]')!;
+    const barN = root.querySelector<HTMLElement>('[data-bar-n]')!;
+    const barT = root.querySelector<HTMLElement>('[data-bar-t]')!;
+    const barOf = root.querySelector<HTMLElement>('[data-bar-of]')!;
+    const segs = [...root.querySelectorAll<HTMLElement>('.hs__seg i')];
+    const pan = root.querySelector<HTMLElement>('[data-pan]')!;
+    const end = root.querySelector<HTMLElement>('[data-end]')!;
+    const titles = lis.map((li) => li.querySelector('.hs__lt')?.textContent?.replace(/^\d+\.\s*/, '') ?? '');
+    root.querySelector('.hs__list')?.removeAttribute('aria-live');
+    const lays = { wide: build(root.querySelector<SVGSVGElement>('.hs__svg--wide')!), tall: build(root.querySelector<SVGSVGElement>('.hs__svg--tall')!) };
+    const wideMQ = window.matchMedia('(min-width: 960px)');
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:100svh;visibility:hidden;pointer-events:none';
+    root.append(probe);
+
+    let lay = lays.wide, A: number[] = [], ref = 0, cut = 0, barH = 0, winV = 0, scale = 1;
+    let pT = 0, pD = 0, panT = 0, panD = 0, raf = 0, step = 0, live: boolean | null = null, force = true, auto = 0;
+
+    const measure = () => {
+      lay = wideMQ.matches ? lays.wide : lays.tall;
+      const top = parseFloat(getComputedStyle(pin).top) || 0;
+      const vh = probe.offsetHeight || window.innerHeight;
+      const pinH = pin.offsetHeight;
+      barH = bar.offsetHeight;
+      const maxWin = wideMQ.matches ? vh - top - 170 : Math.round(vh * 0.55);
+      const win = Math.min(pinH, Math.max(maxWin, barH + 180));
+      cut = pinH - win;
+      winV = win - barH;
+      ref = top + win + 12;
+      root.style.setProperty('--hs-cut', `${cut}px`);
+      root.style.setProperty('--hs-win', `${win}px`);
+      root.style.setProperty('--hs-ref', `${ref}px`);
+      root.style.setProperty('--hs-endh', `${Math.max(0, top + pinH - ref) + Math.round(vh * 0.35)}px`);
+      root.classList.toggle('cut', cut > 0);
+      scale = lay.svg.getBoundingClientRect().height / lay.vbH || 1;
+      const y = window.scrollY;
+      A = [...lis, end].map((el) => el.getBoundingClientRect().top + y);
+      force = true;
+    };
+    // Прогресс 0..9: какая карточка этапа сейчас под линией чтения и насколько она прокручена.
+    const target = () => {
+      const y = window.scrollY + ref;
+      if (y <= A[0]) return 0;
+      for (let i = 0; i < 9; i++) if (y < A[i + 1]) return i + (y - A[i]) / (A[i + 1] - A[i]);
+      return 9 + Math.min(0.5, (y - A[9]) / 400);
+    };
+    const yOf = (p: number) => {
+      if (p >= 9) return A[9] + (p - 9) * 400 - ref;
+      const i = Math.max(0, Math.floor(p));
+      return A[i] + (p - i) * (A[i + 1] - A[i]) - ref;
+    };
+
+    const setStep = (k: number, isLive: boolean) => {
+      for (const L of [lays.wide, lays.tall]) for (const g of L.grps) {
+        g.el.classList.toggle('on', !isLive && (k === 9 || g.st.includes(k)));
+        g.el.classList.toggle('fut', !isLive && g.min > k);
+      }
+      lis.forEach((li, i) => li.classList.toggle('on', !isLive && i + 1 === k));
+      press(isLive ? null : k);
+      root.classList.toggle('live', isLive);
+      barN.textContent = isLive ? '9' : String(k);
+      barT.textContent = isLive ? 'Весь цикл: обе ветки работают одновременно' : titles[k - 1];
+      barOf.textContent = isLive ? "" : `этап ${k} из 9`;
+    };
+
+    const render = () => {
+      const p = pD;
+      const isLive = p >= 9;
+      const k = Math.min(9, Math.floor(p) + 1);
+      if (force || k !== step || isLive !== live) { step = k; live = isLive; setStep(k, isLive); }
+      for (let n = 1; n <= 9; n++) {
+        const t = stageT(p, n);
+        for (const s of lay.subs[n]) {
+          const u = s.b > s.a ? clamp((t - s.a) / (s.b - s.a)) : (t > 0 ? 1 : 0);
+          if (force || Math.abs(u - s.u) > 1e-4) { s.u = u; (s.mk ?? s.el).style.strokeDashoffset = String(s.L * (1 - u)); }
+        }
+      }
+      for (const a of lay.arrs) {
+        const on = stageT(p, a.st) >= a.tau - 1e-3;
+        if (force || on !== a.on) { a.on = on; a.el.style.opacity = on ? '' : '0'; }
+      }
+      segs.forEach((i, n) => { const f = clamp(p - n); const v = `scaleX(${f.toFixed(3)})`; if (i.style.transform !== v) i.style.transform = v; });
+      panT = cut > 0 && !isLive ? clamp(cam(lay, p) * scale - winV / 2, 0, cut) : 0;
+      force = false;
+    };
+
+    const tick = () => {
+      raf = 0;
+      const d = pT - pD;
+      pD = Math.abs(d) < 0.002 ? pT : pD + d * 0.18;
+      render();
+      const dp = panT - panD;
+      panD = Math.abs(dp) < 0.5 ? panT : panD + dp * 0.2;
+      pan.style.transform = panD ? `translate3d(0, ${(-panD).toFixed(1)}px, 0)` : '';
+      if (pD !== pT || panD !== panT) raf = requestAnimationFrame(tick);
+    };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(tick); };
+    const onScroll = () => { pT = target(); kick(); };
+    const relayout = () => { measure(); pT = target(); kick(); };
+
+    measure();
+    pT = pD = target();
+    render();
+    panD = panT;
+    pan.style.transform = panD ? `translate3d(0, ${(-panD).toFixed(1)}px, 0)` : '';
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', relayout);
+    wideMQ.addEventListener('change', () => { relayout(); pD = pT; force = true; render(); });
+    new ResizeObserver(() => relayout()).observe(scrolly);
+    document.fonts?.ready.then(relayout);
+    // Метки потока бегут, только пока схема на экране.
+    new IntersectionObserver(([e]) => root.classList.toggle('idle', !e.isIntersecting)).observe(pin);
+
+    // Номер или ссылка «На схеме» - прокрутка к карточке этапа.
+    const goTo = (n: number) => { stopAuto(); window.scrollTo({ top: yOf(n - 1 + 0.02), behavior: 'smooth' }); };
+    // «Показать весь цикл»: страница прокручивается сама, любое действие посетителя останавливает.
+    const stopAuto = () => {
+      if (auto) cancelAnimationFrame(auto);
+      auto = 0;
+      play.setAttribute('aria-pressed', 'false');
+      playT.textContent = 'Показать весь цикл';
+    };
+    const startAuto = () => {
+      const p0 = pT > 0.02 && pT < 8.9 ? pT : 0;
+      const p1 = 9.15, dur = (p1 - p0) * 1700;
+      let t0 = 0;
+      window.scrollTo({ top: yOf(p0), behavior: 'instant' as ScrollBehavior });
+      play.setAttribute('aria-pressed', 'true');
+      playT.textContent = 'Остановить';
+      const stepF = (now: number) => {
+        if (!t0) t0 = now;
+        const f = clamp((now - t0) / dur);
+        window.scrollTo({ top: yOf(p0 + (p1 - p0) * f), behavior: 'instant' as ScrollBehavior });
+        if (f < 1) auto = requestAnimationFrame(stepF); else stopAuto();
+      };
+      auto = requestAnimationFrame(stepF);
+    };
+    const userStop = (e: Event) => { if (auto && !(e.target instanceof Element && e.target.closest('[data-play]'))) stopAuto(); };
+    ['wheel', 'touchstart', 'pointerdown', 'keydown'].forEach((ev) => window.addEventListener(ev, userStop, { passive: true }));
+    play.addEventListener('click', () => (auto ? stopAuto() : startAuto()));
+    root.addEventListener('click', (e) => {
+      const t = (e.target as Element).closest<HTMLElement | SVGElement>('[data-go]');
+      if (!t || !root.contains(t)) return;
+      goTo(Number(t.dataset.go));
+    });
+    document.querySelectorAll<HTMLElement>('[data-go-stage]').forEach((a) =>
+      a.addEventListener('click', (e) => { e.preventDefault(); goTo(Number(a.dataset.goStage)); }));
+  });
+</script>
+
+<style>
+  .hs { margin: 0; color: #0F2340; }
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .hs__top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px 24px; padding-bottom: 20px; border-bottom: 3px solid #1E3A5F; }
+  .hs__h { font-size: clamp(30px, 3.6vw, 48px); line-height: 1.05; font-weight: 800; letter-spacing: -.025em; }
+  .hs__badge { display: inline-flex; align-items: center; gap: 10px; padding: 8px 14px; border: 2px solid #1E3A5F; font-size: 16px; font-weight: 700; line-height: 1.3; }
+  .hs__badge::before { content: ''; width: 0; height: 0; border-left: 11px solid #E2452B; border-top: 7px solid transparent; border-bottom: 7px solid transparent; flex: none; }
+
+  .hs__stage { margin-top: 24px; }
+  .hs__svg { width: 100%; height: auto; overflow: visible; }
+  .hs__svg--tall { display: none; max-width: 440px; margin: 0 auto; }
+  .hs__svg text { font-family: inherit; }
+  .hs__svg .p { fill: none; stroke-width: 5; stroke-linejoin: miter; stroke-linecap: butt; }
+  .hs__svg .p.r { stroke: #E2452B; }
+  .hs__svg .p.a { stroke: #F2A23A; }
+  .hs__svg .p.b { stroke: #2B6CD9; }
+  .hs__svg .p.d { stroke: #2B6CD9; stroke-width: 3.5; stroke-dasharray: 8 6; }
+  .hs__svg .ar { stroke: none; }
+  .hs__svg .ar.r { fill: #E2452B; }
+  .hs__svg .ar.a { fill: #F2A23A; }
+  .hs__svg .ar.b { fill: #2B6CD9; }
+  .hs__svg .eq { fill: #fff; stroke: #1E3A5F; stroke-width: 2.5; }
+  .hs__svg .fin { fill: none; stroke: #1E3A5F; stroke-width: 1.5; }
+  .hs__svg .fl { fill: none; stroke: #E2452B; stroke-width: 2.5; stroke-linejoin: miter; }
+  .hs__svg .pump circle { fill: #fff; stroke: #1E3A5F; stroke-width: 2.5; }
+  .hs__svg .pump path { fill: none; stroke: #1E3A5F; stroke-width: 2; stroke-linejoin: miter; }
+  .hs__svg .t { font-size: 16px; font-weight: 700; fill: #0F2340; }
+  .hs__svg .tm { font-size: 15px; font-weight: 600; fill: #2C4466; }
+  .hs__svg--tall .t { font-size: 16px; }
+  .hs__svg--tall .tm { font-size: 16px; }
+  .hs__svg .n circle { fill: #1E3A5F; }
+  .hs__svg .n text { fill: #fff; font-size: 15px; font-weight: 800; text-anchor: middle; }
+  .hs.js .hs__svg .n { cursor: pointer; }
+  .hs.js .hs__svg .n:hover circle { fill: #E8662A; }
+
+  /* Подсветка этапа: остальное приглушается */
+  .hs__svg [data-stage] { transition: opacity .35s ease; }
+  .hs[data-active] .hs__svg [data-stage]:not(.on) { opacity: .16; }
+  .hs__svg [data-stage].on .eq { fill: #FFF3E6; stroke-width: 3.5; }
+  .hs__svg [data-stage].on .n circle { fill: #E8662A; }
+  .hs__svg [data-stage].on .p { stroke-width: 7; }
+  .hs__svg [data-stage].on .p.d { stroke-width: 4.5; }
+
+  .hs__legend { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 20px; font-size: 16px; font-weight: 600; }
+  .hs__legend li { display: inline-flex; align-items: center; gap: 10px; }
+  .hs__legend svg { width: 40px; height: 10px; flex: none; }
+
+  .hs__ctrl { margin-top: 20px; }
+  .hs__nums { display: flex; flex-wrap: wrap; gap: 8px; }
+  .hs__num, .hs__play { min-height: 48px; border: 2px solid #1E3A5F; background: #fff; color: #0F2340; font-weight: 800; cursor: pointer; border-radius: 0; }
+  .hs__num { width: 48px; font-size: 18px; }
+  .hs__num[aria-pressed='true'] { background: #1E3A5F; color: #fff; }
+  .hs__num:hover { border-color: #E8662A; }
+  .hs__play { display: inline-flex; align-items: center; gap: 10px; padding: 0 20px; margin-left: 8px; background: #E8662A; border-color: #E8662A; font-size: 17px; }
+  .hs__play:hover { background: #F27B40; border-color: #F27B40; }
+  .hs__play-i { width: 0; height: 0; border-left: 12px solid currentColor; border-top: 8px solid transparent; border-bottom: 8px solid transparent; }
+  .hs__play[aria-pressed='true'] .hs__play-i { width: 12px; height: 14px; border: 0; background: linear-gradient(90deg, currentColor 0 4px, transparent 4px 8px, currentColor 8px 12px); }
+  .hs__hint { margin-top: 14px; font-size: 16px; font-weight: 600; color: #2C4466; max-width: 70ch; }
+
+  .hs__bar, .hs__end, .hs__ls { display: none; }
+
+  /* Список этапов: без JS и при «уменьшить движение» */
+  .hs__cap { margin-top: 24px; }
+  .hs__list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 32px; }
+  .hs__list li { border-top: 3px solid var(--sc); }
+  .hs__card { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 14px; padding: 16px 0; }
+  .hs__ln { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #1E3A5F; color: #fff; font-weight: 800; font-size: 16px; }
+  .hs__lt { font-weight: 800; font-size: 18px; line-height: 1.3; }
+  .hs__ld { margin-top: 4px; font-size: 16px; line-height: 1.5; color: #2C4466; }
+  .hs__lk { display: inline-flex; align-items: center; min-height: 44px; color: #0F2340; font-weight: 700; font-size: 16px; text-underline-offset: 4px; text-decoration-thickness: 2px; text-decoration-color: #E8662A; }
+  .hs.js .hs__list li.on .hs__card { background: #FFF3E6; box-shadow: -12px 0 0 #FFF3E6, 12px 0 0 #FFF3E6; }
+  .hs.js .hs__list li.on .hs__ln { background: #E8662A; color: #0F2340; }
+
+  /* ---------- Прокрутка ведёт по схеме ---------- */
+  .hs.sc { --hs-bar: 48px; --hs-step: 58svh; }
+  .hs.sc .hs__scrolly { position: relative; margin-top: 24px; }
+  /* Схема закреплена под шапкой; на телефоне видно окно до 55% экрана, ниже прокручиваются карточки */
+  .hs.sc .hs__pin { position: sticky; top: var(--hs-top, 80px); z-index: 2; background: #fff; clip-path: inset(0 0 var(--hs-cut, 0px) 0); transition: clip-path .5s ease; }
+  .hs.sc .hs__pin::after { content: ''; position: absolute; left: 0; right: 0; top: calc(var(--hs-win, 100%) - 2px); height: 2px; background: #1E3A5F; transition: opacity .3s; }
+  .hs.sc.live .hs__pin { clip-path: inset(0 0 0 0); }
+  .hs.sc.live .hs__pin::after { opacity: 0; }
+  .hs.sc .hs__bar { position: relative; display: flex; align-items: center; gap: 12px; height: var(--hs-bar); padding: 0 0 6px; font-size: 17px; font-weight: 800; line-height: 1.2; transition: opacity .3s; }
+  .hs__bar-n { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%; background: #E8662A; color: #0F2340; font-size: 17px; }
+  .hs__bar-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hs__bar-of { flex: none; margin-left: auto; font-size: 15px; font-weight: 600; color: #2C4466; }
+  .hs__segs { position: absolute; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 4px; height: 5px; }
+  .hs__seg { background: #E3E8EF; overflow: hidden; }
+  .hs__seg i { display: block; height: 100%; background: var(--sc); transform: scaleX(0); transform-origin: 0 50%; }
+  .hs.sc .hs__stage { margin-top: 12px; overflow: hidden; transition: transform .5s ease; }
+  .hs.sc .hs__pan { will-change: transform; }
+  .hs.sc .hs__svg--wide { max-height: max(300px, calc(100svh - var(--hs-top, 80px) - var(--hs-bar) - 250px)); }
+
+  /* Ещё не дошедшие трубы - серые контуры, будущие элементы приглушены */
+  /* элементы, созданные скриптом, без атрибута области стилей Astro - через :global */
+  .hs.sc .hs__svg :global(.gp) { fill: none; stroke: #DCE3EC; stroke-width: 5; }
+  .hs.sc .hs__svg :global(.gp--d) { stroke-width: 3.5; stroke-dasharray: 8 6; }
+  .hs.sc .hs__svg [data-stage].fut { opacity: .3; }
+  .hs.sc .hs__svg .ar { transition: opacity .2s; }
+  .hs.sc .hs__svg :global(.fm) { display: none; fill: none; stroke: #fff; stroke-width: 2; stroke-dasharray: 4 22; stroke-linecap: butt; pointer-events: none; }
+  /* Живой режим: по трубам бегут метки потока */
+  .hs.sc.live .hs__svg :global(.fm) { display: inline; animation: hs-flow 1s linear infinite; }
+  .hs.sc.live .hs__svg .p.d { animation: hs-mix 1s linear infinite; }
+  .hs.sc.idle .hs__svg :global(.fm), .hs.sc.idle .hs__svg .p.d { animation-play-state: paused; }
+  @keyframes hs-flow { from { stroke-dashoffset: 26; } to { stroke-dashoffset: 0; } }
+  @keyframes hs-mix { from { stroke-dashoffset: 14; } to { stroke-dashoffset: 0; } }
+
+  /* Карточки этапов: прокручиваются под схемой, активная прилипает под окном схемы */
+  .hs.sc .hs__cap { position: relative; z-index: 1; margin-top: calc(-1 * var(--hs-cut, 0px)); }
+  .hs.sc .hs__list { display: block; }
+  .hs.sc .hs__list li { min-height: var(--hs-step); border: 0; }
+  .hs.sc .hs__list li:first-child { margin-top: 12px; }
+  .hs.sc .hs__card { position: sticky; top: var(--hs-ref, 50vh); grid-template-columns: 44px minmax(0, 1fr); gap: 16px; max-width: 780px; padding: 14px 20px 6px 16px; background: #fff; border: 2px solid #1E3A5F; border-left: 8px solid var(--sc); opacity: .35; transition: opacity .3s; box-shadow: none; }
+  .hs.sc .hs__list li.on .hs__card { opacity: 1; background: #fff; box-shadow: none; }
+  .hs.sc .hs__ln { width: 44px; height: 44px; font-size: 20px; }
+  .hs.sc .hs__list li.on .hs__ln { background: #E8662A; color: #0F2340; }
+  .hs.sc .hs__lt { font-size: 16px; font-weight: 700; color: #2C4466; }
+  .hs.sc .hs__ls { display: block; margin-top: 2px; font-size: 20px; line-height: 1.35; font-weight: 700; }
+  .hs.sc .hs__ld { display: none; }
+  .hs.sc .hs__lk { min-height: 40px; }
+  .hs.sc .hs__end { display: block; height: var(--hs-endh, 40vh); }
+
+  @media (max-width: 900px) { .hs__list { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 959px) {
+    .hs__svg--wide { display: none; }
+    .hs__svg--tall { display: block; }
+    .hs.sc { --hs-bar: 42px; --hs-step: 50svh; }
+    .hs.sc .hs__bar { font-size: 15px; gap: 10px; }
+    .hs__bar-n { width: 30px; height: 30px; font-size: 15px; }
+    .hs__bar-of { display: none; }
+    .hs.sc .hs__stage { margin-top: 0; }
+    /* «Живой» режим на телефоне: окно раскрывается на всю схему, строка этапа уходит */
+    .hs.sc.live.cut .hs__bar { opacity: 0; }
+    .hs.sc.live.cut .hs__stage { transform: translateY(calc(-1 * var(--hs-bar))); }
+  }
+  @media (max-width: 639px) {
+    .hs__top { padding-bottom: 16px; }
+    .hs__h { font-size: 30px; }
+    .hs__list { grid-template-columns: 1fr; }
+    .hs__legend { flex-direction: column; gap: 8px; }
+    .hs__nums { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+    .hs__num { width: auto; }
+    .hs__play { grid-column: 1 / -1; margin-left: 0; justify-content: center; }
+    .hs.sc .hs__card { grid-template-columns: 36px minmax(0, 1fr); gap: 12px; padding: 10px 12px 4px 10px; border-left-width: 6px; }
+    .hs.sc .hs__ln { width: 36px; height: 36px; font-size: 18px; }
+    .hs.sc .hs__ls { font-size: 18px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .hs__svg [data-stage] { transition: none; } }
+</style>

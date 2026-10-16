@@ -13,7 +13,7 @@ export default defineConfig({
   devToolbar: { enabled: false },
   integrations: [
     sitemap({
-      filter: (page) => !/\/(spasibo|karta-prototipa|404)\/?$/.test(page),
+      filter: (page) => !/\/(spasibo|karta-prototipa|foto-dlya-sajta|404)\/?$/.test(page) && !/\/eskiz\//.test(page),
     }),
   ],
 });

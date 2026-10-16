@@ -1,0 +1,73 @@
+---
+// Оглавление эскизов стиля: ссылки на все варианты и что изменилось по замечаниям команды.
+import Eskiz from '../../layouts/Eskiz.astro';
+import Logo from '../../components/Logo.astro';
+
+const variants = [
+  { href: '/eskiz/a/', name: 'A «Чертёж»', text: 'Белый фон, тёмно-синий текст. Тонкая линия-шкала слева через всю страницу, номера разделов стоят на ней. Оранжевый только на кнопках и ценах, все углы прямые.' },
+  { href: '/eskiz/b/', name: 'B «Контраст»', text: 'Белые и насыщенно-синие секции по очереди. Между секциями толстая шкала с ручкой термостата, крупные номера разделов, одно фото на всю ширину.' },
+  { href: '/eskiz/c/', name: 'C - Схема', text: 'Система отопления по разделам страницы на рендерах стенда: котёл, гидрострелка, узел смешения, коллектор, петли тёплого пола и общий вид. Кадры крупные, с прямыми углами, чередуются с текстом слева и справа. Две трубы идут зигзагом через всю страницу и входят в каждый кадр. При прокрутке по ним течёт вода: когда она доходит до раздела, приглушённый кадр проявляется в цвете шторкой по ходу потока с лёгким наездом камеры, по трубам на кадре бегут метки потока, а пройденный кадр слегка темнеет. Под гидрострелкой полоса контура радиаторов, раздел вопросов остался схемой. Цены со знаком ₽.' },
+  { href: '/eskiz/c-sticky/', name: 'C - прежний', text: 'Прежняя версия C для сравнения: схема целиком закреплена на экране, под ней прокручиваются девять карточек этапов, трубы прорисовываются по ходу воды.' },
+];
+const changes = [
+  ['Слишком много информации, тексты плохо читаются', 'Первый экран: заголовок, одна строка о работе, цена «от» и одна кнопка. В разделах 2-4 строки или список, длинные тексты свёрнуты в «Подробнее» и остались в коде страницы для поисковиков. Основной текст 17-18 px, строка не длиннее 65 знаков.'],
+  ['Нужно деление на категории', 'Шесть разделов с номерами: 01 Что делаем, 02 Цены, 03 Как работаем, 04 Объекты, 05 Вопросы, 06 Заявка. Те же номера в шапке, по ним можно перейти к разделу.'],
+  ['Заголовок сбоку, расшифровка рядом', 'На компьютере заголовок раздела слева (в A он остаётся на месте при прокрутке), справа короткая расшифровка и содержимое. На телефоне друг под другом.'],
+  ['Нужна силовая линия', 'Фирменная шкала синий, янтарный, красный ведёт по странице от холодного к тёплому: в A вертикальной линией с делениями, в B толстой полосой между секциями с ручкой как на логотипе.'],
+  ['Серо, нужно ярче и чётче', 'Убраны серые подложки и серый текст: текст тёмно-синий на белом или белый на синем, контраст выше AA. Синий фона секций насыщеннее (#133264). Синий и янтарный не смешиваем плавно: их середина получается серой, поэтому шкала идёт ступенями.'],
+  ['Скругления у картинок', 'У всех фото прямые углы. В A и кнопки прямые, в B кнопки и поля слегка скруглены (6 px), чтобы сравнить.'],
+  ['Одно слово для цен', 'Раздел и все подписи называются «Цены», другого слова нет.'],
+  ['Убрать подробный расчёт', 'Вместо опроса из нескольких шагов два поля: площадь и основание. Примерная цена считается сразу: работа от 700 руб./м², с материалами от 2 400 руб./м², на деревянном перекрытии дороже на 20-30%. Ниже короткая заявка.'],
+  ['Телефон или почта, как удобно связаться', 'Обязательно одно из двух, проверка в браузере. Галочки MAX, Telegram, WhatsApp, Звонок. Согласие на обработку данных не отмечено заранее. В прототипе заявка никуда не уходит, показывается «Спасибо, свяжемся».'],
+  ['На телефоне ругаются на размеры и шрифт', 'Базовый шрифт на телефоне 17 px, в полях 18 px (телефон не увеличивает страницу при вводе), кнопки и пункты не ниже 44 px, без прокрутки вбок, заголовки переносятся только между словами.'],
+];
+---
+<Eskiz title="Эскизы стиля: водяной тёплый пол" description="Три эскиза нового стиля страницы «Водяной тёплый пол» для согласования с командой.">
+  <div class="ei">
+    <header class="ei__head">
+      <a class="ei__brand" href="/" aria-label="Система тепла, на главную"><Logo /><span><b>СИСТЕМА</b> <i>ТЕПЛА</i></span></a>
+      <a class="ei__back" href="/karta-prototipa/">Карта прототипа</a>
+    </header>
+    <h1>Эскизы стиля</h1>
+    <p class="ei__lead">Одна страница, «Водяной тёплый пол», в трёх вариантах. Информация в них одинаковая, сравниваем только подачу.</p>
+    <ul class="ei__vars">
+      {variants.map((v) => (
+        <li><a href={v.href}><span class="ei__name">Вариант {v.name}</span><span class="ei__text">{v.text}</span><span class="ei__open">Открыть вариант</span></a></li>
+      ))}
+    </ul>
+    <h2>Что изменилось и почему</h2>
+    <ol class="ei__list">
+      {changes.map(([q, a]) => <li><h3>{q}</h3><p>{a}</p></li>)}
+    </ol>
+    <p class="ei__note">Страницы эскизов закрыты от индексации и не попадают в карту сайта. Основной сайт и его стили не менялись.</p>
+  </div>
+</Eskiz>
+
+<style>
+  .ei { max-width: 980px; margin: 0 auto; padding: 24px clamp(16px, 4vw, 40px) 80px; color: #0F2340; background: #fff; }
+  .ei__head { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding-bottom: 16px; border-bottom: 2px solid #0F2340; }
+  .ei__brand { display: flex; align-items: center; gap: 12px; white-space: nowrap; text-decoration: none; font-size: clamp(17px, 4.6vw, 20px); font-weight: 800; letter-spacing: .02em; }
+  .ei__brand :global(svg) { width: 48px; height: 48px; }
+  .ei__brand b { color: #1E3A5F; }
+  .ei__brand i { color: #E8662A; font-style: normal; }
+  .ei__back { color: #0F2340; font-weight: 700; min-height: 44px; display: inline-flex; align-items: center; text-underline-offset: 4px; }
+  h1 { margin-top: 56px; font-size: clamp(36px, 6vw, 60px); line-height: 1.05; font-weight: 800; letter-spacing: -.025em; }
+  .ei__lead { margin-top: 16px; font-size: 20px; font-weight: 500; max-width: 46ch; }
+  .ei__vars { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 40px; }
+  .ei__vars li:nth-child(4) a { border-color: #B9C6D8; border-style: dashed; }
+  .ei__vars a { display: flex; flex-direction: column; gap: 10px; height: 100%; padding: 28px; text-decoration: none; color: inherit; border: 2px solid #0F2340; }
+  .ei__vars li:nth-child(2) a { background: #133264; color: #fff; border-color: #133264; }
+  .ei__vars li:nth-child(3) a { border-color: #1E3A5F; border-top: 8px solid; border-image: linear-gradient(90deg, #E2452B 0 34%, #F2A23A 34% 67%, #2B6CD9 67%) 1; }
+  .ei__name { font-size: 26px; font-weight: 800; }
+  .ei__open { margin-top: auto; padding-top: 8px; font-weight: 800; text-decoration: underline; text-decoration-color: #E8662A; text-decoration-thickness: 3px; text-underline-offset: 6px; }
+  .ei__vars a:hover .ei__name { text-decoration: underline; text-underline-offset: 6px; }
+  h2 { margin-top: 64px; font-size: clamp(28px, 4vw, 40px); font-weight: 800; letter-spacing: -.02em; }
+  .ei__list { margin-top: 24px; counter-reset: c; }
+  .ei__list li { counter-increment: c; display: grid; grid-template-columns: 56px minmax(0, 1fr); column-gap: 16px; padding: 20px 0; border-top: 1px solid #B9C6D8; }
+  .ei__list li::before { content: counter(c); grid-row: span 2; font-size: 22px; font-weight: 800; color: #C0480F; }
+  .ei__list h3 { font-size: 19px; font-weight: 800; line-height: 1.35; }
+  .ei__list p { margin-top: 4px; color: #2C4466; }
+  .ei__note { margin-top: 32px; font-size: 16px; color: #2C4466; }
+  @media (max-width: 900px) { .ei__vars { grid-template-columns: 1fr; } }
+  @media (max-width: 720px) { .ei__list li { grid-template-columns: 36px minmax(0, 1fr); } }
+</style>

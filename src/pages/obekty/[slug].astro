@@ -2,7 +2,8 @@
 // Ш5 — карточка объекта.
 import Base from '../../layouts/Base.astro';
 import Section from '../../components/Section.astro';
-import Gallery from '../../components/Gallery.astro';
+import PhotoNeeded from '../../components/PhotoNeeded.astro';
+import { NEED } from '../../data/photo-needs';
 import ObjCard from '../../components/ObjCard.astro';
 import { OBJECTS, type Obj } from '../../data/objects';
 import { pageBySlug, href } from '../../data/pages';
@@ -36,8 +37,8 @@ const passport: [string, string][] = [
     </div>
   </section>
 
-  <Section eyebrow="Фото" title="Фотографии с объекта" lead="Прототип: фото объектов — до финальной обработки.">
-    <Gallery ids={o.gallery} />
+  <Section eyebrow="Фото" title="Фотографии с объекта" lead="Прототип: фото по этому объекту пока не загружены.">
+    <PhotoNeeded text={NEED.obektyFull} variant="wide" />
   </Section>
 
   <Section variant="tint" eyebrow="Задача и решение" title="Что было сложного и как решили">

@@ -1,18 +1,20 @@
 ---
 import { Image } from 'astro:assets';
 import Logo from './Logo.astro';
-import { photo, PHOTO_ALT } from '../lib/photos';
-// img — id фото первого экрана. Если фото по теме нет, вместо него показываем карточку facts («для кого / производительность / цена»).
+import PhotoNeeded from './PhotoNeeded.astro';
+import { photo, PHOTO_ALT, photoStyle } from '../lib/photos';
+// img — id фото первого экрана. Если фото по теме нет — need: заглушка «Нужно фото» с описанием, что снять (ФОТО-КАРТА.md).
+// facts — карточка «для кого / производительность / цена»; при заглушке выводится под ней.
 interface Props {
-  h1: string; offer: string; price?: string; img?: string; facts?: [string, string][]; factsTitle?: string; eyebrow?: string;
+  h1: string; offer: string; price?: string; img?: string; need?: string; facts?: [string, string][]; factsTitle?: string; eyebrow?: string;
   primary?: { href: string; label: string }; secondary?: { href: string; label: string } | false;
   trust?: [string, string][]; badge?: string; season?: boolean;
 }
-const { h1, offer, price, img, facts, factsTitle = 'Коротко', eyebrow, primary = { href: '#raschet', label: 'Рассчитать стоимость' }, secondary = { href: '/obekty/', label: 'Посмотреть объекты' },
+const { h1, offer, price, img, need, facts, factsTitle = 'Коротко', eyebrow, primary = { href: '#raschet', label: 'Рассчитать стоимость' }, secondary = { href: '/obekty/', label: 'Посмотреть объекты' },
   trust = [['24 ч', 'смета после замера'], ['3 года', 'гарантия на работы по договору'], ['Поэтапная оплата', 'по этапам работ, без переплат вперёд']], badge, season } = Astro.props;
 ---
 <section class="hero">
-  <div class:list={['wrap', 'hero__grid', { 'hero__grid--solo': !img && !facts?.length }]}>
+  <div class:list={['wrap', 'hero__grid', { 'hero__grid--solo': !img && !need && !facts?.length }]}>
     <div class="hero__text">
       {eyebrow && <div class="eyebrow">{eyebrow}</div>}
       <h1 class="hero__title">{h1}</h1>
@@ -35,8 +37,21 @@ const { h1, offer, price, img, facts, factsTitle = 'Коротко', eyebrow, pr
     </div>
     {img ? (
       <div class="hero__media">
-        <Image src={photo(img)} alt={PHOTO_ALT[img] ?? 'Объект компании'} widths={[480, 720, 960]} sizes="(max-width: 880px) 100vw, 520px" loading="eager" fetchpriority="high" />
+        <Image src={photo(img)} alt={PHOTO_ALT[img] ?? 'Фото монтажа'} widths={[480, 720, 960]} sizes="(max-width: 880px) 100vw, 520px" loading="eager" fetchpriority="high" style={photoStyle(img)} />
         {badge && <div class="hero__badge"><Logo /><span>{badge}</span></div>}
+      </div>
+    ) : need ? (
+      <div class="hero__media hero__media--need">
+        <PhotoNeeded text={need} variant="hero" class={facts?.length ? 'need--short' : undefined} />
+        {facts?.length ? (
+          <div class="hero__facts hero__facts--under">
+            <div class="hero__facts-title">{factsTitle}</div>
+            <dl>
+              {facts.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}
+            </dl>
+            <div class="scale" aria-hidden="true"></div>
+          </div>
+        ) : null}
       </div>
     ) : facts?.length ? (
       <div class="hero__facts">

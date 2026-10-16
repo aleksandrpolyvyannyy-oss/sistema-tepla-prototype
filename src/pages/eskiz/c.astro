@@ -1,0 +1,745 @@
+---
+// Эскиз C «Схема», версия «зигзаг»: схема отопления разрезана по разделам страницы.
+// В каждом разделе две колонки: информация и свой кусок системы (HeatPiece), стороны чередуются.
+// Две трубы идут непрерывно через всю страницу из куска в кусок: A по ходу воды (подача красная,
+// после узла смешения янтарная, после петель остывшая синяя) и B - обратка в котёл (синяя, вверх).
+// Трубы страницы рисует скрипт по реальным координатам кусков (слой SVG на всю высоту), вода течёт по прокрутке.
+// Куски - рендеры стенда из Blender (HeatFrame): когда вода доходит до раздела, кадр проявляется шторкой сверху вниз
+// (откуда вошла труба) с лёгким наездом камеры, при уходе к следующему разделу слегка темнеет. Раздел 05 - схема (HeatPiece).
+// Без JS трубы показаны упрощённо полосами (.fb), при «уменьшить движение» всё нарисовано сразу и без анимации.
+// Прежняя версия C (липкая схема целиком) - /eskiz/c-sticky/.
+import { Image } from 'astro:assets';
+import Eskiz from '../../layouts/Eskiz.astro';
+import EskizHeader from '../../components/eskiz/EskizHeader.astro';
+import EskizFooter from '../../components/eskiz/EskizFooter.astro';
+import Zayavka from '../../components/eskiz/Zayavka.astro';
+import HeatPiece from '../../components/eskiz/HeatPiece.astro';
+import HeatFrame from '../../components/eskiz/HeatFrame.astro';
+import r1 from '../../assets/renders/etap_1.png';
+import r2 from '../../assets/renders/etap_2.png';
+import r3 from '../../assets/renders/etap_3.png';
+import r4 from '../../assets/renders/etap_4.png';
+import r5 from '../../assets/renders/etap_5.png';
+import r6 from '../../assets/renders/etap_6.png';
+import r7 from '../../assets/renders/etap_7.png';
+import r8 from '../../assets/renders/etap_8.png';
+import r9 from '../../assets/renders/etap_9.png';
+import { ESKIZ as E, OBJ, HERO, GALLERY, SECTIONS, clean } from '../../lib/eskiz';
+
+const RED = '#E2452B', AMBER = '#F2A23A', BLUE = '#2B6CD9';
+const [g1, g2, g3, g4, g5] = GALLERY;
+// В эскизе C цены со знаком ₽ (общие данные eskiz.ts пишут «руб.»)
+const rub = (v: string) => v.replace(/\s?руб\./g, ' ₽');
+const num = (v: string) => { const m = rub(v).match(/^(от [\d\s ]+)\s(₽\/м²)$/); return m ? [m[1], m[2]] : [rub(v), '']; };
+const sec = Object.fromEntries(SECTIONS.map((s) => [s.id, s]));
+// Разделы: сторона куска (r/l), цвет трубы A на входе в раздел и на выходе, этап на схеме.
+const Z = {
+  'chto-delaem': { side: 'l', ci: RED, co: RED, n: '2', st: clean('Гидрострелка делит поток: тёплый пол и радиаторы работают параллельно') },
+  ceny: { side: 'r', ci: RED, co: AMBER, n: '6', st: clean('Узел смешения: из 60-75 °C делает 35-45 °C для пола') },
+  'kak-rabotaem': { side: 'l', ci: AMBER, co: AMBER, n: '7', st: clean('Коллектор: на каждой петле свой расходомер') },
+  obekty: { side: 'r', ci: AMBER, co: BLUE, n: '8', st: clean('Петли: труба змейкой греет пол и остывает') },
+  voprosy: { side: 'l', ci: BLUE, co: BLUE, n: '', st: clean('Подмес и обратка: часть воды снова идёт в узел смешения') },
+  zayavka: { side: 'r', ci: BLUE, co: BLUE, n: '9', st: clean('Обратка: вода возвращается в котёл, цикл замкнут') },
+} as const;
+// --fa/--fp: доли ширины колонки, где труба A входит в кусок этого и предыдущего раздела (для полос без JS)
+const FA: Record<string, number> = { hero: .4575, 'chto-delaem': .425, ceny: .5525, 'kak-rabotaem': .795, obekty: .13, voprosy: .465, zayavka: .465 };
+const ORDER = ['hero', 'chto-delaem', 'ceny', 'kak-rabotaem', 'obekty', 'voprosy', 'zayavka'];
+const vars = (id: keyof typeof Z) => `--c:${Z[id].ci};--ci:${Z[id].ci};--co:${Z[id].co};--fa:${FA[id]};--fb:${FA[id] + .07};--fp:${FA[ORDER[ORDER.indexOf(id) - 1]]}`;
+const strip = [
+  { img: r3, n: '3', alt: 'Насосная группа контура радиаторов на стенде' },
+  { img: r4, n: '4', alt: 'Коллектор радиаторов: подача и обратка по стрелкам' },
+  { img: r5, n: '5', alt: 'Комната с радиаторами под окнами' },
+];
+---
+<Eskiz title="Эскиз C «Схема»: водяной тёплый пол" description={rub(E.description)}>
+  <script is:inline>document.documentElement.classList.add('zz-js');</script>
+  <EskizHeader variant="c" />
+  <main class="zz" id="main" data-zz>
+    <svg class="zz__pipes" data-pipes aria-hidden="true" focusable="false" width="1" height="1"></svg>
+
+    <section class="zs zs--r zs--hero" data-zs aria-labelledby="h1" style={`--ci:${RED};--co:${RED};--fa:${FA.hero};--fb:${FA.hero + .07}`}>
+      <div class="zs__info">
+        <h1 id="h1">{E.h1}</h1>
+        <p class="hero__offer">{E.offer}</p>
+        <p class="hero__price"><span class="hero__num">{num(E.priceMain[0].v)[0]}</span> <span class="hero__unit">{num(E.priceMain[0].v)[1]} работа</span></p>
+        <p class="hero__sub">{rub(E.priceMain[1].v)} {E.priceMain[1].n}</p>
+        <a class="btn" href="#zayavka">Рассчитать стоимость</a>
+        <p class="hero__area">{E.area}</p>
+      </div>
+      <div class="zs__col">
+        <span class="fb fb-a" aria-hidden="true"></span><span class="fb fb-b" aria-hidden="true"></span>
+        <HeatFrame k="kotel" img={r1} n="1" tag="Газовый котёл" pos="tr" eager alt="Газовый настенный котёл на стенде: снизу выходит подача и возвращается обратка" label="Этап 1. Газовый настенный котёл нагревает воду до 60-75 °C. Из него выходит подача и в него возвращается обратка." />
+      </div>
+    </section>
+
+    <section class="zs zs--l" data-zs id={sec['chto-delaem'].id} style={vars('chto-delaem')} aria-labelledby="h-01">
+      <span class="fb fbx" aria-hidden="true"></span>
+      <div class="zs__col">
+        <span class="fb fb-a" aria-hidden="true"></span><span class="fb fb-b" aria-hidden="true"></span>
+        <HeatFrame k="strelka" img={r2} n="2" tag="Гидрострелка" pos="tr" alt="Гидрострелка рядом с котлом: горячая подача приходит сверху и расходится по контурам" label="Этап 2. Гидрострелка делит горячий поток. Отвод к радиаторам (этапы 3-5) работает параллельно с тёплым полом." strip={strip} stripCap="Параллельно работает контур радиаторов: насосная группа → коллектор → радиаторы" />
+      </div>
+      <div class="zs__info">
+        <header class="zs__head">
+          <p class="zs__no" aria-hidden="true">01</p>
+          <h2 id="h-01"><span class="vh">01. </span>Что делаем</h2>
+          <p class="zs__stage"><span class="zs__sn">{Z['chto-delaem'].n}</span>{Z['chto-delaem'].st}</p>
+        </header>
+        <p class="lead">Перед заливкой стяжки проверяем каждый контур давлением. Когда стяжка наберёт прочность, настраиваем коллектор, чтобы комнаты грелись одинаково.</p>
+        <ul class="items">
+          {E.what.map((w) => (
+            <li>
+              <h3>{w.t}</h3>
+              <div>
+                <p>{w.d}</p>
+                <details class="more">
+                  <summary>Подробнее</summary>
+                  <div class="more__text">{w.more.map((p) => <p>{p}</p>)}</div>
+                </details>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <details class="more more--block">
+          <summary>{E.notFor.t}</summary>
+          <div class="more__text">
+            <p>{E.notFor.lead}</p>
+            <ul class="dash">{E.notFor.list.map((x) => <li>{x}</li>)}</ul>
+            {E.notFor.after.map((p) => <p>{p}</p>)}
+          </div>
+        </details>
+        <details class="more more--block">
+          <summary>Почему тёплый пол делаем как фундамент отопления</summary>
+          <div class="more__text">{E.intro.map((p) => <p>{p}</p>)}</div>
+        </details>
+      </div>
+    </section>
+
+    <section class="zs zs--r" data-zs id={sec.ceny.id} style={vars('ceny')} aria-labelledby="h-02">
+      <span class="fb fbx" aria-hidden="true"></span>
+      <div class="zs__col">
+        <span class="fb fb-a" aria-hidden="true"></span><span class="fb fb-b" aria-hidden="true"></span>
+        <HeatFrame k="smes" img={r6} n="6" tag="Узел смешения" pos="tl" alt="Узел смешения с насосом над коллектором тёплого пола" label="Этап 6. Узел смешения: к горячей подаче подмешивается остывшая вода из обратки пола, насос подаёт в пол воду 35-45 °C." />
+      </div>
+      <div class="zs__info">
+        <header class="zs__head">
+          <p class="zs__no" aria-hidden="true">02</p>
+          <h2 id="h-02"><span class="vh">02. </span>Цены</h2>
+          <p class="zs__stage"><span class="zs__sn">{Z.ceny.n}</span>{Z.ceny.st}</p>
+        </header>
+        <p class="lead">Цена за м² пола, без стяжки. Стяжку заливает ваша бригада или подрядчик.</p>
+        <div class="pv">
+          {E.priceMain.map((p) => (
+            <div class="pv__item">
+              <p class="pv__val"><span class="pv__num">{num(p.v)[0]}</span> <span class="pv__unit">{num(p.v)[1]}</span></p>
+              <p class="pv__note">{p.n}</p>
+            </div>
+          ))}
+        </div>
+        <h3 class="h3">В стоимость входит</h3>
+        <ul class="inc">{E.included.map((x) => <li>{x}</li>)}</ul>
+        <h3 class="h3">Отдельные работы</h3>
+        <dl class="plist">
+          {E.prices.map(([n, u, p]) => (
+            <div><dt>{n}</dt><dd><b>{rub(p)}</b> <span>за {u}</span></dd></div>
+          ))}
+        </dl>
+        <details class="more more--block">
+          <summary>Коротко о цене и сроках</summary>
+          <div class="more__text"><p>{rub(E.answer)}</p></div>
+        </details>
+      </div>
+    </section>
+
+    <section class="zs zs--l" data-zs id={sec['kak-rabotaem'].id} style={vars('kak-rabotaem')} aria-labelledby="h-03">
+      <span class="fb fbx" aria-hidden="true"></span>
+      <div class="zs__col">
+        <span class="fb fb-a" aria-hidden="true"></span><span class="fb fb-b" aria-hidden="true"></span>
+        <HeatFrame k="kollektor" img={r7} n="7" tag="Коллектор тёплого пола" pos="tl" alt="Коллектор тёплого пола: сверху подача с расходомерами, снизу обратка, вниз уходят петли" label="Этап 7. Коллектор тёплого пола: подача сверху, обратка снизу, на каждой петле расходомер." />
+      </div>
+      <div class="zs__info">
+        <header class="zs__head">
+          <p class="zs__no" aria-hidden="true">03</p>
+          <h2 id="h-03"><span class="vh">03. </span>Как работаем</h2>
+          <p class="zs__stage"><span class="zs__sn">{Z['kak-rabotaem'].n}</span>{Z['kak-rabotaem'].st}</p>
+        </header>
+        <p class="lead">{E.speed} Шесть шагов от расчёта до первого запуска.</p>
+        <ol class="steps">
+          {E.steps.map((s, i) => (
+            <li><span class="steps__n" aria-hidden="true">{i + 1}</span><div><h3>{s.t}</h3><p>{s.d}</p></div></li>
+          ))}
+        </ol>
+      </div>
+    </section>
+
+    <section class="zs zs--r" data-zs id={sec.obekty.id} style={vars('obekty')} aria-labelledby="h-04">
+      <span class="fb fbx" aria-hidden="true"></span>
+      <div class="zs__col">
+        <span class="fb fb-a" aria-hidden="true"></span><span class="fb fb-b" aria-hidden="true"></span>
+        <HeatFrame k="petli" img={r8} n="8" tag="Петли тёплого пола" pos="tr" alt="Петля тёплого пола змейкой на сетке до заливки стяжки" label="Этап 8. Петли тёплого пола уложены змейкой в стяжке: вода приходит 35-45 °C, отдаёт тепло и остывшей уходит в обратку." />
+      </div>
+      <div class="zs__info">
+        <header class="zs__head">
+          <p class="zs__no" aria-hidden="true">04</p>
+          <h2 id="h-04"><span class="vh">04. </span>Объекты</h2>
+          <p class="zs__stage"><span class="zs__sn">{Z.obekty.n}</span>{Z.obekty.st}</p>
+        </header>
+        <p class="lead">Так пол выглядит до заливки: эти слои потом не увидеть, поэтому снимаем каждый.</p>
+        <div class="gal">
+          <figure class="w w--m"><Image src={HERO.src} alt={HERO.alt} widths={[480, 720, 1040]} sizes="(max-width: 760px) 100vw, 680px" /><figcaption>Петли в комнате до заливки стяжки: шаг 150 мм, у наружной стены чаще</figcaption></figure>
+          <figure><Image src={g1.src} alt={g1.alt} widths={[320, 480, 640]} sizes="(max-width: 760px) 50vw, 340px" /><figcaption>{g1.alt}</figcaption></figure>
+          <figure><Image src={g2.src} alt={g2.alt} widths={[320, 480, 640]} sizes="(max-width: 760px) 50vw, 340px" /><figcaption>{g2.alt}</figcaption></figure>
+          <figure class="w w--m"><Image src={g3.src} alt={g3.alt} widths={[480, 720, 1040]} sizes="(max-width: 760px) 100vw, 680px" /><figcaption>{g3.alt}</figcaption></figure>
+          <figure><Image src={g4.src} alt={g4.alt} widths={[320, 480, 640]} sizes="(max-width: 760px) 50vw, 340px" /><figcaption>{g4.alt}</figcaption></figure>
+          <figure><Image src={g5.src} alt={g5.alt} widths={[320, 480, 640]} sizes="(max-width: 760px) 50vw, 340px" /><figcaption>{g5.alt}</figcaption></figure>
+        </div>
+        <article class="obj">
+          <h3>{OBJ.title}</h3>
+          <p class="obj__place">{OBJ.place}</p>
+          <dl class="obj__facts">{OBJ.facts.map((f) => <div><dt>{f.n}</dt><dd>{rub(f.v)}</dd></div>)}</dl>
+          <p>{OBJ.text}</p>
+          <a class="link" href={OBJ.href}>Посмотреть объект</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="zs zs--l" data-zs id={sec.voprosy.id} style={vars('voprosy')} aria-labelledby="h-05">
+      <span class="fb fbx" aria-hidden="true"></span>
+      <div class="zs__col">
+        <span class="fb fb-a" aria-hidden="true"></span><span class="fb fb-b" aria-hidden="true"></span>
+        <HeatPiece k="podmes" label="Подмес и обратка: из обратного коллектора часть воды возвращается в узел смешения, остальное уходит в общую обратку." />
+      </div>
+      <div class="zs__info">
+        <header class="zs__head">
+          <p class="zs__no" aria-hidden="true">05</p>
+          <h2 id="h-05"><span class="vh">05. </span>Вопросы</h2>
+          <p class="zs__stage"><span class="zs__sn zs__sn--dash" aria-hidden="true"></span>{Z.voprosy.st}</p>
+        </header>
+        <div class="faq">
+          {E.faq.map((f) => (
+            <details class="more more--faq"><summary>{rub(f.q)}</summary><div class="more__text"><p>{rub(f.a)}</p></div></details>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <section class="zs zs--r zs--end" data-zs id={sec.zayavka.id} style={vars('zayavka')} aria-labelledby="h-06">
+      <span class="fb fbx" aria-hidden="true"></span>
+      <div class="zs__col">
+        <span class="fb fb-a" aria-hidden="true"></span><span class="fb fb-b" aria-hidden="true"></span>
+        <HeatFrame k="final" img={r9} n="9" tag="Цикл замкнут" pos="bl" alt="Стенд системы отопления целиком: котёл, гидрострелка, узел смешения, коллекторы, тёплый пол и радиаторы" label="Этап 9. Общая обратка: остывшая вода возвращается к котлу, цикл замкнут." />
+      </div>
+      <div class="zs__info">
+        <header class="zs__head">
+          <p class="zs__no" aria-hidden="true">06</p>
+          <h2 id="h-06"><span class="vh">06. </span>Заявка</h2>
+          <p class="zs__stage"><span class="zs__sn">{Z.zayavka.n}</span>{Z.zayavka.st}</p>
+        </header>
+        <p class="lead">Укажите площадь, и сразу увидите примерную цену. Затем оставьте телефон или почту.</p>
+        <Zayavka uid="c" cur="₽" />
+      </div>
+    </section>
+  </main>
+  <EskizFooter variant="c" />
+</Eskiz>
+
+<script>
+  import { roundPath, samples, type Pt } from '../../lib/eskiz-pipes';
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const RED = '#E2452B', AMBER = '#F2A23A', BLUE = '#2B6CD9';
+  // Порты кусков в координатах схемы (ширина 400): A x=180, B x=220.
+  const VBW = 400, PA = 180, PB = 220;
+  // Доли прогресса обратки r (0..1): сначала изгиб в разделе 06, потом труба B вверх по странице, в конце вход в котёл.
+  const R9 = 0.08, R1 = 0.92;
+  const clamp = (v: number, a = 0, b = 1) => (v < a ? a : v > b ? b : v);
+  const mk = (tag: string, attrs: Record<string, string | number> = {}, parent?: Element) => {
+    const el = document.createElementNS(NS, tag);
+    for (const k in attrs) el.setAttribute(k, String(attrs[k]));
+    parent?.append(el);
+    return el as SVGElement;
+  };
+
+  type PP = { el: SVGPathElement; L: number; lane: string; a: number; b: number; u: number; dash: boolean };
+  type AR = { el: SVGElement; lane: string; at: number; on: boolean | null };
+  // Слои кадра-рендера: цветной кадр (наезд), приглушённый кадр-шторка, кромка воды, затемнение при уходе
+  type PH = { cam: HTMLElement; mute: HTMLElement; mi: HTMLElement; front: HTMLElement; dim: HTMLElement; p: number; d: number };
+  type K = {
+    fig: HTMLElement; svg: SVGSVGElement; pp: PP[]; ar: AR[];
+    s: number; xA: number; xB: number; h: number; top0: number; top1: number; sticky: boolean;
+    lb0: number; lb1: number; st: string;
+    pa: number; pb: number; ph: PH | null; lv0: number; lv1: number;
+  };
+  const ease = (t: number) => t * t * (3 - 2 * t);
+  // Толщина труб в кадрах-рендерах (единицы ширины 400); трубы страницы берут ту же толщину
+  const SWF = 6;
+
+  const root = document.querySelector<HTMLElement>('[data-zz]');
+  if (root) {
+    const anim = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    root.classList.add(anim ? 'an' : 'st');
+    const over = root.querySelector<SVGSVGElement>('[data-pipes]')!;
+    const secs = [...root.querySelectorAll<HTMLElement>('[data-zs]')];
+    const cols = secs.map((s) => s.querySelector<HTMLElement>('.zs__col')!);
+    const wideMQ = window.matchMedia('(min-width: 761px)');
+
+    // ---- Слой труб страницы: бледный контур, вода (по цветам через маски-обрезки), метки потока
+    const defs = mk('defs', {}, over);
+    const clip = (id: string) => mk('rect', { x: -50, y: -50, width: 10, height: 10 }, mk('clipPath', { id, clipPathUnits: 'userSpaceOnUse' }, defs));
+    const cR = clip('zzc-r'), cA = clip('zzc-a'), cB = clip('zzc-b');
+    const laneA = mk('g', { class: 'ln' }, over), laneB = mk('g', { class: 'ln' }, over);
+    const ghA = mk('path', { class: 'ln__gh' }, laneA), ghB = mk('path', { class: 'ln__gh' }, laneB);
+    const fillA = mk('g', { class: 'ln__fill' }, laneA), fillB = mk('g', { class: 'ln__fill' }, laneB);
+    const aR = mk('path', { stroke: RED, 'clip-path': 'url(#zzc-r)' }, fillA);
+    const aA = mk('path', { stroke: AMBER, 'clip-path': 'url(#zzc-a)' }, fillA);
+    const aB = mk('path', { stroke: BLUE, 'clip-path': 'url(#zzc-b)' }, fillA);
+    const bB = mk('path', { stroke: BLUE }, fillB);
+    const fmA = mk('path', { class: 'ln__fm' }, laneA), fmB = mk('path', { class: 'ln__fm' }, laneB);
+
+    // ---- Куски системы: трубы прорисовываются штрихом, под ними бледный контур, поверх метки потока
+    const K: K[] = secs.map((s) => {
+      const fig = s.querySelector<HTMLElement>('[data-kus]')!;
+      const svg = fig.querySelector('svg')!;
+      const pp: PP[] = [...svg.querySelectorAll<SVGPathElement>('path.p[data-l]')].map((el) => {
+        const L = el.getTotalLength() || 1;
+        const dash = el.classList.contains('d');
+        const lane = el.dataset.l ?? 'A';
+        if (anim) {
+          const gh = mk('path', { class: dash ? 'pg pg--d' : 'pg', d: el.getAttribute('d') ?? '' });
+          el.before(gh);
+          if (dash) el.style.opacity = '0';
+          else {
+            el.style.strokeDasharray = `${L + 1} ${L + 1}`;
+            el.style.strokeDashoffset = String(L + 1);
+            el.after(mk('path', { class: 'fm', d: el.getAttribute('d') ?? '', 'data-l': lane }));
+          }
+        }
+        return { el, L, lane, a: Number(el.dataset.a ?? 0), b: Number(el.dataset.b ?? 1), u: -1, dash };
+      });
+      const ar: AR[] = [...svg.querySelectorAll<SVGElement>('.ar[data-l]')].map((el) => ({ el, lane: el.dataset.l ?? 'A', at: Number(el.dataset.at ?? 0.5), on: null }));
+      const q = (sel: string) => fig.querySelector<HTMLElement>(sel)!;
+      const ph: PH | null = fig.hasAttribute('data-frame')
+        ? { cam: q('[data-cam]'), mute: q('[data-mute]'), mi: q('[data-mute-in]'), front: q('[data-front]'), dim: q('[data-dim]'), p: -1, d: -1 }
+        : null;
+      return {
+        fig, svg, pp, ar, s: 1, xA: 0, xB: 0, h: 0, top0: 0, top1: 0, sticky: false, lb0: 0, lb1: 1, st: '',
+        pa: Number(fig.dataset.pa ?? PA), pb: Number(fig.dataset.pb ?? PB), ph, lv0: 0, lv1: 1,
+      };
+    });
+    if (!anim) K.forEach((k) => k.fig.classList.add('on', 'fa', 'fb'));
+
+    let W = 0, H = 0, mainTop = 0, RL = 0, ST = 0, LA = 1, LB = 1, sR0 = 0, sR1 = 1;
+    let ys: number[] = [], ls: number[] = [];
+    let sD = 0, raf = 0, force = true, intro = false, t0 = 0;
+
+    // Длина трубы A, до которой дошла вода, по высоте линии чтения (на горизонталях - плавно за окно ±w).
+    const drawnA = (y: number) => {
+      if (!ys.length || y <= ys[0]) return 0;
+      if (y >= ys[ys.length - 1]) return LA;
+      let lo = 0, hi = ys.length - 1;
+      while (hi - lo > 1) { const m = (lo + hi) >> 1; if (ys[m] <= y) lo = m; else hi = m; }
+      return ls[lo] + (ls[hi] - ls[lo]) * (y - ys[lo]) / (ys[hi] - ys[lo]);
+    };
+
+    const layout = () => {
+      const wide = wideMQ.matches;
+      const mr = root.getBoundingClientRect();
+      W = mr.width; H = mr.height; mainTop = mr.top + window.scrollY;
+      over.setAttribute('width', String(W)); over.setAttribute('height', String(H));
+      over.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const vh = window.innerHeight;
+      RL = Math.round(vh * (wide ? 0.62 : 0.7));
+      ST = parseFloat(getComputedStyle(K[1].fig).top) || 0;
+      // толщина труб страницы = толщине концов труб в кадрах (SWF единиц ширины кадра)
+      root.style.setProperty('--lwp', `${((SWF * K[1].svg.getBoundingClientRect().width) / VBW).toFixed(2)}px`);
+      const ox = mr.left, oy = mr.top;
+      const S = secs.map((s) => { const r = s.getBoundingClientRect(); return { t: r.top - oy, b: r.bottom - oy }; });
+      K.forEach((k, i) => {
+        const r = k.svg.getBoundingClientRect();
+        k.s = r.width / VBW; k.h = r.height;
+        k.xA = r.left - ox + k.pa * k.s; k.xB = r.left - ox + k.pb * k.s;
+        k.sticky = wide && getComputedStyle(k.fig).position === 'sticky';
+        if (k.sticky) {
+          // Естественное и крайнее нижнее положение липкого куска в его колонке
+          const cr = cols[i].getBoundingClientRect(), cs = getComputedStyle(cols[i]), fr = k.fig.getBoundingClientRect();
+          const off = r.top - fr.top;
+          k.top0 = cr.top - oy + parseFloat(cs.paddingTop) + off;
+          k.top1 = Math.max(k.top0, cr.bottom - oy - parseFloat(cs.paddingBottom) - fr.height + off);
+        } else k.top0 = k.top1 = r.top - oy;
+        // Уход воды из раздела: на компьютере к границе со следующим разделом, на телефоне вниз от кадра
+        if (wide) { k.lv0 = S[i].b - 320; k.lv1 = S[i].b - 20; }
+        else { k.lv0 = k.top0 + k.h + 40; k.lv1 = k.lv0 + vh * 0.45; }
+      });
+
+      // Ломаные труб (строим сверху вниз; B потом разворачиваем - вода в ней идёт вверх)
+      const pA: Pt[] = [], pB: Pt[] = [], rA: number[] = [], rB: number[] = [];
+      const push = (a: Pt, b: Pt, ra: number, rb: number) => { pA.push(a); pB.push(b); rA.push(ra); rB.push(rb); };
+      const k0 = K[0], k6 = K[6];
+      push([k0.xA, k0.top0 + k0.h], [k0.xB, k0.top0 + k0.h], 0, 0);
+      if (wide) {
+        // Колонка куска → граница разделов → колонка следующего куска. Изгибы концентрические.
+        const g = (K[1].pb - K[1].pa) * K[1].s, r = 30;
+        for (let i = 0; i < 6; i++) {
+          const yb = S[i].b, right = K[i + 1].xA > K[i].xA;
+          const yA = yb + (right ? g / 2 : -g / 2), yB = yb + (right ? -g / 2 : g / 2);
+          push([K[i].xA, yA], [K[i].xB, yB], right ? r + g : r, right ? r : r + g);
+          push([K[i + 1].xA, yA], [K[i + 1].xB, yB], right ? r : r + g, right ? r + g : r);
+        }
+      } else {
+        // Телефон: трубы идут по колее у левого края, у каждого куска сворачивают в него и выходят обратно.
+        const xa = 12, xb = 26, gm = 14, rm = 12, e = 18;
+        const out = (k: K) => {
+          const y = k.top0 + k.h + e;
+          push([k.xA, y], [k.xB, y + gm], rm, rm + gm);
+          push([xa, y], [xb, y + gm], rm + gm, rm);
+        };
+        const inn = (k: K) => {
+          const y = k.top0 - e;
+          push([xa, y], [xb, y - gm], rm + gm, rm);
+          push([k.xA, y], [k.xB, y - gm], rm, rm + gm);
+        };
+        out(k0);
+        for (let i = 1; i <= 6; i++) { inn(K[i]); if (i < 6) out(K[i]); }
+      }
+      push([k6.xA, k6.top0], [k6.xB, k6.top0], 0, 0);
+      const ra = roundPath(pA, rA), rb = roundPath(pB.reverse(), rB.reverse());
+      LA = ra.len; LB = rb.len;
+      for (const el of [ghA, aR, aA, aB, fmA]) el.setAttribute('d', ra.d);
+      for (const el of [ghB, bB, fmB]) el.setAttribute('d', rb.d);
+      if (anim) {
+        fillA.style.strokeDasharray = `${LA + 2} ${LA + 2}`;
+        fillB.style.strokeDasharray = `${LB + 2} ${LB + 2}`;
+      }
+
+      // Линия чтения → длина трубы A: по вертикалям вода идёт вровень с прокруткой,
+      // горизонтальный переход между разделами проходит за окно ±w вокруг границы.
+      const sa = samples(ra.prims, 6);
+      const hs = ra.prims.filter((p) => p.k === 'L' && Math.abs(p.a[1] - p.b[1]) < 0.5 && p.len > 4).map((p) => (p.k === 'L' ? p.a[1] : 0));
+      const w = wide ? 80 : 22;
+      const firstAt = (y: number) => {
+        for (let i = 1; i < sa.length; i++) if (sa[i][2] >= y) {
+          const [l0, , y0] = sa[i - 1], [l1, , y1] = sa[i];
+          return y1 > y0 ? l0 + (l1 - l0) * (y - y0) / (y1 - y0) : l1;
+        }
+        return LA;
+      };
+      const an: [number, number][] = sa.filter((s) => !hs.some((h) => Math.abs(s[2] - h) < w)).map((s) => [s[2], s[0]]);
+      hs.forEach((h) => an.push([h - w, firstAt(h - w)], [h + w, firstAt(h + w)]));
+      an.sort((p, q) => p[0] - q[0] || p[1] - q[1]);
+      ys = []; ls = [];
+      for (const [y, l] of an) if (!ys.length || (y > ys[ys.length - 1] + 0.01 && l >= ls[ls.length - 1])) { ys.push(y); ls.push(l); }
+
+      // Где обратка проходит каждый кусок (для «оживления» обратки в куске)
+      const sb = samples(rb.prims, 8);
+      const lbAt = (y: number) => { for (const s of sb) if (s[2] <= y) return s[0]; return LB; };
+      K.forEach((k) => { k.lb0 = lbAt(k.top0 + k.h); k.lb1 = Math.max(k.lb0 + 1, lbAt(k.top0)); });
+
+      // Прокрутка, на которой вода доходит до раздела 06, и отрезок, за который она возвращается в котёл
+      const maxS = document.documentElement.scrollHeight - vh;
+      sR0 = k6.top0 + (k6.ph ? k6.h : 120 * k6.s) - RL + mainTop;
+      sR1 = Math.min(sR0 + 450, maxS - 4);
+      if (sR1 - sR0 < 200) sR0 = sR1 - 200;
+      force = true;
+    };
+
+    const setCls = (k: K, cls: string) => {
+      if (k.st === cls) return;
+      k.st = cls;
+      const [on, fa, fb] = cls.split('');
+      k.fig.classList.toggle('on', on === '1');
+      k.fig.classList.toggle('fa', fa === '1');
+      k.fig.classList.toggle('fb', fb === '1');
+    };
+
+    let live: boolean | null = null, clipKey = '';
+    const render = () => {
+      // Цвет трубы A меняется внутри липких кусков 6 и 8: граница цвета идёт вместе с куском
+      const mid = (k: K) => (k.sticky ? clamp(window.scrollY + ST - mainTop, k.top0, k.top1) : k.top0) + k.h / 2;
+      const s2 = mid(K[2]), s4 = mid(K[4]);
+      // границы цвета трогаем, только когда они сдвинулись (иначе лишняя перекладка SVG на каждом кадре)
+      const ck = `${s2}|${s4}|${W}|${H}`;
+      if (force || ck !== clipKey) {
+        clipKey = ck;
+        cR.setAttribute('height', String(s2 + 50));
+        cR.setAttribute('width', String(W + 100));
+        cA.setAttribute('y', String(s2)); cA.setAttribute('height', String(Math.max(0, s4 - s2))); cA.setAttribute('width', String(W + 100));
+        cB.setAttribute('y', String(s4)); cB.setAttribute('height', String(H - s4 + 100)); cB.setAttribute('width', String(W + 100));
+      }
+      if (!anim) { force = false; return; }
+
+      const fy = sD + RL - mainTop;
+      const dA = drawnA(fy);
+      const r = clamp((sD - sR0) / (sR1 - sR0));
+      const dB = clamp((r - R9) / (R1 - R9)) * LB;
+      fillA.style.strokeDashoffset = String(LA + 2 - dA);
+      fillB.style.strokeDashoffset = String(LB + 2 - dB);
+      const tM = clamp((r - 0.1) / 0.9);
+      // Первый экран: кадр с котлом проявляется сам после загрузки, потом вода выбегает в трубу страницы
+      const pI = intro ? clamp((performance.now() - t0 - 250) / 1300) : 1;
+      if (pI >= 1) intro = false;
+      K.forEach((k, i) => {
+        // У кадра-рендера доля проявления = где кромка воды внутри кадра (труба входит в верхний край)
+        const tA = k.ph ? (i === 0 ? ease(pI) : clamp((fy - k.top0) / k.h))
+          : i === 6 ? clamp((fy - k.top0) / (110 * k.s)) : clamp((fy - k.top0) / (k.h * 0.8));
+        if (k.ph) {
+          const ph = k.ph;
+          if (force || Math.abs(tA - ph.p) > 1e-4) {
+            ph.p = tA;
+            const z = (1.08 - 0.08 * ease(tA)).toFixed(4);
+            ph.cam.style.transform = `scale(${z})`;
+            ph.mute.style.transform = `translate3d(0,${(tA * 100).toFixed(3)}%,0)`;
+            ph.mi.style.transform = `translate3d(0,${(-tA * 100).toFixed(3)}%,0) scale(${z})`;
+            ph.mute.style.visibility = tA >= 1 ? 'hidden' : '';
+            ph.front.style.transform = `translate3d(0,${(tA * k.h).toFixed(1)}px,0)`;
+            ph.front.style.opacity = tA > 0.002 && tA < 0.998 ? '1' : '0';
+          }
+          const lv = i === 6 ? 0 : clamp((fy - k.lv0) / (k.lv1 - k.lv0));
+          if (force || Math.abs(lv - ph.d) > 1e-3) { ph.d = lv; ph.dim.style.opacity = (lv * 0.34).toFixed(3); }
+        }
+        const tR = i === 0 ? clamp((r - R1) / (1 - R1)) : i === 6 ? clamp(r / R9) : clamp((dB - k.lb0) / (k.lb1 - k.lb0));
+        const T: Record<string, number> = { A: tA, B: tR, M: tM };
+        for (const p of k.pp) {
+          const u = clamp((T[p.lane] - p.a) / (p.b - p.a || 1));
+          if (!force && Math.abs(u - p.u) < 1e-3) continue;
+          p.u = u;
+          if (p.dash) p.el.style.opacity = u > 0 ? String(Math.min(1, u * 1.6)) : '0';
+          else p.el.style.strokeDashoffset = String((p.L + 1) * (1 - u));
+        }
+        for (const a of k.ar) {
+          const on = T[a.lane] >= a.at - 1e-3;
+          if (force || on !== a.on) { a.on = on; a.el.style.opacity = on ? '' : '0'; }
+        }
+        setCls(k, `${tA > 0.001 ? 1 : 0}${tA >= 0.999 ? 1 : 0}${tR >= 0.999 ? 1 : 0}`);
+      });
+      const isLive = r >= 0.999;
+      if (isLive !== live) { live = isLive; root.classList.toggle('live', isLive); }
+      force = false;
+    };
+
+    const tick = () => {
+      raf = 0;
+      const y = window.scrollY, d = y - sD;
+      // пока проявляется первый кадр, вода стоит в котле
+      if (!intro) sD = Math.abs(d) < 0.5 ? y : sD + d * 0.16;
+      render();
+      if (sD !== y || intro) raf = requestAnimationFrame(tick);
+    };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(tick); };
+    let lq = 0;
+    const relayout = () => { if (lq) return; lq = requestAnimationFrame(() => { lq = 0; layout(); force = true; kick(); }); };
+
+    layout();
+    // При загрузке кадр с котлом проявляется (если он на экране), затем вода «выбегает» из котла
+    t0 = performance.now();
+    intro = anim && window.scrollY < K[0].top0 + K[0].h + mainTop;
+    sD = anim ? Math.max(-RL, window.scrollY - 500) : window.scrollY;
+    force = true;
+    render();
+    kick();
+    window.addEventListener('scroll', kick, { passive: true });
+    window.addEventListener('resize', relayout);
+    wideMQ.addEventListener('change', relayout);
+    new ResizeObserver(relayout).observe(root);
+    document.fonts?.ready.then(relayout);
+    window.addEventListener('load', relayout);
+    // Метки потока и огонь бегут только в кусках на экране
+    const io = new IntersectionObserver((es) => es.forEach((e) => e.target.classList.toggle('vis', e.isIntersecting)), { rootMargin: '120px 0px' });
+    K.forEach((k) => io.observe(k.fig));
+  }
+</script>
+
+<style>
+  .zz {
+    --ink: #0F2340; --ink2: #2C4466; --navy: #1E3A5F; --rule: #B9C6D8; --orange: #E8662A; --rust: #C0480F;
+    --red: #E2452B; --amber: #F2A23A; --blue: #2B6CD9;
+    --gap: 64px; --pad: clamp(72px, 7vw, 104px); --lw: 8px; --sticky: 104px;
+    position: relative; z-index: 0;
+    color: var(--ink); background: #fff;
+    max-width: 1320px; margin: 0 auto; padding: 0 clamp(16px, 3vw, 40px);
+    --zv-ink: var(--ink); --zv-panel: #fff; --zv-border: 2px solid var(--navy); --zv-field: #fff; --zv-field-ink: var(--ink);
+    --zv-field-line: #5B7290; --zv-check: #E8662A; --zv-focus: #2B6CD9; --zv-error: #B8241A;
+    --zv-accent: #E8662A; --zv-accent-ink: #0F2340; --zv-accent-hover: #F27B40; --zv-price: #C0480F;
+    --zv-rule: 1px solid var(--rule); --zv-radius: 0; --zv-btn-radius: 0;
+  }
+  :global(html) { scroll-padding-top: 96px; }
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+  /* Слой труб страницы (создаётся скриптом) */
+  .zz__pipes { position: absolute; left: 0; top: 0; z-index: 1; pointer-events: none; overflow: visible; }
+  .zz__pipes :global(.ln path) { fill: none; stroke-width: var(--lwp, var(--lw)); stroke-linecap: butt; stroke-linejoin: round; }
+  .zz__pipes :global(.ln__gh) { stroke: #DCE3EC; }
+  .zz.st .zz__pipes :global(.ln__gh) { display: none; }
+  .zz__pipes :global(.ln__fm) { display: none; stroke: #fff !important; stroke-width: 2.5px !important; stroke-dasharray: 6 30; }
+  .zz.an.live .zz__pipes :global(.ln__fm) { display: inline; animation: zz-flow 1.2s linear infinite; }
+  @keyframes zz-flow { from { stroke-dashoffset: 36; } to { stroke-dashoffset: 0; } }
+
+  /* Раздел: информация и колонка с куском системы, стороны чередуются */
+  .zs { position: relative; display: grid; grid-template-columns: minmax(0, 6fr) minmax(0, 7fr); column-gap: var(--gap); }
+  .zs__info { grid-column: 1; grid-row: 1; position: relative; z-index: 2; min-width: 0; padding: var(--pad) 0; }
+  .zs__col { grid-column: 2; grid-row: 1; position: relative; min-width: 0; padding: var(--pad) 0; }
+  .zs--l { grid-template-columns: minmax(0, 7fr) minmax(0, 6fr); }
+  .zs--l .zs__info { grid-column: 2; }
+  .zs--l .zs__col { grid-column: 1; }
+  .zs__col > :global(.kus) { position: sticky; top: var(--sticky); z-index: 2; margin: 0 auto; }
+  /* схема 05: ширина такая, чтобы её трубы (7.5 единиц) были толщиной с трубы страницы */
+  .zs__col > :global(.kus:not(.fr)) { max-width: min(440px, calc(var(--lwp, 8.25px) * 53.33)); background: #fff; }
+  .zs--hero .zs__col > :global(.kus), .zs--end .zs__col > :global(.kus) { position: relative; top: auto; }
+
+  /* Первый экран */
+  .zs--hero { align-items: center; }
+  .zs--hero .zs__info { padding: clamp(40px, 5vw, 72px) 0 clamp(64px, 6vw, 88px); }
+  .zs--hero .zs__col { padding: clamp(32px, 4vw, 56px) 0 clamp(80px, 7vw, 104px); }
+  h1 { font-size: clamp(36px, 4.3vw, 60px); line-height: 1.05; font-weight: 800; letter-spacing: -.025em; text-wrap: balance; max-width: 15ch; }
+  .hero__offer { margin-top: 28px; font-size: clamp(19px, 1.6vw, 22px); line-height: 1.5; font-weight: 500; max-width: 36ch; }
+  .hero__price { margin-top: 32px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+  .hero__num { font-size: clamp(40px, 4.4vw, 56px); font-weight: 800; color: var(--red); letter-spacing: -.02em; line-height: 1; }
+  .hero__unit { font-size: 20px; font-weight: 700; }
+  .hero__sub { margin-top: 10px; font-size: 18px; font-weight: 600; color: var(--ink2); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; margin-top: 32px; min-height: 60px; padding: 16px 36px; background: var(--orange); color: var(--ink); font-size: 19px; font-weight: 800; text-decoration: none; }
+  .btn:hover { background: #F27B40; }
+  .hero__area { margin-top: 20px; font-size: 16px; font-weight: 600; color: var(--ink2); }
+
+  /* Заголовок раздела */
+  .zs__head { margin-bottom: clamp(28px, 3vw, 40px); }
+  .zs__no { display: inline-grid; place-items: center; min-width: 56px; height: 38px; padding: 0 10px; border: 4px solid var(--c); font-size: 16px; font-weight: 800; letter-spacing: .02em; }
+  .zs__head h2 { margin-top: 18px; font-size: clamp(34px, 3.8vw, 52px); line-height: 1.02; font-weight: 800; letter-spacing: -.025em; }
+  .zs__stage { display: flex; align-items: center; gap: 12px; margin-top: 18px; font-size: 17px; line-height: 1.4; font-weight: 700; color: var(--ink2); max-width: 52ch; }
+  .zs__sn { display: grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--navy); color: #fff; font-size: 16px; font-weight: 800; }
+  .zs__sn--dash { background: #fff; border: 3px dashed var(--blue); }
+  .lead { font-size: clamp(20px, 1.7vw, 23px); line-height: 1.45; font-weight: 600; max-width: 40ch; margin-bottom: clamp(28px, 3.5vw, 44px); }
+  .h3 { font-size: 22px; font-weight: 800; margin: 44px 0 16px; }
+
+  /* 01 */
+  .items { border-bottom: 1px solid var(--rule); }
+  .items li { display: grid; grid-template-columns: minmax(0, 200px) minmax(0, 1fr); column-gap: 28px; padding: 22px 0 10px; border-top: 1px solid var(--rule); }
+  .items h3 { font-size: 20px; line-height: 1.3; font-weight: 800; padding-top: 2px; }
+  .items p { color: var(--ink2); }
+  .more summary { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; font-weight: 700; color: var(--ink); list-style: none; }
+  .more summary::-webkit-details-marker { display: none; }
+  .more summary::after { content: ''; width: 12px; height: 12px; flex: none; background: linear-gradient(currentColor 0 0) center / 12px 2px no-repeat, linear-gradient(currentColor 0 0) center / 2px 12px no-repeat; transition: transform .2s; }
+  .more[open] summary::after { transform: rotate(45deg); }
+  .more summary:hover { text-decoration: underline; text-underline-offset: 4px; }
+  .more__text { padding: 4px 0 16px; max-width: 64ch; }
+  .more__text p + p, .more__text ul + p, .more__text p + ul { margin-top: 12px; }
+  .more--block { border-bottom: 1px solid var(--rule); }
+  .more--block summary { min-height: 64px; font-size: 19px; display: flex; justify-content: space-between; }
+  .dash li { padding-left: 22px; position: relative; }
+  .dash li::before { content: ''; position: absolute; left: 0; top: .8em; width: 12px; height: 2px; background: var(--ink); }
+
+  /* 02 */
+  .pv { display: grid; grid-template-columns: 1fr 1fr; border-top: 6px solid var(--red); border-bottom: 1px solid var(--rule); }
+  .pv__item { padding: 24px 24px 24px 0; }
+  .pv__item + .pv__item { padding-left: 24px; border-left: 1px solid var(--rule); }
+  .pv__val { display: grid; gap: 8px; }
+  .pv__num { font-size: clamp(36px, 3.6vw, 52px); line-height: 1; font-weight: 800; color: var(--red); letter-spacing: -.02em; white-space: nowrap; }
+  .pv__item + .pv__item .pv__num { color: var(--ink); }
+  .pv__unit { font-size: 19px; font-weight: 700; }
+  .pv__note { margin-top: 8px; font-weight: 600; }
+  .inc { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 32px; }
+  .inc li { position: relative; padding-left: 26px; }
+  .inc li::before { content: ''; position: absolute; left: 0; top: .5em; width: 12px; height: 12px; background: var(--red); }
+  .plist div { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; padding: 14px 0; border-top: 1px solid var(--rule); }
+  .plist div:last-child { border-bottom: 1px solid var(--rule); }
+  .plist dd { margin: 0; text-align: right; white-space: nowrap; }
+  .plist b { color: var(--rust); font-weight: 800; }
+  .plist span { color: var(--ink2); font-size: 16px; }
+  .zs__info > .more--block:first-of-type { margin-top: 32px; }
+  .zs__info .items + .more--block { margin-top: 0; }
+
+  /* 03: шаги на янтарной трубе */
+  .steps { position: relative; display: grid; gap: 28px; }
+  .steps::before { content: ''; position: absolute; left: 21px; top: 8px; bottom: 8px; width: 4px; background: var(--amber); }
+  .steps li { position: relative; display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 20px; }
+  .steps__n { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; background: var(--navy); color: #fff; font-weight: 800; font-size: 19px; box-shadow: 0 0 0 5px #fff; }
+  .steps h3 { font-size: 20px; font-weight: 800; line-height: 1.3; margin: 8px 0 4px; }
+  .steps p { color: var(--ink2); }
+
+  /* 04 */
+  .gal { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 16px; }
+  .gal figure { margin: 0; min-width: 0; }
+  .gal .w { grid-column: 1 / -1; }
+  .gal :global(img) { width: 100%; height: clamp(180px, 16vw, 240px); object-fit: cover; }
+  .gal .w :global(img) { height: clamp(240px, 24vw, 340px); }
+  .gal figcaption { margin-top: 8px; font-size: 16px; line-height: 1.4; color: var(--ink2); }
+  .obj { margin-top: 44px; border: 2px solid var(--navy); border-top: 8px solid var(--amber); padding: clamp(20px, 3vw, 32px); }
+  .obj h3 { font-size: 22px; font-weight: 800; line-height: 1.3; }
+  .obj__place { margin-top: 4px; color: var(--ink2); font-weight: 600; }
+  .obj__facts { display: grid; grid-template-columns: minmax(0, .7fr) minmax(0, 1fr) minmax(0, 1.6fr); gap: 16px; margin: 20px 0; padding: 16px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  .obj__facts dt { font-size: 16px; color: var(--ink2); font-weight: 600; }
+  .obj__facts dd { margin: 0; font-weight: 800; }
+  .link { display: inline-flex; align-items: center; min-height: 44px; margin-top: 8px; color: var(--ink); font-weight: 800; text-underline-offset: 5px; text-decoration-thickness: 2px; text-decoration-color: var(--orange); }
+
+  /* 05 */
+  .faq { border-top: 6px solid var(--blue); }
+  .more--faq { border-bottom: 1px solid var(--rule); }
+  .more--faq summary { display: flex; justify-content: space-between; gap: 24px; min-height: 72px; padding: 14px 0; font-size: 20px; line-height: 1.35; font-weight: 700; }
+  .more--faq .more__text { color: var(--ink2); padding-bottom: 24px; }
+
+  /* ---------- Без JS: трубы упрощённо полосами, без скруглений ---------- */
+  .fb { position: absolute; display: block; pointer-events: none; }
+  :global(html.zz-js) .fb { display: none; }
+  /* без JS кусок не липнет: смена цвета трубы A спрятана за ним */
+  :global(html:not(.zz-js)) .zs__col > :global(.kus) { position: relative; top: auto; }
+  .fb-a, .fb-b { width: var(--lw); z-index: 0; }
+  .fb-a { left: calc(var(--fa) * 100% - var(--lw) / 2); background: linear-gradient(var(--ci) calc(var(--pad) + 200px), var(--co) 0); }
+  .fb-b { left: calc(var(--fb) * 100% - var(--lw) / 2); background: var(--blue); }
+  /* вход сверху: справа - A ниже границы, B выше; слева наоборот. Выход вниз - по стороне следующего раздела */
+  .zs--r .fb-a { top: 22px; bottom: 22px; }
+  .zs--r .fb-b { top: -22px; bottom: -22px; }
+  .zs--l .fb-a { top: -22px; bottom: -22px; }
+  .zs--l .fb-b { top: 22px; bottom: 22px; }
+  .zs--hero .fb-a, .zs--hero .fb-b { top: 50%; }
+  .zs--end .fb-a, .zs--end .fb-b { bottom: auto; height: calc(var(--pad) + 40px); }
+  /* переход между разделами: от трубы предыдущего куска (--fp) к трубе этого (--fa); --cw - ширина колонки куска */
+  .fbx { --cw: calc((100% - var(--gap)) * 7 / 13); top: -26px; height: 52px; z-index: 0;
+    background: linear-gradient(var(--ci) 0 0) 0 var(--ya) / calc(100% - 44px) var(--lw) no-repeat, linear-gradient(var(--blue) 0 0) 44px var(--yb) / calc(100% - 44px) var(--lw) no-repeat; }
+  .zs--r .fbx { --ya: calc(48px - var(--lw) / 2); --yb: calc(4px - var(--lw) / 2); left: calc(var(--fp) * var(--cw) - 26px); right: calc((1 - var(--fa)) * var(--cw) - 26px); }
+  .zs--l .fbx { --ya: calc(4px - var(--lw) / 2); --yb: calc(48px - var(--lw) / 2); left: calc(var(--fa) * var(--cw) - 26px); right: calc((1 - var(--fp)) * var(--cw) - 26px); }
+
+  @media (max-width: 1100px) {
+    .zz { --gap: 40px; }
+    .fbx { --cw: calc((100% - var(--gap)) / 2); }
+    .zs, .zs--l { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .items li { grid-template-columns: 1fr; }
+    .items h3 { margin-bottom: 4px; }
+    .pv { grid-template-columns: 1fr; }
+    .pv__item + .pv__item { padding-left: 0; border-left: 0; border-top: 1px solid var(--rule); }
+    .inc { grid-template-columns: 1fr; }
+    .obj__facts { grid-template-columns: 1fr; gap: 8px; }
+  }
+
+  /* ---------- Телефон: одна колонка, кусок над текстом, трубы по колее у левого края ---------- */
+  @media (max-width: 760px) {
+    .zz { --lw: 6px; --pad: 0px; padding: 0 16px; }
+    .zs, .zs--l { display: block; }
+    .zs__col { padding: 48px 0 0; }
+    .zs__col > :global(.kus) { position: relative; top: auto; }
+    .zs__col > :global(.kus:not(.fr)) { max-width: min(400px, calc(var(--lwp, 6px) * 53.33)); }
+    .zs__info { padding: 48px 0 56px 30px; }
+    .zs--hero { display: flex; flex-direction: column; align-items: stretch; }
+    .zs--hero .zs__info { padding: 28px 0 8px; }
+    .zs--hero .zs__col { padding: 32px 0 0; }
+    .zs--end .zs__info { padding-bottom: 64px; }
+    h1 { font-size: clamp(32px, 9vw, 38px); max-width: none; }
+    .hero__offer { margin-top: 18px; font-size: 18px; }
+    .hero__price { margin-top: 22px; }
+    .btn { width: 100%; margin-top: 24px; }
+    .zs__head h2 { font-size: 34px; margin-top: 14px; }
+    .zs__stage { font-size: 16px; }
+    .lead { font-size: 19px; margin-bottom: 28px; }
+    .plist div { flex-direction: column; gap: 2px; }
+    .plist dd { text-align: left; }
+    .steps li { grid-template-columns: 44px minmax(0, 1fr); gap: 14px; }
+    .steps__n { width: 44px; height: 44px; font-size: 18px; }
+    .steps::before { left: 20px; }
+    .gal { gap: 16px 12px; }
+    .gal :global(img) { height: 150px; }
+    .gal .w :global(img) { height: 220px; }
+    .more--faq summary { font-size: 18px; }
+    .more--block summary { font-size: 18px; }
+    /* без JS: колея из двух полос у левого края вдоль текста раздела, между кусками */
+    .fbx, .fb-a, .fb-b { display: none; }
+    :global(html:not(.zz-js)) .zs:not(.zs--hero, .zs--end) .zs__info {
+      background: linear-gradient(var(--co) 0 0) 0 0 / 6px 100% no-repeat, linear-gradient(var(--blue) 0 0) 14px 0 / 6px 100% no-repeat; }
+  }
+  @media (prefers-reduced-motion: reduce) { .more summary::after { transition: none; } }
+</style>

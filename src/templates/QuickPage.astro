@@ -16,6 +16,7 @@ import LeadForm from '../components/LeadForm.astro';
 import SectionNav from '../components/SectionNav.astro';
 import Prose from '../components/Prose.astro';
 import ObjectsGrid from '../components/ObjectsGrid.astro';
+import Gallery from '../components/Gallery.astro';
 import { SITE } from '../data/site';
 import { type Page, crumbsFor, serviceLd } from '../data/pages';
 interface Props { page: Page }
@@ -34,7 +35,7 @@ const nav = [
 ].filter(Boolean) as { id: string; label: string }[];
 ---
 <Base title={p.title} description={p.description} crumbs={crumbsFor(p.slug)} jsonld={[serviceLd(p)]}>
-  <Hero h1={p.h1} offer={p.offer} price={p.priceFrom} img={p.hero} facts={p.facts} eyebrow={p.eyebrow ?? 'Запуск газовых котлов · выезд за 1–2 дня'}
+  <Hero h1={p.h1} offer={p.offer} price={p.priceFrom} img={p.hero} need={p.hero ? undefined : p.photoNeed} facts={p.facts} eyebrow={p.eyebrow ?? 'Запуск газовых котлов · выезд за 1–2 дня'}
     primary={{ href: '#perezvonite', label: 'Перезвоните мне' }} secondary={isMain ? { href: '#ceny', label: 'Цены на запуск' } : { href: '/zapusk-gazovyh-kotlov/', label: 'Запуск газовых котлов' }}
     trust={[['1–2 дня', 'до выезда инженера'], ['2–4 часа', 'работа на объекте'], ['акт', 'для гарантии производителя']]}>
     <a class="urgent-phone" href={SITE.phoneHref}><span>Звоните — ответит инженер</span><b>{SITE.phone}</b></a>
@@ -62,7 +63,12 @@ const nav = [
     </div>
   </Section>
 
-  {isMain && <ObjectsGrid tags={p.objTags} gallery={p.gallery} title="Объекты, которые мы запускали" />}
+  {isMain && <ObjectsGrid tags={p.objTags} gallery={p.gallery} galleryNeed={p.hero ? p.photoNeed : undefined} title="Объекты, которые мы запускали" />}
+  {!isMain && (p.gallery?.length || (p.hero && p.photoNeed)) ? (
+    <Section variant={hasText ? 'tint' : 'plain'} eyebrow="Фото" title="Как выглядит монтаж">
+      <Gallery ids={p.gallery ?? []} need={p.hero ? p.photoNeed : undefined} strip />
+    </Section>
+  ) : null}
 
   <Guarantees />
   <Reviews />

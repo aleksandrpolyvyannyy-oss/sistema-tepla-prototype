@@ -1,0 +1,139 @@
+---
+// Служебная страница для команды: какие фото стоят на страницах, где заглушки и что доснять.
+// Данные берутся из тех же полей, что и страницы (hero, gallery, photoNeed, HOME_PHOTO), поэтому таблица не расходится с сайтом.
+// Не в sitemap, noindex. Раскладка — ФОТО-КАРТА.md в корне проекта.
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import { allPages, href } from '../data/pages';
+import { HOME_PHOTO, NEED } from '../data/photo-needs';
+import { PHOTOS, PHOTO_ALT, photo, photoStyle } from '../lib/photos';
+
+type Row = { url: string; name: string; hero?: string; heroNeed?: string; gallery: string[]; galleryNeed?: string; note?: string };
+const PAGES = allPages();
+const homeCards = Object.entries(HOME_PHOTO.cards);
+const rows: Row[] = [
+  {
+    url: '/', name: 'Главная', hero: HOME_PHOTO.hero,
+    gallery: homeCards.filter(([, c]) => c.img).map(([, c]) => c.img!),
+    note: `В галерее — обложки карточек разделов. Заглушки на карточках: ${homeCards.filter(([, c]) => c.need).map(([u]) => u).join(', ')} (что снять — в строках этих страниц ниже)`,
+  },
+  ...PAGES.map((p) => ({
+    url: href(p.slug), name: p.name, hero: p.hero,
+    heroNeed: p.hero ? undefined : p.photoNeed,
+    gallery: p.gallery ?? [],
+    galleryNeed: p.hero ? p.photoNeed : undefined,
+  })),
+  { url: '/obekty/', name: 'Объекты и карточки объектов', heroNeed: NEED.obektyFull, gallery: [] },
+  { url: '/o-kompanii/', name: 'О компании', gallery: [], note: 'Без фото (решение команды)' },
+];
+
+// Где стоит каждое фото.
+const usage: Record<string, string[]> = {};
+const use = (id: string, where: string) => { (usage[id] ??= []).push(where); };
+for (const r of rows) {
+  if (r.hero) use(r.hero, `${r.url} (первый экран)`);
+  for (const g of r.gallery) use(g, r.url === '/' ? '/ (карточка раздела)' : `${r.url} (галерея)`);
+}
+// Почему фото не стоит на сайте.
+const WHY: Record<string, string> = {
+  s07: 'тёмное',
+  s25: 'лестница, оборудования не видно',
+  s43: 'на тёплом полу инструмент и мусор',
+};
+const SPARE: [RegExp, string][] = [
+  [/^s(04|12|19|26|34)$/, 'запас: укладка тёплого пола, стоят более удачные кадры'],
+  [/^s(09|10|18|32|33)$/, 'запас: готовая стяжка, на сайте стоит s31'],
+  [/^s(11|16|20|21|30)$/, 'запас: подготовка основания, в раскладку не вошло'],
+  [/^s(13|35|40)$/, 'запас: радиаторы, стоят другие кадры'],
+];
+const why = (id: string) => WHY[id] ?? SPARE.find(([re]) => re.test(id))?.[1] ?? 'в раскладку не вошло';
+const ids = Object.keys(PHOTOS).sort();
+const used = ids.filter((id) => usage[id]).length;
+const withNeed = rows.filter((r) => r.heroNeed || r.galleryNeed || (r.url === '/' && homeCards.some(([, c]) => c.need))).length;
+---
+<Base title="Фото для сайта — что стоит и что доснять" description="Служебная страница прототипа: фото на страницах, заглушки и что нужно снять." crumbs={[{ href: '/karta-prototipa/', label: 'Карта прототипа' }, { href: '/foto-dlya-sajta/', label: 'Фото для сайта' }]} noindex>
+  <section class="section" style="padding-top:32px">
+    <div class="wrap">
+      <div class="eyebrow">Служебная страница</div>
+      <h1 style="font-size:clamp(28px,4vw,40px)">Фото для сайта</h1>
+      <p class="hero__offer" style="max-width:none">Фото объектов s01–s43 от 14.10.2026: на сайте используется <b>{used}</b> из {ids.length}. Страниц, где ещё нужны фото (заглушка «Нужно фото»): <b>{withNeed}</b>. Раскладка по смыслу — файл ФОТО-КАРТА.md в корне проекта.</p>
+
+      <h2 class="mt-40">Страницы: что стоит и что доснять</h2>
+      <div class="table-wrap">
+        <table class="ft">
+          <thead><tr><th>Страница</th><th>Первый экран</th><th>Галерея</th><th>Что нужно снять</th></tr></thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr>
+                <td data-l="Страница"><a href={r.url}>{r.name}</a><br /><code>{r.url}</code></td>
+                <td data-l="Первый экран">
+                  {r.hero ? (
+                    <figure class="ft__th"><Image src={photo(r.hero)} alt={PHOTO_ALT[r.hero] ?? ''} width={240} style={photoStyle(r.hero)} /><figcaption>{r.hero}</figcaption></figure>
+                  ) : r.heroNeed ? <span class="tag tag--wip">заглушка</span> : <span class="tag">без фото</span>}
+                </td>
+                <td data-l="Галерея">
+                  {r.gallery.length || r.galleryNeed ? (
+                    <div class="ft__row">
+                      {r.gallery.map((g) => <figure class="ft__th ft__th--s"><Image src={photo(g)} alt={PHOTO_ALT[g] ?? ''} width={144} style={photoStyle(g)} /><figcaption>{g}</figcaption></figure>)}
+                      {r.galleryNeed && <span class="tag tag--wip">+ заглушка</span>}
+                    </div>
+                  ) : <span class="ft__dash">—</span>}
+                </td>
+                <td data-l="Что нужно снять">
+                  {r.heroNeed || r.galleryNeed ? <span>{r.heroNeed ?? r.galleryNeed}</span> : !r.note && <span class="ft__dash">—</span>}
+                  {r.note && <div class="ft__note">{r.note}</div>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <h2 class="mt-40">Все фото s01–s43</h2>
+      <div class="fg">
+        {ids.map((id) => (
+          <figure class:list={['fg__item', { 'fg__item--off': !usage[id] }]}>
+            <Image src={photo(id)} alt={PHOTO_ALT[id] ?? ''} width={240} />
+            <figcaption>
+              <b>{id}</b> · {PHOTO_ALT[id]}
+              {usage[id]
+                ? <span class="fg__use">на сайте: {usage[id].join(', ')}</span>
+                : <span class="fg__off">не используется ({why(id)})</span>}
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+      <p class="table-note">Страница закрыта от индексации и не входит в sitemap. Исходники фото: папка «фото_объектов/от_Стаса_14.10», копии в src/assets/photos/stas.</p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .ft code { font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+  .ft td { font-size: 14px; }
+  .ft th:nth-child(1) { width: 22%; }
+  .ft th:nth-child(2) { width: 150px; }
+  .ft th:nth-child(3) { width: 34%; }
+  .ft__th { margin: 0; display: inline-block; text-align: center; font-size: 12px; font-weight: 700; color: var(--navy-900); }
+  .ft__th img { width: 120px; height: 90px; object-fit: cover; border-radius: 8px; }
+  .ft__th--s img { width: 72px; height: 72px; }
+  .ft__row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .ft__dash { color: var(--gray); }
+  .ft__note { margin-top: 6px; font-size: 12.5px; color: var(--muted); }
+  .fg { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }
+  .fg__item { margin: 0; background: #fff; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .fg__item img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+  .fg__item figcaption { padding: 8px 10px 10px; font-size: 12.5px; line-height: 1.4; }
+  .fg__use, .fg__off { display: block; margin-top: 4px; font-size: 12px; overflow-wrap: anywhere; }
+  .fg__use { color: #1f7a3d; }
+  .fg__off { color: #8a6200; }
+  .fg__item--off img { opacity: .55; }
+  @media (max-width: 720px) {
+    .ft thead { display: none; }
+    .ft, .ft tbody, .ft tr, .ft td { display: block; width: 100%; }
+    .ft tr { border-bottom: 2px solid var(--line); padding: 8px 0; }
+    .ft td { border: 0; padding: 6px 14px; }
+    .ft td::before { content: attr(data-l); display: block; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+    .fg { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  }
+</style>
